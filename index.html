@@ -255,13 +255,14 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v44</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v46</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button onclick="testAlert()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">테스트</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
-  <div class="tab on" id="tab-form" onclick="sw('form')"><i>✏️</i>접수</div>
-  <div class="tab" id="tab-list" onclick="sw('list')"><i>📋</i>목록</div>
+  <div class="tab" id="tab-form" style="display:none" onclick="sw('form')"><i>✏️</i>접수</div>
+  <div class="tab on" id="tab-list" onclick="sw('list')"><i>📋</i>목록</div>
   <div class="tab" id="tab-map" onclick="sw('map')"><i>🗺</i>지도</div>
+  <div class="tab" id="tab-fee" onclick="sw('fee')"><i>💰</i>수수료</div>
 </div>
 
 <div id="login" style="position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,#0F1622,#1B2838);display:flex;align-items:center;justify-content:center;padding:24px">
@@ -277,7 +278,7 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
     <div style="font-size:12px;color:#5a6572;font-weight:600;margin-top:24px">한 번 선택하면 다음부터 바로 열립니다</div>
   </div>
 </div>
-<div class="pane on" id="pane-form">
+<div class="pane" id="pane-form">
   <div id="install-bar" style="display:none;align-items:center;justify-content:space-between;gap:10px;border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#EAF0FF;color:#1B5CFF;font-size:13px;font-weight:700">
     <span>홈 화면에 추가하면 앱처럼 바로 열립니다</span>
     <span style="display:flex;gap:6px;flex-shrink:0">
@@ -383,7 +384,7 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
   <div class="msg" id="f-msg"></div>
 </div>
 
-<div class="pane" id="pane-list">
+<div class="pane on" id="pane-list">
 
   <div style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;padding:12px 15px;margin:10px 14px 4px;border-radius:12px">
     <span style="font-size:16px;font-weight:800"><span id="who2"></span></span>
@@ -416,6 +417,21 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
   <div id="list-body"></div>
 </div>
 
+<div class="pane" id="pane-fee">
+  <div style="padding:12px 14px 6px">
+    <input type="text" id="fee-q" placeholder="품목 검색 (예: 소파, 침대, 냉장고)" oninput="renderFee()"
+      style="width:100%;font-size:16px;padding:13px 14px;border:1.5px solid #d7dee8;border-radius:11px;font-family:inherit">
+    <div class="type-row" style="margin-top:9px;flex-wrap:wrap;gap:6px">
+      <button class="type-btn on-own" id="fc-" onclick="feeCat('')" style="flex:none;padding:8px 13px;font-size:13px">전체</button>
+      <button class="type-btn" id="fc-가전제품류" onclick="feeCat('가전제품류')" style="flex:none;padding:8px 13px;font-size:13px">가전</button>
+      <button class="type-btn" id="fc-가구류" onclick="feeCat('가구류')" style="flex:none;padding:8px 13px;font-size:13px">가구</button>
+      <button class="type-btn" id="fc-생활류" onclick="feeCat('생활류')" style="flex:none;padding:8px 13px;font-size:13px">생활</button>
+      <button class="type-btn" id="fc-기타류" onclick="feeCat('기타류')" style="flex:none;padding:8px 13px;font-size:13px">기타</button>
+    </div>
+  </div>
+  <div class="count-bar" id="fee-cnt"></div>
+  <div id="fee-body" style="padding:0 14px 20px"></div>
+</div>
 <div class="pane" id="pane-map">
   <div id="map"></div>
   <div id="pick-bar" style="display:none;position:absolute;top:0;left:0;right:0;z-index:30;background:#0F1622;color:#fff;padding:13px 16px;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:700">
@@ -440,6 +456,36 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
 </div>
 </div>
 
+<div class="overlay" id="est-ov" style="display:none;align-items:flex-end">
+  <div style="background:#F5F7FA;width:100%;max-width:520px;margin:0 auto;border-radius:16px 16px 0 0;max-height:92vh;display:flex;flex-direction:column">
+    <div style="background:#0F1622;color:#fff;padding:14px 16px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:12px;color:#8A97A8;font-weight:700" id="est-where"></div>
+      <div style="font-size:17px;font-weight:800">견적 품목 담기</div></div>
+      <button onclick="estClose()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:8px 13px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">닫기</button>
+    </div>
+    <div style="padding:10px 14px 6px;background:#fff;border-bottom:1px solid #E3E7ED">
+      <input type="text" id="est-q" placeholder="품목 검색 (예: 소파, 장롱, 냉장고)" oninput="estList()"
+        style="width:100%;font-size:16px;padding:12px 13px;border:1.5px solid #d7dee8;border-radius:10px;font-family:inherit">
+      <div class="type-row" style="margin-top:8px;flex-wrap:wrap;gap:5px">
+        <button class="type-btn on-own" id="ec-" onclick="estCat('')" style="flex:none;padding:7px 12px;font-size:13px">전체</button>
+        <button class="type-btn" id="ec-가전제품류" onclick="estCat('가전제품류')" style="flex:none;padding:7px 12px;font-size:13px">가전</button>
+        <button class="type-btn" id="ec-가구류" onclick="estCat('가구류')" style="flex:none;padding:7px 12px;font-size:13px">가구</button>
+        <button class="type-btn" id="ec-생활류" onclick="estCat('생활류')" style="flex:none;padding:7px 12px;font-size:13px">생활</button>
+        <button class="type-btn" id="ec-기타류" onclick="estCat('기타류')" style="flex:none;padding:7px 12px;font-size:13px">기타</button>
+      </div>
+    </div>
+    <div id="est-body" style="flex:1;overflow-y:auto;padding:10px 14px 4px;-webkit-overflow-scrolling:touch"></div>
+    <div style="background:#fff;border-top:1px solid #E3E7ED;padding:10px 14px 14px">
+      <div id="est-cart" style="max-height:29vh;overflow-y:auto;margin-bottom:8px"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:2px solid #0F1622;margin-bottom:9px">
+        <span style="font-size:16px;font-weight:800">합계</span>
+        <span style="font-size:23px;font-weight:800;color:#1B5CFF" id="est-sum">0원</span>
+      </div>
+      <input type="text" id="est-memo" placeholder="메모 (선택)" style="width:100%;font-size:15px;padding:11px 13px;border:1.5px solid #d7dee8;border-radius:10px;font-family:inherit;margin-bottom:9px">
+      <button onclick="estSave()" style="width:100%;padding:15px;border:none;border-radius:11px;background:#1B5CFF;color:#fff;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer">견적 저장</button>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="ov" onclick="closeDetail(event)">
   <div class="dbox">
     <div class="d-h" id="d-title"></div>
@@ -1040,7 +1086,7 @@ function cancelEdit(){
   editId=null;
   clrForm();
   showEditBar(null);
-  msg('수정을 취소했습니다','ok');
+  sw('list');
 }
 async function saveRec(){
   const addr=gv('f-addr');
@@ -1108,6 +1154,7 @@ async function saveRec(){
   clrForm();
   renderList();
   if(mapReady)drawPins();
+  sw('list');            // 저장 후 목록으로
 }
 
 // 연락처: 뒷자리만 입력 → 자동으로 010 붙이고 보기 좋게 정리
@@ -1149,6 +1196,7 @@ function sw(t){
   const tb=$('tab-'+t);
   if(tb)tb.classList.add('on');
   if(t==='list')renderList();
+  if(t==='fee'&&!$('fee-body').innerHTML)renderFee();
   if(t==='map'){initMap();setTimeout(()=>{if(map){map.relayout();drawPins();}},120);}
 }
 // ── 구분별 입력 (특수마대 개수 / 용기 규격별 / 견적 내용) ──
@@ -1194,6 +1242,56 @@ function buildContent(){
   return (gv('f-content')||'').trim();     // 민원·견적
 }
 function pickTp(){ return curTp; }
+const FEE=[["가전제품류","DVD,비디오(VTR)","","면제"],["가전제품류","TV","42인치 이상","7000"],["가전제품류","TV","25인치 이상","5000"],["가전제품류","TV","25인치 미만","3000"],["가전제품류","가스 레인지","","면제"],["가전제품류","가스오븐 렌지","높이 1m 이상","5000"],["가전제품류","가스오븐 렌지","높이 1m 미만","면제"],["가전제품류","가습기","","면제"],["가전제품류","게임기 오락기","전문 업소용","12000"],["가전제품류","게임기 오락기","50cm 이상","5000"],["가전제품류","게임기 오락기","50cm 미만","3000"],["가전제품류","공기청정기","영업용","15000"],["가전제품류","공기청정기","가장긴면 1m이상","4000"],["가전제품류","공기청정기","가장긴면 1m미만","면제"],["가전제품류","김치냉장고","130L 이상","5000"],["가전제품류","김치냉장고","130L 미만","3000"],["가전제품류","냉장고","영업용 (대형)","20000"],["가전제품류","냉장고","500L 이상","10000"],["가전제품류","냉장고","300L 이상","7000"],["가전제품류","냉장고","300L 미만","5000"],["가전제품류","노트북 컴퓨터","","면제"],["가전제품류","녹즙기","","면제"],["가전제품류","다리미","","면제"],["가전제품류","라지에터","","4000"],["가전제품류","모뎀","","면제"],["가전제품류","믹서기","","면제"],["가전제품류","발마사지 기계","","면제"],["가전제품류","보온밥통","","면제"],["가전제품류","복사기","영업용","10000"],["가전제품류","복사기(영업용프린터)","높이 1m 이상","5000"],["가전제품류","복사기(영업용프린터)","높이 1m 미만","3000"],["가전제품류","선풍기","업소용(스탠드형)","3000"],["가전제품류","선풍기","가정용","면제"],["가전제품류","세탁기","10kg 이상","4000"],["가전제품류","세탁기","10kg 이하","3000"],["가전제품류","스캐너","","면제"],["가전제품류","식기건조기","높이 1m 이상","5000"],["가전제품류","식기건조기","높이 1m 미만","면제"],["가전제품류","식기세척기","높이 1m 이상","5000"],["가전제품류","식기세척기","높이 1m 미만","면제"],["가전제품류","안마기","","2000"],["가전제품류","안마의자","","10000"],["가전제품류","온수기","","2000"],["가전제품류","에어컨","264㎡ 이상","9000"],["가전제품류","에어컨","66㎡ 이상","6000"],["가전제품류","에어컨","66㎡ 미만","4000"],["가전제품류","에어컨 실외기","1m 이상","2000"],["가전제품류","에어컨 실외기","1m 미만","면제"],["가전제품류","오디오 본 체","본체 1m 이상","4000"],["가전제품류","오디오 본 체","본체 1m 미만","면제"],["가전제품류","오디오 스피커","스피커 1m 이상","1000"],["가전제품류","오디오 스피커","스피커 1m 미만","면제"],["가전제품류","온풍기","264㎡ 이상","8000"],["가전제품류","온풍기","66㎡ 이상","5000"],["가전제품류","온풍기","66㎡ 미만","3000"],["가전제품류","자동판매기","음료 담배","15000"],["가전제품류","자동판매기","자가 소형","3000"],["가전제품류","전기밥솥","(보온밥솥)","면제"],["가전제품류","전기판넬","3.3㎡당","2000"],["가전제품류","전기히터","","면제"],["가전제품류","전자레인지","","면제"],["가전제품류","전자시계","","면제"],["가전제품류","전화기․휴대폰","","면제"],["가전제품류","정수기","높이 1m 이상","4000"],["가전제품류","정수기","높이 1m 미만","면제"],["가전제품류","청소기","영업용","4000"],["가전제품류","청소기","가정용","면제"],["가전제품류","카세트 라디오","","면제"],["가전제품류","커피포트","","면제"],["가전제품류","컴퓨터","","면제"],["가전제품류","컴퓨터 복합기","","면제"],["가전제품류","컴퓨터 오락기","","면제"],["가전제품류","컴퓨터 키보드","","면제"],["가전제품류","탈수기","가정용","면제"],["가전제품류","토스터기","","면제"],["가전제품류","팩시밀리","사무용","2500"],["가전제품류","팩시밀리","","면제"],["가전제품류","팬히터","벽걸이형","2000"],["가전제품류","프린터","가정용","면제"],["가전제품류","헤어 드라이어","","면제"],["가전제품류","환풍기","업소용(대형)","3000"],["가전제품류","환풍기","가정용","면제"],["가전제품류","휴대폰 충전기","","면제"],["가구류","TV 받 침","","3000"],["가구류","거실장","너비 180cm 이상","10000"],["가구류","거실장(유리별도)","너비 120cm 이상","6000"],["가구류","거실장(유리별도)","너비 120cm 미만","4000"],["가구류","거울","가장 긴면 50cm이상","2000"],["가구류","거울","가장 긴면 50cm미만","1000"],["가구류","렌지대 수납장","","4000"],["가구류","목욕탕 수건함","","1000"],["가구류","문갑","","3000"],["가구류","문짝","","4000"],["가구류","서랍장","5단 이상","5000"],["가구류","서랍장","4단 이하","3000"],["가구류","쇼파","4인용","13000"],["가구류","쇼파(안락의자)","3인용","10000"],["가구류","쇼파(안락의자)","2인용","7000"],["가구류","쇼파(안락의자)","1인용","4000"],["가구류","쇼파(안락의자)","스툴","3000"],["가구류","스탠드 옷걸이","가정용(행거)","2000"],["가구류","식 탁(나무) (의자별도)","6인 이상","5000"],["가구류","식 탁(나무) (의자별도)","4인 이상","4000"],["가구류","식 탁(나무) (의자별도)","3인 이하","3000"],["가구류","식 탁(대리석) (의자별도)","6인 이상","13000"],["가구류","식 탁(대리석) (의자별도)","4인 이상","10000"],["가구류","신발장","높이 1.5m 이상","4000"],["가구류","신발장","높이 1.5m 미만","2000"],["가구류","싱크대","개당","5000"],["가구류","쌀통","","3000"],["가구류","쓰레기통","사무실 옥외용","2000"],["가구류","쓰레기통","가정용","1000"],["가구류","아이스박스","50L 이상","3000"],["가구류","아이스박스","30L 이상","2000"],["가구류","아이스박스","30L 미만","1000"],["가구류","의자","장의자","6000"],["가구류","의자","회전의자","5000"],["가구류","의자","1인용","2000"],["가구류","장롱","너비 100cm 이상(쪽당)","15000"],["가구류","장롱","너비 100cm 미만(쪽당)","10000"],["가구류","장식장","높이 180cm이상","10000"],["가구류","장식장(찬 장)","높이 120cm이상","6000"],["가구류","장식장(찬 장)","높이 120cm미만","4000"],["가구류","장식장(찬 장)","오디오용","3000"],["가구류","진 열 대(목재)","1㎡ 당","5000"],["가구류","창문","","2000"],["가구류","책상","양수","8000"],["가구류","책상(유리별도)","편수","5000"],["가구류","책상(유리별도)","서랍 없음","3000"],["가구류","책상(유리별도)","컴퓨터 책상","3000"],["가구류","책장","90cm×180cm 이상","8000"],["가구류","책장(책 꽂 이)","90cm×180cm 미만","5000"],["가구류","책장(책 꽂 이)","4단 이하","2000"],["가구류","침대","어린이 2층","15000"],["가구류","침대(목 재)","2인용 매트리스","8000"],["가구류","침대(목 재)","2인용 침대 틀","7000"],["가구류","침대(목 재)","1인용 매트리스","5000"],["가구류","침대(목 재)","1인용 침대 틀","5000"],["가구류","침대(목 재)","유아용","3000"],["가구류","침대","2인용 돌, 옥, 황토","30000"],["가구류","침대(돌,옥,황토 침대)","1인용 돌, 옥, 황토","20000"],["가구류","컬러박스","3단 이상","2000"],["가구류","컬러박스(공간박스)","2단 미만","1000"],["가구류","탁구대","","7000"],["가구류","탁자","10인용 이상","8000"],["가구류","탁자","10인용 미만","6000"],["가구류","탁자","2인용","3000"],["가구류","탁자","응접용","3000"],["가구류","탁자","협 탁","2000"],["가구류","캐비넷","90cm×180cm","4000"],["가구류","캐비넷(파 일)","4단 이상","3000"],["가구류","캐비넷(파 일)","3단 이하","2000"],["가구류","파티션","1㎡당","2000"],["가구류","화 장 대(경대)","가정용","3000"],["생활류","가방류","가장긴면 50cm 이상","3000"],["생활류","가방류","가장긴면 50cm 미만","2000"],["생활류","빨 래 건조대","길이 1m 이상","2000"],["생활류","빨 래 건조대","길이 1m 미만","1000"],["생활류","게 시 판 (화이트보드)","가장 긴면 1m이상","2000"],["생활류","게 시 판 (화이트보드)","가장 긴면 1m미만","1000"],["생활류","고무통","지름 1m 이상","5000"],["생활류","고무통","지름 50cm이상","4000"],["생활류","고무통","지름 50cm미만","3000"],["생활류","교자상․밥상","4인 이상","2000"],["생활류","교자상․밥상","4인 미만","1500"],["생활류","교자상․밥상","차식탁 (다과상)","1000"],["생활류","금고","가장 긴면","15000"],["생활류","금고(가 정 용)","1m 미만",""],["생활류","금고(가 정 용)","가장 긴면 30cm 미만","10000"],["생활류","난로","가스","2000"],["생활류","난로","석유","2000"],["생활류","난로","전기","면제"],["생활류","난로","벽걸이","면제"],["생활류","다리미판","","1000"],["생활류","도마","업소용 나무도마","2000"],["생활류","도마","가정용 나무도마","1000"],["생활류","돗 자 리 (대자리,놀이매트)","1㎡당","1000"],["생활류","마네킹","1m 이상","5000"],["생활류","마네킹","1m 미만","3000"],["생활류","바둑판","두께 60mm 이상","2000"],["생활류","바둑판","두께 12mm","1000"],["생활류","방석","겨울용","1000"],["생활류","방석","여름용","500"],["생활류","배기후드","","2000"],["생활류","베개(라텍스베개)","","1000"],["생활류","벽시계","길이 1m이상, 지름 28cm이상","2000"],["생활류","벽시계","길이 1m미만, 지름 28cm미만","1000"],["생활류","병풍","2폭당","1000"],["생활류","보행기","","2000"],["생활류","블라인드","1㎡당","1000"],["생활류","비 닐 옷 장 (비키니옷장)","","3000"],["생활류","비데","","1000"],["생활류","수도호스","10m 당","1000"],["생활류","스키","스키(부츠별도)","3000"],["생활류","스키","스키부츠","2000"],["생활류","액자","가장 긴면 100cm초과","3000"],["생활류","액자","가장 긴면 50cm이상","2000"],["생활류","액자","가장 긴면 50cm미만","1000"],["생활류","어항","영업용, 2m이상","15000"],["생활류","어항(수족관)","가장 긴면 1m이상","5000"],["생활류","어항(수족관)","가장 긴면 1m미만","1000"],["생활류","올갠","일반용","10000"],["생활류","올갠","전자식","5000"],["생활류","우산","일반용","1000"],["생활류","우산","어린이용","면제"],["생활류","유리","0.5㎡ 당","1000"],["생활류","유모차","2인용","4000"],["생활류","유모차","1인용","2000"],["생활류","이불","겨울용","2000"],["생활류","인형","","1000"],["생활류","자전거","성인용","3000"],["생활류","자전거","아동용 2륜","2000"],["생활류","자전거","아동용 3륜","2000"],["생활류","장난감","길이 50cm이상","2000"],["생활류","장난감","길이 50cm미만","1000"],["생활류","장판","옥 자석 온수 등 2인용","7000"],["생활류","장판","옥 자석 온수 등 1인용","4000"],["생활류","장판","전기장판(2인용)","3000"],["생활류","장판","전기장판(1인용)","2000"],["생활류","장판","3.3㎡당","2000"],["생활류","재봉틀","(재봉틀대)","2000"],["생활류","전기담요","2인용","2000"],["생활류","전기담요","1인용","1000"],["생활류","조명기구","샹드레아","2000"],["생활류","조명기구(모든 규격)","폭, 높이 1m이상","2000"],["생활류","조명기구(모든 규격)","폭, 높이 1m미만","1000"],["생활류","천막","길이 6m 이상","7000"],["생활류","천막","길이 6m 미만","5000"],["생활류","카시트","","2000"],["생활류","카페트","3.3㎡당","2000"],["생활류","커튼","2m 이상","2000"],["생활류","커튼","2m 미만","1000"],["생활류","커튼봉","","1000"],["생활류","킥보드","","2000"],["생활류","라켓","테니스 라켓","1000"],["생활류","라켓","배드민턴 라켓","500"],["생활류","텐트","4인용 이상","4000"],["생활류","텐트","4인용 미만","3000"],["생활류","피아노","일반","16000"],["생활류","피아노","디지털","5000"],["생활류","항아리","높이 50cm 이상","5000"],["생활류","항아리","높이 50cm 미만","3000"],["생활류","행거","2단 행거","3000"],["생활류","행거","1단 행거","2000"],["생활류","헬스기구","런닝머신","15000"],["생활류","헬스기구","헬스자전거","7000"],["생활류","헬스기구","스텝퍼","4000"],["생활류","화환","","3000"],["생활류","휠체어","","3000"],["생활류","휠체어(입)간 판","고무통 입간판","5000"],["생활류","휠체어(입)간 판","40cm ×100cm 당","4000"],["생활류","휠체어(입)간 판","가장 긴면 1m 이상","2000"],["생활류","휠체어(입)간 판","가장 긴면 1m 미만","1000"],["기타류","기름탱크","400L 이상","7000"],["기타류","기름탱크","400L 미만","4000"],["기타류","물탱크","1톤당","6000"],["기타류","물탱크","0.5톤 이상","4000"],["기타류","물탱크","0.5톤 미만","3000"],["기타류","변기","양변기","8000"],["기타류","변기","좌변기","5000"],["기타류","보일러","16kcal/h 이상","12000"],["기타류","보일러","16kcal/h 미만","10000"],["기타류","세면대","세면대 세트","3000"],["기타류","욕조","일 반 용","5000"],["기타류","욕조","유 아 용","3000"],["기타류","타이어","지름 110cm이상","6000"],["기타류","타이어","지름 60cm 이상","5000"],["기타류","타이어","지름 60cm 미만","3000"],["기타류","화분","지름 50cm 이상","2000"],["기타류","화분","지름 50cm 미만","1000"],["기타류","소화기","대형(20㎏ 이상)","3000"],["기타류","소화기","중형 (4.5㎏초과 20㎏미만)","2000"],["기타류","소화기","소형(4.5㎏ 이하)","1000"]];
+const FEE_NOTE=["1. 위 품목에 명시되지 않은 품목은 종류 및 규격을 감안하여 유사품목의 수수료를 적용","2. 항아리, 변기, 욕조 등 특수규격봉투(민원성 마대) 처리 선택 가능","3. 다량배출사업장 폐기물은 수거대상에서 제외"];
+const FEE_ALIAS={"소파":"쇼파","쇼파":"쇼파","침대틀":"침대","왁구":"침대","매트":"매트리스","텔레비전":"TV","티비":"TV","tv":"TV","에어컨":"에어콘","컴퓨터":"컴퓨터","세탁기":"세탁기","책상":"책상","의자":"의자","서랍":"서랍장","장농":"장롱"};
+let feeC='';
+function feeCat(c){
+  feeC=c;
+  ['','가전제품류','가구류','생활류','기타류'].forEach(k=>{
+    const b=$('fc-'+k);
+    if(b)b.className='type-btn'+(k===c?' on-own':'');
+  });
+  renderFee();
+}
+function renderFee(){
+  let q=(gv('fee-q')||'').replace(/\s/g,'').toLowerCase();
+  if(FEE_ALIAS[q])q=FEE_ALIAS[q].replace(/\s/g,'').toLowerCase();
+  const rows=FEE.filter(r=>{
+    if(feeC&&r[0]!==feeC)return false;
+    if(!q)return true;
+    return (r[1]+r[2]).replace(/\s/g,'').toLowerCase().indexOf(q)>=0;
+  });
+  $('fee-cnt').innerHTML='<b>'+rows.length+'</b>건'+(q?' · "'+esc(gv('fee-q'))+'" 검색':'');
+  if(!rows.length){
+    $('fee-body').innerHTML='<div class="empty">찾는 품목이 없습니다.<br>비슷한 품목의 수수료를 적용하세요.</div>';
+    return;
+  }
+  // 같은 품목끼리 묶어서 표시
+  let html='',last='';
+  rows.forEach(r=>{
+    const fee=r[3]==='면제'?'<span style="color:#2e7d32;font-weight:800">면제</span>'
+      :'<span style="font-weight:800">'+Number(r[3]).toLocaleString()+'<span style="font-size:12px;font-weight:700">원</span></span>';
+    if(r[1]!==last){
+      if(last)html+='</div>';
+      html+='<div style="background:#fff;border:1px solid #E3E7ED;border-radius:12px;padding:12px 14px;margin-bottom:9px">'
+        +'<div style="font-size:16px;font-weight:800;color:#0F1622;margin-bottom:'+(r[2]?'7px':'0')+'">'
+        +esc(r[1])+' <span style="font-size:11px;font-weight:700;color:#8A97A8">'+esc(r[0])+'</span></div>';
+      last=r[1];
+    }
+    if(r[2]){
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:14px;border-top:1px solid #F1F4F8">'
+        +'<span style="color:#5a6572">'+esc(r[2])+'</span>'+fee+'</div>';
+    }else{
+      html+='<div style="display:flex;justify-content:flex-end;margin-top:-22px">'+fee+'</div>';
+    }
+  });
+  if(last)html+='</div>';
+  html+='<div style="background:#FFF8E6;border:1px solid #FFE0A3;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.7;color:#7A5B12;font-weight:600">'
+    +FEE_NOTE.map(x=>esc(x)).join('<br>')+'</div>';
+  $('fee-body').innerHTML=html;
+}
+
 // ── 로그인 ──
 let curOwner='';
 function login(o){
@@ -1201,7 +1299,7 @@ function login(o){
   try{localStorage.setItem('app_user',o);}catch(e){}
   const lg=$('login'); if(lg)lg.style.display='none';
   applyOwner();
-  sw('form');
+  sw('list');
 }
 function logout(){
   if(!confirm('로그아웃할까요?\n\n다음에 담당자를 다시 고르실 수 있습니다.'))return;
@@ -1362,21 +1460,122 @@ function pinSvg(color){
 }
 
 // 견적 내용을 지도에서 바로 입력·수정
-function editMemo(id){
+// ── 견적: 품목을 눌러서 담기 ──
+let estId=null, estCart=[], estC='';
+function won(n){ return Number(n).toLocaleString()+'원'; }
+function estOpen(id){
   const r=recs.find(x=>x.id===id);
   if(!r)return;
+  estId=id; estCart=[]; estC='';
   const where=r.isApt
     ? ((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim()
     : (r.jibun||'');
-  const v=prompt('견적 내용을 적어 주세요.\n\n['+where+']',r.content||'');
-  if(v===null)return;                 // 취소
-  r.content=v.trim();
-  save();
-  renderList();
-  drawPins();
+  $('est-where').textContent=where;
+  sv('est-q','');
+  // 이미 담긴 견적이 있으면 되살림
+  const parsed=estParse(r.content||'');
+  estCart=parsed.items;
+  sv('est-memo',parsed.memo);
+  estCat('');
+  estCart_render();
   if(infoWin)infoWin.close();
-  sdkBar('ok','견적 내용을 저장했습니다 — '+where);
+  const ov=$('est-ov'); if(ov)ov.style.display='flex';
 }
+function estClose(){
+  const ov=$('est-ov'); if(ov)ov.style.display='none';
+  estId=null;
+}
+function estCat(c){
+  estC=c;
+  ['','가전제품류','가구류','생활류','기타류'].forEach(k=>{
+    const b=$('ec-'+k); if(b)b.className='type-btn'+(k===c?' on-own':'');
+  });
+  estList();
+}
+function estList(){
+  let q=(gv('est-q')||'').replace(/\s/g,'').toLowerCase();
+  if(FEE_ALIAS[q])q=FEE_ALIAS[q].replace(/\s/g,'').toLowerCase();
+  const rows=FEE.filter(r=>{
+    if(r[3]==='면제')return false;                 // 면제는 금액이 없으니 제외
+    if(estC&&r[0]!==estC)return false;
+    if(!q)return true;
+    return (r[1]+r[2]).replace(/\s/g,'').toLowerCase().indexOf(q)>=0;
+  });
+  if(!rows.length){
+    $('est-body').innerHTML='<div class="empty" style="padding:26px 10px">찾는 품목이 없습니다.</div>';
+    return;
+  }
+  $('est-body').innerHTML=rows.map(r=>{
+    const nm=r[1]+(r[2]?' · '+r[2]:'');
+    return '<button onclick="estAdd('+JSON.stringify(nm).replace(/"/g,'&quot;')+','+r[3]+')" '
+      +'style="width:100%;text-align:left;background:#fff;border:1px solid #E3E7ED;border-radius:11px;'
+      +'padding:13px 14px;margin-bottom:7px;font-family:inherit;cursor:pointer;display:flex;'
+      +'justify-content:space-between;align-items:center;gap:10px">'
+      +'<span style="font-size:15px;font-weight:700;color:#0F1622;line-height:1.4">'+esc(nm)
+      +'<span style="display:block;font-size:11px;font-weight:700;color:#8A97A8;margin-top:2px">'+esc(r[0])+'</span></span>'
+      +'<span style="font-size:16px;font-weight:800;color:#1B5CFF;white-space:nowrap">'+won(r[3])+'</span></button>';
+  }).join('');
+}
+function estAdd(nm,fee){
+  const f=estCart.find(x=>x.nm===nm);
+  if(f)f.q++;
+  else estCart.push({nm:nm,fee:Number(fee),q:1});
+  estCart_render();
+}
+function estStep(i,d){
+  const it=estCart[i]; if(!it)return;
+  it.q+=d;
+  if(it.q<=0)estCart.splice(i,1);
+  estCart_render();
+}
+function estCart_render(){
+  const box=$('est-cart');
+  if(!estCart.length){
+    box.innerHTML='<div style="text-align:center;color:#8A97A8;font-size:13px;font-weight:700;padding:12px 0">위에서 품목을 눌러 담으세요</div>';
+    $('est-sum').textContent='0원';
+    return;
+  }
+  box.innerHTML=estCart.map((it,i)=>
+    '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F1F4F8">'
+    +'<span style="flex:1;font-size:14px;font-weight:700;color:#0F1622;line-height:1.35">'+esc(it.nm)+'</span>'
+    +'<button onclick="estStep('+i+',-1)" style="width:34px;height:34px;border:1.5px solid #d7dee8;background:#fff;border-radius:8px;font-size:18px;font-weight:800;color:#5a6572;font-family:inherit;cursor:pointer">−</button>'
+    +'<span style="min-width:26px;text-align:center;font-size:16px;font-weight:800">'+it.q+'</span>'
+    +'<button onclick="estStep('+i+',1)" style="width:34px;height:34px;border:1.5px solid #d7dee8;background:#fff;border-radius:8px;font-size:18px;font-weight:800;color:#5a6572;font-family:inherit;cursor:pointer">+</button>'
+    +'<span style="min-width:72px;text-align:right;font-size:14px;font-weight:800">'+won(it.fee*it.q)+'</span></div>').join('');
+  $('est-sum').textContent=won(estCart.reduce((s,x)=>s+x.fee*x.q,0));
+}
+// 저장된 견적 글을 다시 항목으로 되돌림
+function estParse(ct){
+  const items=[]; let memo='';
+  (ct||'').split('\n').forEach(line=>{
+    const m=line.match(/^(.+?)\s+(\d+)개\s+([\d,]+)원$/);
+    if(m){
+      const q=Number(m[2]), tot=Number(m[3].replace(/,/g,''));
+      items.push({nm:m[1].trim(),fee:q?Math.round(tot/q):tot,q:q});
+    }else if(!/^합계/.test(line)&&line.trim()){
+      memo+=(memo?' ':'')+line.trim();
+    }
+  });
+  return{items:items,memo:memo};
+}
+function estSave(){
+  const r=recs.find(x=>x.id===estId);
+  if(!r){estClose();return;}
+  const memo=(gv('est-memo')||'').trim();
+  if(!estCart.length&&!memo){
+    if(!confirm('담은 품목이 없습니다.\n\n내용을 비운 채로 저장할까요?'))return;
+  }
+  const lines=estCart.map(it=>it.nm+' '+it.q+'개 '+won(it.fee*it.q));
+  const sum=estCart.reduce((s,x)=>s+x.fee*x.q,0);
+  if(estCart.length)lines.push('합계 '+won(sum));
+  if(memo)lines.push(memo);
+  r.content=lines.join('\n');
+  r.estSum=sum;
+  save(); renderList(); drawPins();
+  estClose();
+  sdkBar('ok','견적을 저장했습니다 — 합계 '+won(sum));
+}
+function editMemo(id){ estOpen(id); }
 function drawPins(){
   if(!mapReady)return;
   markers.forEach(m=>m.setMap(null));markers=[];
@@ -1411,7 +1610,7 @@ function drawPins(){
       // 상태 버튼 — 요청으로 숨김 (상세 보기에서는 그대로 사용 가능)
       // 견적은 지도에서 바로 내용을 적을 수 있게
       const btns = r.tp==='g'
-        ? '<button class="iw-btn g" onclick="editMemo('+r.id+')">✏️ '+(r.content&&r.content.trim()?'내용 수정':'내용 입력')+'</button>'
+        ? '<button class="iw-btn g" onclick="estOpen('+r.id+')">💰 '+(r.content&&r.content.trim()?'견적 수정':'견적 담기')+'</button>'
         : '';
       const head = (r.isApt&&r.noDong)
         ? '<div style="font-size:20px;font-weight:800;letter-spacing:-.02em;margin:2px 0 4px">'+(r.aptName||r.jibun)+'</div>'
@@ -1422,7 +1621,7 @@ function drawPins(){
         +'<div style="display:flex;gap:5px;align-items:center;margin-bottom:5px"><span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="badge '+s2.cls+'">'+r.status+'</span></div>'
         +head
         +'<div style="font-size:12px;color:#6B7785;font-weight:600;margin-top:5px">'+fdate(r.dt)+' '+r.at+(r.co?' · '+r.co:'')+(r.tel?' · '+telLink(r.tel,'color:#1B5CFF;font-weight:800;text-decoration:none'):'')+'</div>'
-        +'<div style="margin-top:7px;padding-top:7px;border-top:1px solid #E3E7ED;font-size:14px;line-height:1.55">'+((r.content&&r.content.trim())?esc(r.content.length>80?r.content.slice(0,80)+'…':r.content):'<span style="color:#B54708;font-weight:700">내용이 아직 없습니다</span>')+'</div>'
+        +'<div style="margin-top:7px;padding-top:7px;border-top:1px solid #E3E7ED;font-size:14px;line-height:1.55;white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>110?r.content.slice(0,110)+'…':r.content):'<span style="color:#B54708;font-weight:700">내용이 아직 없습니다</span>')+'</div>'
         +'<div class="iw-btns">'+btns+'</div>'
         +'<a href="javascript:void(0)" onclick="showDetail('+r.id+')" style="color:#1B5CFF;font-weight:700;font-size:13px;display:inline-block;margin-top:8px">상세 보기 →</a>'+(r.approx?'<div style="font-size:11px;color:#B54708;margin-top:6px">'+(r.isApt&&r.aptDong?r.aptDong+' 위치가 등록되지 않아 단지 대표 위치에 표시했습니다.':'대략 위치입니다.')+'<br>상세 보기에서 위치를 지정할 수 있습니다.</div>':'')+'</div>');
       infoWin.open(map,mk);
@@ -1530,7 +1729,7 @@ function renderList(){
   $('cbar').innerHTML=who+'<b>'+tot+'</b> &nbsp;·&nbsp; 미완료 <b>'+c('미완료')+'</b> &nbsp;·&nbsp; 접수완료 <b>'+(c('접수완료')+c('수거완료'))+'</b> &nbsp;·&nbsp; 없음 <b>'+c('없음')+'</b> &nbsp;·&nbsp; 배송완료 <b>'+c('배송완료')+'</b>';
   const lb=$('list-body');
   if(!rows.length){lb.innerHTML='<div class="empty">'+(listOwner?OWNER[listOwner]+' 접수가 없습니다.':'아직 접수한 건이 없습니다.<br>접수 탭에서 등록해 보세요.')+'</div>';return;}
-  lb.innerHTML=rows.map(r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div><div class="c-body">'+((r.content&&r.content.trim())?esc(r.content.length>60?r.content.slice(0,60)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();editMemo('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">✏️ 내용이 없습니다 — 눌러서 입력</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>').join('');
+  lb.innerHTML=rows.map(r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div><div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>').join('');
   if(selMode)$('cbar').innerHTML+=' &nbsp;·&nbsp; <b style="color:#1e6fd9">선택 '+selIds.size+'건</b>';
 }
 

@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v89</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v90</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -355,6 +355,14 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <button id="install-btn" onclick="doInstall()" style="display:none;width:100%;margin-top:16px;padding:14px;border:none;border-radius:13px;background:#0F1622;color:#fff;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📲 홈 화면에 앱으로 설치</button>
   </div>
 </div>
+<div id="tp-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:340px;background:#fff;border-radius:16px;padding:20px">
+    <div style="font-size:17px;font-weight:800;color:#0F1622;margin-bottom:4px">무엇을 접수할까요?</div>
+    <div style="font-size:12.5px;color:#8A97A8;font-weight:600;margin-bottom:14px">고르면 업무도 함께 바뀝니다</div>
+    <div id="tp-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button onclick="closeTpPick()" style="width:100%;margin-top:14px;padding:12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;font-size:14px;font-weight:700;font-family:inherit;color:var(--ink-2);cursor:pointer">닫기</button>
+  </div>
+</div>
 <div id="staff-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:20px">
   <div style="width:100%;max-width:340px;background:#fff;border-radius:16px;padding:20px">
     <div style="font-size:17px;font-weight:800;color:#0F1622;margin-bottom:4px">접수자</div>
@@ -382,7 +390,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div id="sdk-bar" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;font-weight:700;line-height:1.6"></div>
   <div id="edit-bar" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#0F1622;color:#fff;font-size:14px;font-weight:700;align-items:center;justify-content:space-between;gap:10px"></div>
   <div id="who-bar" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;border-radius:12px;padding:12px 15px;margin-bottom:12px">
-    <span style="font-size:16px;font-weight:800"><span id="who"></span> 접수
+    <span style="font-size:16px;font-weight:800"><a href="javascript:void(0)" onclick="openTpPick()" style="color:#fff;text-decoration:none"><span id="who"></span> 접수 <span style="font-size:12px;opacity:.85">▼</span></a>
       <a href="javascript:void(0)" onclick="openStaff()" id="staff-tag" style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,.9);text-decoration:none;margin-left:8px"></a></span>
     <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
   </div>
@@ -1895,7 +1903,7 @@ window.addEventListener('popstate',()=>{
     return;
   }
   // 열려 있는 창이 있으면 닫기
-  const ovs=['est-ov','staff-ov','start-ov'];
+  const ovs=['est-ov','tp-ov','staff-ov','start-ov'];
   for(const id of ovs){
     const e=$(id);
     if(e&&e.style.display==='flex'){ e.style.display='none'; if(id==='staff-ov')staffOpen=false; return; }
@@ -2008,6 +2016,32 @@ function setOwner(o){
     if(b)b.style.display=(TP_OF[o].indexOf(k)>=0)?'':'none';
   });
   setTp(TP_OF[o][0]);
+}
+// ── 접수 구분 고르기 (업무도 같이 바뀜) ──
+function openTpPick(){
+  const box=$('tp-list');
+  if(box){
+    box.innerHTML=['m','c','t','y','g'].map(k=>{
+      const on=(curTp===k), c=PC[k];
+      return '<button type="button" onclick="pickTp(\''+k+'\')" style="display:flex;align-items:center;gap:10px;'
+        +'width:100%;padding:13px 14px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;'
+        +(on?('background:'+c+';color:#fff;border:1.5px solid '+c):('background:#fff;color:#0F1622;border:1.5px solid var(--line)'))+'">'
+        +'<span style="width:11px;height:11px;border-radius:50%;background:'+(on?'#fff':c)+'"></span>'
+        +TN[k]+'</button>';
+    }).join('');
+  }
+  const ov=$('tp-ov'); if(ov)ov.style.display='flex';
+}
+function closeTpPick(){ const ov=$('tp-ov'); if(ov)ov.style.display='none'; }
+function pickTp(t){
+  const o=OWNER_OF[t]||curOwner;
+  if(o!==curOwner){
+    curOwner=o;
+    try{localStorage.setItem('app_user',o);}catch(e){}
+    try{ applyOwner(); }catch(err){ showBoot('구분 바꾸기', err); }
+  }
+  setTp(t);
+  closeTpPick();
 }
 function setTp(t){
   curTp=t;

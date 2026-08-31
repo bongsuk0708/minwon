@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v82</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v85</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -1886,8 +1886,7 @@ function refreshZoneTag(){
 }
 let startOpen=false;
 function openStart(){
-  if(startOpen)return;
-  startOpen=true;
+  startOpen=true;                   // 상태와 상관없이 항상 연다
   sv('st-name',crewName);
   renderStZone();
   const ov=$('start-ov');
@@ -1947,7 +1946,7 @@ window.addEventListener('popstate',()=>{
   const ovs=['est-ov','staff-ov','start-ov'];
   for(const id of ovs){
     const e=$(id);
-    if(e&&e.style.display==='flex'){ e.style.display='none'; return; }
+    if(e&&e.style.display==='flex'){ e.style.display='none'; if(id==='start-ov')startOpen=false; return; }
   }
   const ov=$('ov');
   if(ov&&ov.classList.contains('on')){ closeDetail(); return; }
@@ -1960,11 +1959,17 @@ function login(o){
   curOwner=o;
   try{localStorage.setItem('app_user',o);}catch(e){}
   const lg=$('login'); if(lg)lg.style.display='none';
-  applyOwner();
-  sw('list');
   startOpen=false;
   const ov=$('start-ov'); if(ov)ov.style.display='none';
-  if(!crewName)setTimeout(openStart,300);
+  // 작업 시작 화면을 먼저 예약해 둔다 (아래에서 오류가 나도 뜨도록)
+  if(!crewName){
+    setTimeout(openStart,300);
+    setTimeout(()=>{ if(!crewName)openStart(); },1200);
+  }
+  try{
+    applyOwner();
+    sw('list');
+  }catch(err){ showBoot('로그인', err); }
 }
 function logout(){
   if(!confirm('로그아웃할까요?\n\n다음에 업무와 수거원을 다시 고르게 됩니다.'))return;
@@ -2008,10 +2013,27 @@ function checkLogin(){
   if(OWNER[o]){
     curOwner=o;
     const lg=$('login'); if(lg)lg.style.display='none';
-    applyOwner();
-    if(!crewName)setTimeout(openStart,400);   // 수거원 이름이 없으면 작업 시작 화면
+    if(!crewName){                            // 수거원 이름이 없으면 작업 시작 화면
+      setTimeout(openStart,400);
+      setTimeout(()=>{ if(!crewName)openStart(); },1400);
+    }
+    try{ applyOwner(); }catch(err){ showBoot('시작', err); }
   }
 }
+// 오류가 나면 화면에 보여 준다 (원인 확인용)
+function showBoot(where,err){
+  try{
+    const m=(err&&err.message)?err.message:String(err);
+    alert('\u26a0 '+where+' 중 문제가 생겼습니다\n\n'+m+'\n\n이 화면을 캡처해 주세요.');
+  }catch(e){}
+}
+window.addEventListener('error',e=>{
+  try{
+    if(window.__bootShown)return;
+    window.__bootShown=true;
+    alert('\u26a0 오류\n\n'+(e.message||'')+'\n'+(e.filename||'')+' '+(e.lineno||'')+'\n\n이 화면을 캡처해 주세요.');
+  }catch(x){}
+});
 
 function setOwner(o){
   curOwner=o;

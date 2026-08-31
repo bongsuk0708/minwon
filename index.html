@@ -217,6 +217,21 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
   line-height:1.95;box-shadow:0 2px 12px rgba(15,22,34,.14);font-weight:600;color:var(--ink-2);
 }
 .ldot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle}
+/* 지도 위 구분 고르기 줄 */
+.mfil{
+  position:absolute;top:10px;left:10px;right:10px;z-index:22;
+  display:flex;gap:6px;overflow-x:auto;padding:2px;
+  -webkit-overflow-scrolling:touch;
+}
+.mfil::-webkit-scrollbar{display:none}
+.mf-b{
+  flex:0 0 auto;border:1.5px solid var(--line);background:rgba(255,255,255,.97);
+  border-radius:999px;padding:8px 13px;font-size:12.5px;font-weight:800;
+  font-family:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(15,22,34,.14);display:flex;align-items:center;gap:6px;
+}
+.mf-b .ldot{margin-right:0}
+.mf-b.on{color:#fff}
 
 
 /* 로그인 화면 */
@@ -310,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v85</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v87</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -370,7 +385,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div id="who-bar" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;border-radius:12px;padding:12px 15px;margin-bottom:12px">
     <span style="font-size:16px;font-weight:800"><span id="who"></span> 접수
       <a href="javascript:void(0)" onclick="openStaff()" id="staff-tag" style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,.9);text-decoration:none;margin-left:8px"></a></span>
-    <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
+    <span style="display:flex;gap:7px"><button onclick="swapOwner()" id="swap-btn1" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button><span style="display:flex;gap:7px"><button onclick="swapOwner()" id="swap-btn2" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button><button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button></span></span>
   </div>
 
   <div class="type-row">
@@ -577,12 +592,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <button class="map-tool" onclick="pickDongPos()">동 위치 등록</button>
   </div>
   -->
-  <div class="legend">
-    <div><span class="ldot" style="background:#2e7d32"></span>특수마대</div>
-    <div><span class="ldot" style="background:#00838f"></span>공동용기</div>
-    <div><span class="ldot" style="background:#e65100"></span>용기</div>
-    <div><span class="ldot" style="background:#6a1b9a"></span>견적</div>
-  </div>
+  <div class="mfil" id="mfil"></div>
 </div>
 </div>
 
@@ -1924,8 +1934,18 @@ function logout(){
   const lg=$('login'); if(lg)lg.style.display='flex';
 }
 // 로그인한 담당자에 맞게 화면 전체를 맞춤
+// 로그아웃 없이 민원 <-> 견적 전환
+function swapOwner(){
+  const o=(curOwner==='geum')?'kwon':'geum';
+  curOwner=o;
+  try{localStorage.setItem('app_user',o);}catch(e){}
+  try{ applyOwner(); }catch(err){ showBoot('업무 전환', err); }
+}
 function applyOwner(){
   setOwner(curOwner);
+  // 전환 버튼에는 '넘어갈 쪽' 이름을 보여 준다
+  const sTxt=(curOwner==='geum')?'견적으로':'민원으로';
+  ['swap-btn1','swap-btn2'].forEach(id=>{ const b=$(id); if(b)b.textContent=sTxt; });
   // 집계는 용기 재고가 있는 담당자(권봉석·김정섭)만 사용
   const rt=$('tab-rep');
   if(rt)rt.style.display=(curOwner==='geum')?'none':'';
@@ -2218,13 +2238,34 @@ function estSave(){
   sdkBar('ok','견적을 저장했습니다 — 합계 '+won(sum));
 }
 function editMemo(id){ estOpen(id); }
+// ── 지도 구분 고르기 ('' = 전체) ──
+let mapTp='';
+function renderMfil(){
+  const box=$('mfil'); if(!box)return;
+  const list=[['','전체','#0F1622']].concat(
+    ['m','c','t','y','g'].map(k=>[k,TN[k],PC[k]]));
+  box.innerHTML=list.map(([k,n,c])=>{
+    const on=(mapTp===k);
+    const st=on?('background:'+c+';border-color:'+c):'';
+    const dot=k?'<span class="ldot" style="background:'+(on?'#fff':c)+'"></span>':'';
+    return '<button type="button" class="mf-b'+(on?' on':'')+'" style="'+st+'" '
+      +'onclick="setMapTp(\''+k+'\')">'+dot+n+'</button>';
+  }).join('');
+}
+function setMapTp(k){
+  mapTp=k;
+  renderMfil();
+  if(mapReady)drawPins();
+}
 function drawPins(){
+  renderMfil();
   if(!mapReady)return;
   markers.forEach(m=>m.setMap(null));markers=[];
   const seen={};
   recs.forEach(r=>{
     if(!r.lat||!r.lng)return;
     if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
+    if(mapTp&&r.tp!==mapTp)return;  // 지도에서 고른 구분만
     let la=r.lat,ln=r.lng;
     // 단지 기본 좌표로 찍힌 아파트는 동 번호에 따라 규칙적으로 배치
     // (같은 동은 항상 같은 자리 → 현장에서 헷갈리지 않음)

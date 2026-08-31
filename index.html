@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v87</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v89</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -344,7 +344,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 
     <button onclick="login('geum')" class="lg-btn" style="border-left:6px solid #0E9F6E">
       <span class="lg-dot" style="background:#0E9F6E">민</span>
-      <span class="lg-txt"><b>민원</b><i>민원 · 공동용기 · 특수마대</i></span>
+      <span class="lg-txt"><b>민원</b><i>민원 · 공동용기</i></span>
     </button>
 
     <button onclick="login('kwon')" class="lg-btn" style="border-left:6px solid #1B5CFF">
@@ -353,7 +353,6 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     </button>
 
     <button id="install-btn" onclick="doInstall()" style="display:none;width:100%;margin-top:16px;padding:14px;border:none;border-radius:13px;background:#0F1622;color:#fff;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📲 홈 화면에 앱으로 설치</button>
-    <div style="font-size:12px;color:#8A97A8;font-weight:600;margin-top:22px">한 번 선택하면 다음부터 바로 열립니다</div>
   </div>
 </div>
 <div id="staff-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:20px">
@@ -385,7 +384,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div id="who-bar" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;border-radius:12px;padding:12px 15px;margin-bottom:12px">
     <span style="font-size:16px;font-weight:800"><span id="who"></span> 접수
       <a href="javascript:void(0)" onclick="openStaff()" id="staff-tag" style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,.9);text-decoration:none;margin-left:8px"></a></span>
-    <span style="display:flex;gap:7px"><button onclick="swapOwner()" id="swap-btn1" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button><span style="display:flex;gap:7px"><button onclick="swapOwner()" id="swap-btn2" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button><button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button></span></span>
+    <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
   </div>
 
   <div class="type-row">
@@ -490,7 +489,10 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 
   <div id="who-bar2" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;padding:12px 15px;margin:10px 14px 4px;border-radius:12px">
     <span style="font-size:16px;font-weight:800"><span id="who2"></span></span>
+    <span style="display:flex;gap:7px">
+    <button onclick="swapOwner()" id="swap-btn2" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button>
     <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
+    </span>
   </div>
   <div class="count-bar" id="cbar"></div>
   <div style="padding:0 14px 8px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap">
@@ -1945,7 +1947,7 @@ function applyOwner(){
   setOwner(curOwner);
   // 전환 버튼에는 '넘어갈 쪽' 이름을 보여 준다
   const sTxt=(curOwner==='geum')?'견적으로':'민원으로';
-  ['swap-btn1','swap-btn2'].forEach(id=>{ const b=$(id); if(b)b.textContent=sTxt; });
+  ['swap-btn2'].forEach(id=>{ const b=$(id); if(b)b.textContent=sTxt; });
   // 집계는 용기 재고가 있는 담당자(권봉석·김정섭)만 사용
   const rt=$('tab-rep');
   if(rt)rt.style.display=(curOwner==='geum')?'none':'';
@@ -1968,9 +1970,11 @@ function applyOwner(){
 }
 // 저장된 로그인 확인
 function checkLogin(){
+  // 열 때마다 업무를 다시 고르게 한다 (자동으로 들어가지 않음)
+  const AUTO=false;
   let o='';
   try{o=localStorage.getItem('app_user')||'';}catch(e){}
-  if(OWNER[o]){
+  if(AUTO&&OWNER[o]){
     curOwner=o;
     const lg=$('login'); if(lg)lg.style.display='none';
     if(!curStaff){

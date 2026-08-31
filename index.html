@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v90</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v91</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -555,6 +555,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button class="type-btn" id="rt-c" onclick="repTp('c')" style="flex:none;padding:7px 12px;font-size:13px">공동용기</button>
       <button class="type-btn" id="rt-m" onclick="repTp('m')" style="flex:none;padding:7px 12px;font-size:13px">민원</button>
       <button class="type-btn" id="rt-y" onclick="repTp('y')" style="flex:none;padding:7px 12px;font-size:13px">용기</button>
+      <button class="type-btn" id="rt-del" onclick="repDelToggle()" style="flex:none;padding:7px 12px;font-size:13px">지운 건 보기</button>
     </div>
   </div>
   <div id="rep-body" style="padding:0 14px 24px"></div>
@@ -1471,6 +1472,21 @@ function renderFee(){
 
 // ── 집계·인쇄 ──
 let repT='';
+let repDel=false;                     // 지운 건도 보일지
+function nowStr(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')
+    +' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function repDelToggle(){
+  repDel=!repDel;
+  const b=$('rt-del');
+  if(b){
+    b.className='type-btn'+(repDel?' on-own':'');
+    b.textContent=repDel?'지운 건 보는 중':'지운 건 보기';
+  }
+  renderRep();
+}
 function repTp(t){
   repT=t;
   ['','t','c','m','y'].forEach(k=>{const b=$('rt-'+k);if(b)b.className='type-btn'+(k===t?' on-own':'');});
@@ -1514,6 +1530,7 @@ function qtyOf(r,size){
 function repRows(){
   const f=gv('rp-from'), t=gv('rp-to');
   return recs.filter(r=>{
+    if(r.del&&!repDel)return false;                     // '지운 건 포함'을 켜야 보임
     if(['t','c','m','y'].indexOf(r.tp)<0)return false;   // 견적 제외
     if(repT&&r.tp!==repT)return false;
     const d=r.dt||'';
@@ -1551,7 +1568,7 @@ function renderRep(){
     html+='<th style="width:60px">상태</th></tr></thead><tbody>';
     const sum={10:0,20:0,70:0,120:0,n:0};
     rs.forEach((r,i)=>{
-      html+='<tr><td>'+(i+1)+'</td><td>'+fdate(r.dt)+'</td><td class="ta-l">'+esc(addrOf(r))+'</td><td>'+esc(r.staff||'')+'</td>';
+      html+='<tr'+(r.del?' style="color:#9aa3b0;background:#fafafa"':'')+'><td>'+(i+1)+'</td><td>'+fdate(r.dt)+'</td><td class="ta-l">'+esc(addrOf(r))+'</td><td>'+esc(r.staff||'')+'</td>';
       if(tp==='y'){
         let amt=0;
         CAN_SIZES.forEach(v=>{const q=qtyOf(r,v);sum[v]+=q;amt+=q*CAN_PRICE[v];html+='<td>'+(q||'')+'</td>';});
@@ -1562,7 +1579,7 @@ function renderRep(){
       }else{
         const q=qtyOf(r);sum.n+=q;html+='<td>'+(q||'')+'</td>';
       }
-      html+='<td>'+esc(r.status||'')+'</td></tr>';
+      html+='<td>'+esc(r.status||'')+(r.del?' <span style="color:#c62828;font-weight:800">(지움)</span>':'')+'</td></tr>';
     });
     html+='</tbody><tfoot><tr><td colspan="4">합계</td>';
     if(tp==='y'){
@@ -1614,6 +1631,7 @@ function saveStock(){
 function usedQty(size){
   let n=0;
   recs.forEach(r=>{
+    if(r.del)return;                // 지운 접수는 재고에서 뺌
     if(r.tp!=='y')return;
     if(stockAt&&(r.dt||'')<stockAt)return;      // 기준일 전 접수는 이미 반영된 것으로 봄
     const m=(r.content||'').match(new RegExp(size+'L\\s*(\\d+)\\s*개'));
@@ -1800,6 +1818,7 @@ function checkBookings(){
   if(typeof recs==='undefined'||!recs.length)return;
   const now=Date.now();
   recs.forEach(r=>{
+    if(r.del)return;                         // 지운 건은 알리지 않음
     if(r.tp!=='g'||!r.visitD)return;
     if(r.status&&r.status!=='미완료')return;  // 끝난 건은 알리지 않음
     if(!ownerOk(r))return;                   // 내 담당 건만
@@ -2301,6 +2320,7 @@ function drawPins(){
   markers.forEach(m=>m.setMap(null));markers=[];
   const seen={};
   recs.forEach(r=>{
+    if(r.del)return;                // 지운 건은 지도에 안 찍음
     if(!r.lat||!r.lng)return;
     if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
     if(mapTp&&r.tp!==mapTp)return;  // 지도에서 고른 구분만
@@ -2407,7 +2427,7 @@ function ownerOk(r){
 }
 function curRows(){
   const ft=gv('ft'),fs=gv('fs'),fd=gv('fd');
-  return recs.filter(r=>ownerOk(r)&&(!ft||r.tp===ft)&&(!fs||r.status===fs)&&(!fd||r.dt===fd));
+  return recs.filter(r=>!r.del&&ownerOk(r)&&(!ft||r.tp===ft)&&(!fs||r.status===fs)&&(!fd||r.dt===fd));
 }
 function toggleSel(id,ev){
   if(ev)ev.stopPropagation();
@@ -2424,7 +2444,8 @@ function delSelected(){
   if(wait)msg+='\n※ 이 중 미완료가 '+wait+'건 있습니다.\n';
   msg+='\n등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
-  recs=recs.filter(r=>!selIds.has(r.id));
+  const ts=nowStr();
+  recs.forEach(r=>{ if(selIds.has(r.id)){ r.del=1; r.delAt=ts; } });
   selIds.clear();
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
@@ -2499,7 +2520,7 @@ function groupHead(g){
 }
 function renderList(){
   const rows=curRows();
-  const base=recs.filter(ownerOk);          // 담당자 범위 안에서 집계
+  const base=recs.filter(r=>!r.del&&ownerOk(r));   // 지운 건 뺀 담당자 범위
   const tot=base.length;
   const c=k=>base.filter(r=>r.status===k).length;
   const who=listOwner?(OWNER[listOwner]+' '):'전체 ';
@@ -2834,11 +2855,17 @@ function cleanOld(){
   msg+='등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
   const ids=new Set(target.map(r=>r.id));
-  recs=recs.filter(r=>!ids.has(r.id));
+  const ts2=nowStr();
+  recs.forEach(r=>{ if(ids.has(r.id)){ r.del=1; r.delAt=ts2; } });
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
 }
-function delRec(id){if(!confirm('삭제하시겠습니까?'))return;recs=recs.filter(x=>x.id!==id);save();closeDetail();renderList();drawPins();}
+function delRec(id){
+  if(!confirm('삭제하시겠습니까?\n\n목록·지도에서는 사라지지만\n집계에서는 그대로 볼 수 있습니다.'))return;
+  const r=recs.find(x=>x.id===id);
+  if(r){ r.del=1; r.delAt=nowStr(); }
+  save();closeDetail();renderList();drawPins();
+}
 // ── 사진을 파일로 저장 ──
 // 파일 이름: 날짜_주소_처리전1.jpg  (현장에서 찾기 쉽게)
 function photoName(r,kind,i){

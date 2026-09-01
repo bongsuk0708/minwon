@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v91</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v92</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -547,6 +547,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button class="type-btn" onclick="repMonth(0)" style="flex:none;padding:8px 12px;font-size:13px">이번 달</button>
       <button class="type-btn" onclick="repMonth(-1)" style="flex:none;padding:8px 12px;font-size:13px">지난 달</button>
       <button class="type-btn" onclick="repAll()" style="flex:none;padding:8px 12px;font-size:13px">전체 기간</button>
+      <button class="type-btn" onclick="renderRep()" style="flex:none;padding:8px 14px;font-size:13px;background:#1B5CFF;color:#fff;border-color:#1B5CFF">🔍 조회</button>
       <button class="type-btn" onclick="repPrint()" style="flex:none;padding:8px 14px;font-size:13px;background:#0F1622;color:#fff;border-color:#0F1622">🖨 인쇄</button>
     </div>
     <div class="type-row" style="flex-wrap:wrap;gap:6px">
@@ -1547,7 +1548,19 @@ function renderRep(){
   const f=gv('rp-from')||'', t=gv('rp-to')||'';
   const period=(f?fdate(f):'처음')+' ~ '+(t?fdate(t):'오늘');
   if(!rows.length){
-    $('rep-body').innerHTML='<div class="empty">이 기간에 접수한 건이 없습니다.</div>';
+    const all=recs.filter(r=>['t','c','m','y'].indexOf(r.tp)>=0);
+    const live=all.filter(r=>!r.del).length, gone=all.length-live;
+    const ds=all.map(r=>r.dt).filter(Boolean).sort();
+    let tip='';
+    if(!all.length){
+      tip='집계에 넣는 접수(특수마대·공동용기·민원·용기)가 아직 없습니다.<br>견적 접수는 집계에 나오지 않습니다.';
+    }else{
+      tip='전체 자료는 '+live+'건'+(gone?(' (지운 것 '+gone+'건)'):'')+' 있습니다.<br>'
+        +'접수한 날짜 범위: '+fdate(ds[0])+' ~ '+fdate(ds[ds.length-1])+'<br>'
+        +'[전체 기간] 을 눌러 보세요.';
+    }
+    $('rep-body').innerHTML='<div class="empty">이 기간('+esc(period)+')에 접수한 건이 없습니다.<br><br>'
+      +'<span style="font-size:13px;line-height:1.8">'+tip+'</span></div>';
     return;
   }
   // 구분별로 나눠서 표를 각각 만듦

@@ -1,6 +1,6 @@
 // 잠실·삼전 수거관리 서비스워커
 // 새 버전을 올리면 바로 반영되도록 '인터넷 우선' 방식으로 동작한다.
-const CACHE = 'minwon-v91';
+const CACHE = 'minwon-v92';
 
 self.addEventListener('install', e => {
   self.skipWaiting();                       // 새 버전을 기다리지 않고 바로 적용

@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v99</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v101</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -565,7 +565,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button class="type-btn" id="rt-c" onclick="repTp('c')" style="flex:none;padding:7px 12px;font-size:13px">공동용기</button>
       <button class="type-btn" id="rt-m" onclick="repTp('m')" style="flex:none;padding:7px 12px;font-size:13px">민원</button>
       <button class="type-btn" id="rt-y" onclick="repTp('y')" style="flex:none;padding:7px 12px;font-size:13px">용기</button>
-      <button class="type-btn" id="rt-del" onclick="repDelToggle()" style="flex:none;padding:7px 12px;font-size:13px">지운 건 보기</button>
+      <button class="type-btn" id="rt-del" onclick="repDelToggle()" style="flex:none;padding:7px 12px;font-size:13px">조회</button>
     </div>
   </div>
   <div id="rep-body" style="padding:0 14px 24px"></div>
@@ -1495,7 +1495,7 @@ function repDelToggle(){
   const b=$('rt-del');
   if(b){
     b.className='type-btn'+(repDel?' on-own':'');
-    b.textContent=repDel?'지운 건 보는 중':'지운 건 보기';
+    b.textContent=repDel?'조회 중':'조회';
   }
   renderRep();
 }
@@ -2485,7 +2485,7 @@ function delSelected(){
   const wait=target.filter(r=>r.status==='미완료').length;
   let msg='선택한 '+target.length+'건을 지웁니다.\n';
   if(wait)msg+='\n※ 이 중 미완료가 '+wait+'건 있습니다.\n';
-  msg+='\n등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
+  msg+='\n목록·지도에서만 사라지고 자료는 남습니다.\n집계의 [조회] 로 다시 볼 수 있습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
   const ts=nowStr();
   recs.forEach(r=>{ if(selIds.has(r.id)){ r.del=1; r.delAt=ts; } });
@@ -2894,7 +2894,7 @@ function cleanOld(){
   let msg=target.length+'건을 지웁니다.\n\n';
   if(days)msg+='· '+days+'일 지난 접수\n';
   msg+='· 처리 끝남 '+done+'건'+(wait?' / 미완료 '+wait+'건':'')+'\n\n';
-  msg+='등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
+  msg+='목록·지도에서만 사라지고 자료는 남습니다.\n집계의 [조회] 로 다시 볼 수 있습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
   const ids=new Set(target.map(r=>r.id));
   const ts2=nowStr();

@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v96</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v97</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -498,10 +498,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 
   <div id="who-bar2" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;padding:12px 15px;margin:10px 14px 4px;border-radius:12px">
     <span style="font-size:16px;font-weight:800"><span id="who2"></span></span>
-    <span style="display:flex;gap:7px">
-    <button onclick="swapOwner()" id="swap-btn2" style="background:rgba(255,255,255,.28);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer"></button>
     <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
-    </span>
   </div>
   <div class="count-bar" id="cbar"></div>
   <div style="padding:0 14px 8px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap">
@@ -1989,22 +1986,21 @@ function swapOwner(){
 function applyOwner(){
   setOwner(curOwner);
   // 전환 버튼에는 '넘어갈 쪽' 이름을 보여 준다
-  const sTxt=(curOwner==='geum')?'견적으로':'민원으로';
-  ['swap-btn2'].forEach(id=>{ const b=$(id); if(b)b.textContent=sTxt; });
   // 집계는 용기 재고가 있는 담당자(권봉석·김정섭)만 사용
   const rt=$('tab-rep');
   if(rt)rt.style.display=(curOwner==='geum')?'none':'';
   if(curOwner==='geum'&&$('pane-rep')&&$('pane-rep').classList.contains('on'))sw('list');
-  listOwner=curOwner;          // 목록·지도도 본인 것만
-  // 목록 구분 선택지도 본인 것만
+  listOwner='';                // 목록·지도는 민원·견적을 한꺼번에 본다
+  // 구분 선택지는 다섯 가지 모두
   const ft=$('ft');
   if(ft){
+    const keep=ft.value;
     ft.innerHTML='<option value="">전체 구분</option>'
-      +TP_OF[curOwner].map(k=>'<option value="'+k+'">'+TN[k]+'</option>').join('');
-    ft.value='';
+      +['m','c','t','y','g'].map(k=>'<option value="'+k+'">'+TN[k]+'</option>').join('');
+    ft.value=keep||'';
   }
   const w2=$('who2');
-  if(w2)w2.textContent=OWNER[curOwner]||'';
+  if(w2)w2.textContent='전체 목록';
   renderStaff();
   const c=OWNER_COLOR[curOwner]||'#0F1622';
   ['who-bar','who-bar2'].forEach(id=>{const b=$(id);if(b)b.style.background=c;});

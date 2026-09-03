@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v98</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v99</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -1533,8 +1533,9 @@ function repPick(which){
 function qtyOf(r,size){
   const ct=r.content||'';
   if(r.tp==='y'&&size){
-    const m=ct.match(new RegExp(size+'L\\s*(\\d+)\\s*개'));
-    return m?Number(m[1]):0;
+    // '120L' 안의 '20L' 에 걸리지 않도록 앞에 숫자가 없는 것만 찾는다
+    const m=ct.match(new RegExp('(^|[^0-9])'+size+'L\\s*(\\d+)\\s*개'));
+    return m?Number(m[2]):0;
   }
   const m=ct.match(/(\d+)\s*개/);
   return m?Number(m[1]):0;
@@ -1658,8 +1659,8 @@ function usedQty(size){
     if(r.del)return;                // 지운 접수는 재고에서 뺌
     if(r.tp!=='y')return;
     if(stockAt&&(r.dt||'')<stockAt)return;      // 기준일 전 접수는 이미 반영된 것으로 봄
-    const m=(r.content||'').match(new RegExp(size+'L\\s*(\\d+)\\s*개'));
-    if(m)n+=Number(m[1]);
+    const m=(r.content||'').match(new RegExp('(^|[^0-9])'+size+'L\\s*(\\d+)\\s*개'));
+    if(m)n+=Number(m[2]);
   });
   return n;
 }

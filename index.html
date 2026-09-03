@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v97</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v98</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -521,8 +521,19 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <select id="fs" onchange="renderList()">
       <option value="">전체 상태</option><option value="미완료">미완료</option><option value="접수완료">접수완료</option><option value="수거완료">수거완료(예전)</option><option value="없음">없음</option><option value="배송완료">배송완료</option>
     </select>
-    <input type="date" id="fd" onchange="renderList()">
     <button class="btn sm" onclick="resetFilter()">초기화</button>
+  </div>
+  <div class="filter-row" style="align-items:center">
+    <span style="flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--mute)">기간</span>
+    <input type="date" id="fd" onchange="renderList()" title="시작일">
+    <span style="flex:0 0 auto;font-size:13px;color:var(--mute)">~</span>
+    <input type="date" id="fd2" onchange="renderList()" title="종료일">
+  </div>
+  <div class="filter-row" style="margin-top:-6px">
+    <button class="btn sm" onclick="listPeriod('today')">오늘</button>
+    <button class="btn sm" onclick="listPeriod('7')">최근 7일</button>
+    <button class="btn sm" onclick="listPeriod('m')">이번 달</button>
+    <button class="btn sm" onclick="listPeriod('')">전체 기간</button>
   </div>
   <div id="list-body"></div>
 </div>
@@ -2438,8 +2449,27 @@ function ownerOk(r){
   return ownerOfRec(r)===listOwner;
 }
 function curRows(){
-  const ft=gv('ft'),fs=gv('fs'),fd=gv('fd');
-  return recs.filter(r=>!r.del&&ownerOk(r)&&(!ft||r.tp===ft)&&(!fs||r.status===fs)&&(!fd||r.dt===fd));
+  const ft=gv('ft'),fs=gv('fs'),fd=gv('fd'),fd2=gv('fd2');
+  return recs.filter(r=>{
+    if(r.del)return false;
+    if(!ownerOk(r))return false;
+    if(ft&&r.tp!==ft)return false;
+    if(fs&&r.status!==fs)return false;
+    const d=r.dt||'';
+    if(fd&&d<fd)return false;      // 시작일부터
+    if(fd2&&d>fd2)return false;    // 종료일까지
+    return true;
+  });
+}
+// 목록 기간 빠른 선택
+function listPeriod(k){
+  const t=new Date(), z=n=>String(n).padStart(2,'0');
+  const ymd=d=>d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());
+  if(k===''){ sv('fd',''); sv('fd2',''); }
+  else if(k==='today'){ sv('fd',ymd(t)); sv('fd2',ymd(t)); }
+  else if(k==='7'){ const a=new Date(t); a.setDate(a.getDate()-6); sv('fd',ymd(a)); sv('fd2',ymd(t)); }
+  else if(k==='m'){ sv('fd',ymd(new Date(t.getFullYear(),t.getMonth(),1))); sv('fd2',ymd(t)); }
+  renderList();
 }
 function toggleSel(id,ev){
   if(ev)ev.stopPropagation();
@@ -2909,7 +2939,7 @@ function savePhotos(id,kind){
   msg(arr.length+'장을 저장합니다. 다운로드 폴더를 확인해 주세요.','ok');
 }
 function closeDetail(e){if(!e||e.target===$('ov'))$('ov').classList.remove('on');}
-function resetFilter(){sv('ft','');sv('fs','');sv('fd','');renderList();}
+function resetFilter(){sv('ft','');sv('fs','');sv('fd','');sv('fd2','');renderList();}
 
 function $(id){return document.getElementById(id);}
 function gv(id){const e=$(id);return e?e.value:'';}

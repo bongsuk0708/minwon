@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v85</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v86</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -514,6 +514,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <select id="fs" onchange="renderList()">
       <option value="">전체 상태</option><option value="미완료">미완료</option><option value="접수완료">접수완료</option><option value="수거완료">수거완료(예전)</option><option value="없음">없음</option><option value="배송완료">배송완료</option>
     </select>
+    <button id="hd-btn" onclick="toggleDone()" style="flex:0 0 auto;background:#0F1622;border:1.5px solid #0F1622;color:#fff;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">끝난 건 숨김</button>
     <input type="date" id="fd" onchange="renderList()">
     <button class="btn sm" onclick="resetFilter()">초기화</button>
   </div>
@@ -2286,6 +2287,7 @@ function drawPins(){
     if(!r.lat||!r.lng)return;
     if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
     if(!zoneOk(r))return;           // 고른 구역만
+    if(hideDone&&!gv('fs')&&isDone(r))return;   // 끝난 건은 핀도 빼기
     let la=r.lat,ln=r.lng;
     // 단지 기본 좌표로 찍힌 아파트는 동 번호에 따라 규칙적으로 배치
     // (같은 동은 항상 같은 자리 → 현장에서 헷갈리지 않음)
@@ -2387,9 +2389,31 @@ function ownerOk(r){
   if(!listOwner)return true;
   return ownerOfRec(r)===listOwner;
 }
+// 끝난 건(접수완료·배송완료)을 감출지
+let hideDone=true;
+function isDone(r){ return r.status==='접수완료'||r.status==='배송완료'||r.status==='수거완료'; }
+function toggleDone(){
+  hideDone=!hideDone;
+  const b=$('hd-btn');
+  if(b){
+    b.textContent=hideDone?'끝난 건 숨김':'끝난 건 보기';
+    b.style.background=hideDone?'#0F1622':'#fff';
+    b.style.color=hideDone?'#fff':'#5a6572';
+    b.style.borderColor=hideDone?'#0F1622':'#d7dee8';
+  }
+  renderList();
+  if(mapReady)drawPins();
+}
 function curRows(){
   const ft=gv('ft'),fs=gv('fs'),fd=gv('fd');
-  return recs.filter(r=>ownerOk(r)&&zoneOk(r)&&(!ft||r.tp===ft)&&(!fs||r.status===fs)&&(!fd||r.dt===fd));
+  return recs.filter(r=>{
+    if(!ownerOk(r)||!zoneOk(r))return false;
+    if(ft&&r.tp!==ft)return false;
+    if(fs&&r.status!==fs)return false;
+    if(fd&&r.dt!==fd)return false;
+    if(hideDone&&!fs&&isDone(r))return false;   // 상태를 직접 고르면 그때는 보여 준다
+    return true;
+  });
 }
 function toggleSel(id,ev){
   if(ev)ev.stopPropagation();

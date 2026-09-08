@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v89</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v90</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -2298,6 +2298,7 @@ function drawPins(){
   const seen={};
   recs.forEach(r=>{
     if(!r.lat||!r.lng)return;
+    if(r.del)return;                // 사무실에서 지운 건
     if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
     if(!zoneOk(r))return;           // 고른 구역만
     if(hideDone&&!gv('fs')&&isDone(r))return;   // 끝난 건은 핀도 빼기
@@ -2402,6 +2403,10 @@ function ownerOk(r){
   if(!listOwner)return true;
   return ownerOfRec(r)===listOwner;
 }
+function nowStr(){
+  const d=new Date(), z=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes());
+}
 // 끝난 건(접수완료·배송완료)을 감출지
 let hideDone=true;
 function isDone(r){ return r.status==='접수완료'||r.status==='배송완료'||r.status==='수거완료'; }
@@ -2436,6 +2441,7 @@ function listPeriod(k){
 function curRows(){
   const ft=gv('ft'),fs=gv('fs'),fd=gv('fd'),fd2=gv('fd2');
   return recs.filter(r=>{
+    if(r.del)return false;                       // 사무실에서 지운 건
     if(!ownerOk(r)||!zoneOk(r))return false;
     if(ft&&r.tp!==ft)return false;
     if(fs&&r.status!==fs)return false;
@@ -2459,9 +2465,10 @@ function delSelected(){
   const wait=target.filter(r=>r.status==='미완료').length;
   let msg='선택한 '+target.length+'건을 지웁니다.\n';
   if(wait)msg+='\n※ 이 중 미완료가 '+wait+'건 있습니다.\n';
-  msg+='\n등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
+  msg+='\n목록·지도에서만 사라지고 자료는 남습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
-  recs=recs.filter(r=>!selIds.has(r.id));
+  const ts=nowStr();
+  recs.forEach(r=>{ if(selIds.has(r.id)){ r.del=1; r.delAt=ts; } });
   selIds.clear();
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
@@ -2915,14 +2922,20 @@ function cleanOld(){
   let msg=target.length+'건을 지웁니다.\n\n';
   if(days)msg+='· '+days+'일 지난 접수\n';
   msg+='· 처리 끝남 '+done+'건'+(wait?' / 미완료 '+wait+'건':'')+'\n\n';
-  msg+='등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
+  msg+='목록·지도에서만 사라지고 자료는 남습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
   const ids=new Set(target.map(r=>r.id));
-  recs=recs.filter(r=>!ids.has(r.id));
+  const ts2=nowStr();
+  recs.forEach(r=>{ if(ids.has(r.id)){ r.del=1; r.delAt=ts2; } });
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
 }
-function delRec(id){if(!confirm('삭제하시겠습니까?'))return;recs=recs.filter(x=>x.id!==id);save();closeDetail();renderList();drawPins();}
+function delRec(id){
+  if(!confirm('삭제하시겠습니까?\n\n목록·지도에서만 사라지고 자료는 남습니다.'))return;
+  const r=recs.find(x=>x.id===id);
+  if(r){ r.del=1; r.delAt=nowStr(); }
+  save();closeDetail();renderList();drawPins();
+}
 // ── 사진을 파일로 저장 ──
 // 파일 이름: 날짜_주소_처리전1.jpg  (현장에서 찾기 쉽게)
 function photoName(r,kind,i){

@@ -217,23 +217,15 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
   line-height:1.95;box-shadow:0 2px 12px rgba(15,22,34,.14);font-weight:600;color:var(--ink-2);
 }
 .ldot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle}
-/* 지도 위 구분 고르기 줄 */
-.mfil{
-  position:absolute;top:10px;left:10px;right:10px;z-index:22;
-  display:flex;gap:6px;overflow-x:auto;padding:2px;
-  -webkit-overflow-scrolling:touch;
-}
-.mfil::-webkit-scrollbar{display:none}
-.mf-b{
-  flex:0 0 auto;border:1.5px solid var(--line);background:rgba(255,255,255,.97);
-  border-radius:999px;padding:8px 13px;font-size:12.5px;font-weight:800;
-  font-family:inherit;color:var(--ink-2);cursor:pointer;white-space:nowrap;
-  box-shadow:0 2px 8px rgba(15,22,34,.14);display:flex;align-items:center;gap:6px;
-}
-.mf-b .ldot{margin-right:0}
-.mf-b.on{color:#fff}
 
 
+/* 작업 시작 화면 버튼 */
+.st-b{
+  background:#0F1622;border:1.5px solid #2C3A4E;color:#C7D2E0;
+  border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+}
+.st-b.on{background:#1B5CFF;border-color:#1B5CFF;color:#fff}
 /* 로그인 화면 */
 .lg-btn{
   width:100%;display:flex;align-items:center;gap:13px;text-align:left;
@@ -325,12 +317,12 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v103</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v89</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
-  <div class="tab on" id="tab-form" onclick="sw('form')"><i>✏️</i>접수</div>
-  <div class="tab" id="tab-list" onclick="sw('list')"><i>📋</i>목록</div>
+  <div class="tab" id="tab-form" style="display:none" onclick="sw('form')"><i>✏️</i>접수</div>
+  <div class="tab on" id="tab-list" onclick="sw('list')"><i>📋</i>목록</div>
   <div class="tab" id="tab-map" onclick="sw('map')"><i>🗺</i>지도</div>
   <div class="tab" id="tab-fee" onclick="sw('fee')"><i>💰</i>수수료</div>
   <div class="tab" id="tab-rep" onclick="sw('rep')"><i>📊</i>집계</div>
@@ -344,7 +336,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 
     <button onclick="login('geum')" class="lg-btn" style="border-left:6px solid #0E9F6E">
       <span class="lg-dot" style="background:#0E9F6E">민</span>
-      <span class="lg-txt"><b>민원</b><i>민원 · 공동용기</i></span>
+      <span class="lg-txt"><b>민원</b><i>민원 · 공동용기 · 특수마대</i></span>
     </button>
 
     <button onclick="login('kwon')" class="lg-btn" style="border-left:6px solid #1B5CFF">
@@ -353,25 +345,27 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     </button>
 
     <button id="install-btn" onclick="doInstall()" style="display:none;width:100%;margin-top:16px;padding:14px;border:none;border-radius:13px;background:#0F1622;color:#fff;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📲 홈 화면에 앱으로 설치</button>
+    <div style="font-size:12px;color:#8A97A8;font-weight:600;margin-top:22px">한 번 선택하면 다음부터 바로 열립니다</div>
   </div>
 </div>
-<div id="tp-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:340px;background:#fff;border-radius:16px;padding:20px">
-    <div style="font-size:17px;font-weight:800;color:#0F1622;margin-bottom:4px">무엇을 접수할까요?</div>
-    <div style="font-size:12.5px;color:#8A97A8;font-weight:600;margin-bottom:14px">고르면 업무도 함께 바뀝니다</div>
-    <div id="tp-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    <button onclick="closeTpPick()" style="width:100%;margin-top:14px;padding:12px;border:1.5px solid var(--line);border-radius:11px;background:#fff;font-size:14px;font-weight:700;font-family:inherit;color:var(--ink-2);cursor:pointer">닫기</button>
+<div id="start-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:18px;overflow-y:auto">
+  <div style="width:100%;max-width:380px;background:#131C2B;border-radius:18px;padding:20px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.4)">
+    <div style="font-size:19px;font-weight:800;margin-bottom:13px">수거원</div>
+    <input type="text" id="st-name" placeholder="이름을 입력하세요" oninput="stCrewInput()"
+      style="width:100%;font-size:15px;padding:12px 13px;border:1.5px solid #2C3A4E;border-radius:11px;background:#0F1622;color:#fff;font-family:inherit;margin-bottom:18px">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span style="font-size:15px;font-weight:800">담당 구역 <span style="font-size:11.5px;font-weight:600;color:#8A97A8">여러 개 선택 · 안 고르면 전체</span></span>
+      <button onclick="stAll()" style="background:#1B5CFF;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">전체</button>
+    </div>
+    <div id="st-zone" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px"></div>
+    <div style="font-size:12px;color:#8A97A8;font-weight:700;margin-bottom:7px">잠실3동 아파트</div>
+    <div id="st-apt" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px"></div>
+
+    <button onclick="stStart()" style="width:100%;padding:15px;border:none;border-radius:12px;background:#1B5CFF;color:#fff;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer">시작하기</button>
   </div>
 </div>
-<div id="staff-ov" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:20px">
-  <div style="width:100%;max-width:340px;background:#fff;border-radius:16px;padding:20px">
-    <div style="font-size:17px;font-weight:800;color:#0F1622;margin-bottom:4px">접수자</div>
-    <div style="font-size:12.5px;color:#8A97A8;font-weight:600;margin-bottom:14px">한 번 고르면 계속 유지됩니다</div>
-    <div id="staff-row" style="display:flex;flex-direction:column;gap:8px"></div>
-    <button onclick="closeStaff()" style="width:100%;margin-top:14px;padding:12px;border:1.5px solid #d7dee8;background:#fff;color:#5a6572;border-radius:11px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer">닫기</button>
-  </div>
-</div>
-<div class="pane on" id="pane-form">
+<div class="pane" id="pane-form">
   <div id="install-bar" style="display:none;align-items:center;justify-content:space-between;gap:10px;border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#EAF0FF;color:#1B5CFF;font-size:13px;font-weight:700">
     <span>홈 화면에 추가하면 앱처럼 바로 열립니다</span>
     <span style="display:flex;gap:6px;flex-shrink:0">
@@ -379,7 +373,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button onclick="hideInstall()" style="background:transparent;color:#6B7785;border:none;padding:7px 6px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">닫기</button>
     </span>
   </div>
-  <div id="share-bar" style="display:none !important;flex-direction:column;gap:9px;border-radius:14px;padding:14px;margin-bottom:12px;background:#FEF6D8;border:2px solid #F5D76E;color:#8A6D00;font-size:14px;font-weight:700">
+  <div id="share-bar" style="display:none;flex-direction:column;gap:9px;border-radius:14px;padding:14px;margin-bottom:12px;background:#FEF6D8;border:2px solid #F5D76E;color:#8A6D00;font-size:14px;font-weight:700">
     <span>📢 <b>기사님께 카톡으로 알려 주세요</b><br><span style="font-size:12.5px;font-weight:600">폰 화면이 꺼져 있으면 앱 알림이 가지 않습니다.</span></span>
     <span style="display:flex;gap:7px">
       <button onclick="shareRec(lastSavedId)" style="flex:1;background:#FEE500;color:#3C1E1E;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">💬 카톡으로 알리기</button>
@@ -390,13 +384,11 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div id="sdk-bar" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;font-weight:700;line-height:1.6"></div>
   <div id="edit-bar" style="display:none;border-radius:12px;padding:12px 14px;margin-bottom:12px;background:#0F1622;color:#fff;font-size:14px;font-weight:700;align-items:center;justify-content:space-between;gap:10px"></div>
   <div id="who-bar" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;border-radius:12px;padding:12px 15px;margin-bottom:12px">
-    <span style="font-size:16px;font-weight:800"><a href="javascript:void(0)" onclick="openTpPick()" style="color:#fff;text-decoration:none"><span id="who"></span> 접수 <span style="font-size:12px;opacity:.85">▼</span></a>
-      <a href="javascript:void(0)" onclick="openStaff()" id="staff-tag" style="font-size:12.5px;font-weight:700;color:rgba(255,255,255,.9);text-decoration:none;margin-left:8px"></a></span>
+    <span style="font-size:16px;font-weight:800"><span id="who"></span> 접수</span>
     <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
   </div>
 
-  <!-- 구분 버튼 줄은 제목의 '○○ 접수 ▼' 로 옮김. 되살리려면 style="display:none" 만 지우면 됨 -->
-  <div class="type-row" style="display:none">
+  <div class="type-row">
     <button id="tb-t" class="type-btn" onclick="setTp('t')">특수마대</button>
     <button id="tb-c" class="type-btn" onclick="setTp('c')">공동용기</button>
     <button id="tb-m" class="type-btn" onclick="setTp('m')">민원</button>
@@ -494,17 +486,18 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div class="msg" id="f-msg"></div>
 </div>
 
-<div class="pane" id="pane-list">
+<div class="pane on" id="pane-list">
 
   <div id="who-bar2" style="display:flex;align-items:center;justify-content:space-between;background:#0F1622;color:#fff;padding:12px 15px;margin:10px 14px 4px;border-radius:12px">
-    <span style="font-size:16px;font-weight:800"><span id="who2"></span></span>
+    <span style="font-size:16px;font-weight:800"><span id="who2"></span>
+      <a href="javascript:void(0)" onclick="openStart()" id="zone-tag" style="font-size:12px;font-weight:700;color:rgba(255,255,255,.85);text-decoration:none;margin-left:8px"></a></span>
     <button onclick="logout()" style="background:rgba(255,255,255,.16);color:#fff;border:none;border-radius:8px;padding:7px 13px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">로그아웃</button>
   </div>
   <div class="count-bar" id="cbar"></div>
   <div style="padding:0 14px 8px;display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap">
     <div id="sel-tools" style="display:none;gap:6px">
       <button onclick="selAll()" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">전체 선택</button>
-      <button onclick="selNone()" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">모두 해제</button>
+      <button onclick="selNone()" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">선택 해제</button>
       <button onclick="delSelected()" style="background:#e53935;border:none;color:#fff;border-radius:9px;padding:7px 12px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">선택 삭제</button>
     </div>
     <div style="display:flex;gap:6px;margin-left:auto">
@@ -521,6 +514,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <select id="fs" onchange="renderList()">
       <option value="">전체 상태</option><option value="미완료">미완료</option><option value="접수완료">접수완료</option><option value="수거완료">수거완료(예전)</option><option value="없음">없음</option><option value="배송완료">배송완료</option>
     </select>
+    <button id="hd-btn" onclick="toggleDone()" style="flex:0 0 auto;background:#0F1622;border:1.5px solid #0F1622;color:#fff;border-radius:9px;padding:7px 11px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">끝난 건 숨김</button>
     <button class="btn sm" onclick="resetFilter()">초기화</button>
   </div>
   <div class="filter-row" style="align-items:center">
@@ -557,7 +551,6 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button class="type-btn" onclick="repMonth(0)" style="flex:none;padding:8px 12px;font-size:13px">이번 달</button>
       <button class="type-btn" onclick="repMonth(-1)" style="flex:none;padding:8px 12px;font-size:13px">지난 달</button>
       <button class="type-btn" onclick="repAll()" style="flex:none;padding:8px 12px;font-size:13px">전체 기간</button>
-      <button class="type-btn" onclick="renderRep()" style="flex:none;padding:8px 14px;font-size:13px;background:#1B5CFF;color:#fff;border-color:#1B5CFF">🔍 조회</button>
       <button class="type-btn" onclick="repPrint()" style="flex:none;padding:8px 14px;font-size:13px;background:#0F1622;color:#fff;border-color:#0F1622">🖨 인쇄</button>
     </div>
     <div class="type-row" style="flex-wrap:wrap;gap:6px">
@@ -566,7 +559,6 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button class="type-btn" id="rt-c" onclick="repTp('c')" style="flex:none;padding:7px 12px;font-size:13px">공동용기</button>
       <button class="type-btn" id="rt-m" onclick="repTp('m')" style="flex:none;padding:7px 12px;font-size:13px">민원</button>
       <button class="type-btn" id="rt-y" onclick="repTp('y')" style="flex:none;padding:7px 12px;font-size:13px">용기</button>
-      <button class="type-btn" id="rt-del" onclick="repDelToggle()" style="flex:none;padding:7px 12px;font-size:13px">조회</button>
     </div>
   </div>
   <div id="rep-body" style="padding:0 14px 24px"></div>
@@ -614,7 +606,12 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <button class="map-tool" onclick="pickDongPos()">동 위치 등록</button>
   </div>
   -->
-  <div class="mfil" id="mfil"></div>
+  <div class="legend">
+    <div><span class="ldot" style="background:#2e7d32"></span>특수마대</div>
+    <div><span class="ldot" style="background:#00838f"></span>공동용기</div>
+    <div><span class="ldot" style="background:#e65100"></span>용기</div>
+    <div><span class="ldot" style="background:#6a1b9a"></span>견적</div>
+  </div>
 </div>
 </div>
 
@@ -652,6 +649,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div class="dbox">
     <div class="d-h" id="d-title"></div>
     <div id="d-body"></div>
+    <div id="d-nav" style="display:flex;gap:8px;margin:12px 0 4px"></div>
     <div class="act-row" id="d-acts"></div>
   </div>
 </div>
@@ -1233,7 +1231,6 @@ function editRec(id){
   }else{
     sv('f-content',ct);
   }
-  if(r.staff){curStaff=r.staff;try{localStorage.setItem('cur_staff',curStaff);}catch(e){}renderStaff();}
   sv('f-visit-d',r.visitD||'');sv('f-visit-t',r.visitT||'');
   bookHint();
   photos={before:[...(r.before||[])],after:[...(r.after||[])]};
@@ -1259,7 +1256,7 @@ function cancelEdit(){
   editId=null;
   clrForm();
   showEditBar(null);
-  msg('수정을 취소했습니다','ok');
+  sw('list');
 }
 async function saveRec(){
   const addr=gv('f-addr');
@@ -1277,14 +1274,13 @@ async function saveRec(){
       return;
     }
   }
-  if(!curStaff){openStaff();return;}
   const wasEdit=!!editId;
   const btn=$('btn-save');btn.disabled=true;btn.textContent='저장하는 중';
   msg('주소를 확인하는 중','ok');
   const r=resolve(addr);
   const c=await findCoord(r);
   const rec={
-    id:Date.now(),by:myId,tp:pickTp(),own:curOwner,staff:curStaff,dt:gv('f-date'),
+    id:Date.now(),by:myId,tp:pickTp(),own:curOwner,dt:gv('f-date'),
     visitD:gv('f-visit-d'),visitT:gv('f-visit-t'),
     jibun:r.jibun,road:r.road,raw:addr,
     isApt:!!r.isApt,aptKey:r.aptKey||'',aptName:r.aptName||'',aptDong:r.aptDong||'',aptHo:r.aptHo||'',noDong:!!r.noDong,
@@ -1318,6 +1314,9 @@ async function saveRec(){
   save();
   btn.disabled=false;btn.textContent='접수 저장';
   lastSavedId=rec.id;
+  const sb=$('share-bar');
+  if(sb)sb.style.display='flex';
+  if(!wasEdit)setTimeout(()=>shareRec(rec.id),450);   // 저장하면 바로 공유창이 뜸
   msg(c?(wasEdit?'수정했습니다. 지도에 반영됩니다.':'저장했습니다. 지도에 표시됩니다.')
      :(sdkReady?'저장했습니다. 이 주소의 좌표를 찾지 못했습니다. 목록에서 위치를 직접 지정할 수 있습니다.'
                :'저장했습니다. 지도 서비스에 연결되지 않아 좌표를 찾지 못했습니다.'),
@@ -1325,6 +1324,7 @@ async function saveRec(){
   clrForm();
   renderList();
   if(mapReady)drawPins();
+  sw('list');            // 저장 후 목록으로
 }
 
 // 연락처: 뒷자리만 입력 → 자동으로 010 붙이고 보기 좋게 정리
@@ -1358,8 +1358,6 @@ function clrForm(){
   photos={before:[],after:[]};
   $('before-grid').innerHTML='';$('after-grid').innerHTML='';
   $('addr-hint').className='hint hide';$('ac').style.display='none';
-  const d=$('diag');                       // '주소 확인' 결과도 함께 지움
-  if(d){ d.style.display='none'; d.textContent=''; }
 }
 
 function sw(t){
@@ -1485,21 +1483,6 @@ function renderFee(){
 
 // ── 집계·인쇄 ──
 let repT='';
-let repDel=false;                     // 지운 건도 보일지
-function nowStr(){
-  const d=new Date();
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')
-    +' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
-function repDelToggle(){
-  repDel=!repDel;
-  const b=$('rt-del');
-  if(b){
-    b.className='type-btn'+(repDel?' on-own':'');
-    b.textContent=repDel?'조회 중':'조회';
-  }
-  renderRep();
-}
 function repTp(t){
   repT=t;
   ['','t','c','m','y'].forEach(k=>{const b=$('rt-'+k);if(b)b.className='type-btn'+(k===t?' on-own':'');});
@@ -1534,9 +1517,8 @@ function repPick(which){
 function qtyOf(r,size){
   const ct=r.content||'';
   if(r.tp==='y'&&size){
-    // '120L' 안의 '20L' 에 걸리지 않도록 앞에 숫자가 없는 것만 찾는다
-    const m=ct.match(new RegExp('(^|[^0-9])'+size+'L\\s*(\\d+)\\s*개'));
-    return m?Number(m[2]):0;
+    const m=ct.match(new RegExp(size+'L\\s*(\\d+)\\s*개'));
+    return m?Number(m[1]):0;
   }
   const m=ct.match(/(\d+)\s*개/);
   return m?Number(m[1]):0;
@@ -1544,7 +1526,6 @@ function qtyOf(r,size){
 function repRows(){
   const f=gv('rp-from'), t=gv('rp-to');
   return recs.filter(r=>{
-    if(r.del&&!repDel)return false;                     // '지운 건 포함'을 켜야 보임
     if(['t','c','m','y'].indexOf(r.tp)<0)return false;   // 견적 제외
     if(repT&&r.tp!==repT)return false;
     const d=r.dt||'';
@@ -1561,19 +1542,7 @@ function renderRep(){
   const f=gv('rp-from')||'', t=gv('rp-to')||'';
   const period=(f?fdate(f):'처음')+' ~ '+(t?fdate(t):'오늘');
   if(!rows.length){
-    const all=recs.filter(r=>['t','c','m','y'].indexOf(r.tp)>=0);
-    const live=all.filter(r=>!r.del).length, gone=all.length-live;
-    const ds=all.map(r=>r.dt).filter(Boolean).sort();
-    let tip='';
-    if(!all.length){
-      tip='집계에 넣는 접수(특수마대·공동용기·민원·용기)가 아직 없습니다.<br>견적 접수는 집계에 나오지 않습니다.';
-    }else{
-      tip='전체 자료는 '+live+'건'+(gone?(' (지운 것 '+gone+'건)'):'')+' 있습니다.<br>'
-        +'접수한 날짜 범위: '+fdate(ds[0])+' ~ '+fdate(ds[ds.length-1])+'<br>'
-        +'[전체 기간] 을 눌러 보세요.';
-    }
-    $('rep-body').innerHTML='<div class="empty">이 기간('+esc(period)+')에 접수한 건이 없습니다.<br><br>'
-      +'<span style="font-size:13px;line-height:1.8">'+tip+'</span></div>';
+    $('rep-body').innerHTML='<div class="empty">이 기간에 접수한 건이 없습니다.</div>';
     return;
   }
   // 구분별로 나눠서 표를 각각 만듦
@@ -1594,7 +1563,7 @@ function renderRep(){
     html+='<th style="width:60px">상태</th></tr></thead><tbody>';
     const sum={10:0,20:0,70:0,120:0,n:0};
     rs.forEach((r,i)=>{
-      html+='<tr'+(r.del?' style="color:#9aa3b0;background:#fafafa"':'')+'><td>'+(i+1)+'</td><td>'+fdate(r.dt)+'</td><td class="ta-l">'+esc(addrOf(r))+'</td><td>'+esc(r.staff||'')+'</td>';
+      html+='<tr><td>'+(i+1)+'</td><td>'+fdate(r.dt)+'</td><td class="ta-l">'+esc(addrOf(r))+'</td><td>'+esc(r.staff||'')+'</td>';
       if(tp==='y'){
         let amt=0;
         CAN_SIZES.forEach(v=>{const q=qtyOf(r,v);sum[v]+=q;amt+=q*CAN_PRICE[v];html+='<td>'+(q||'')+'</td>';});
@@ -1605,7 +1574,7 @@ function renderRep(){
       }else{
         const q=qtyOf(r);sum.n+=q;html+='<td>'+(q||'')+'</td>';
       }
-      html+='<td>'+esc(r.status||'')+(r.del?' <span style="color:#c62828;font-weight:800">(지움)</span>':'')+'</td></tr>';
+      html+='<td>'+esc(r.status||'')+'</td></tr>';
     });
     html+='</tbody><tfoot><tr><td colspan="4">합계</td>';
     if(tp==='y'){
@@ -1643,7 +1612,7 @@ if(!stockIns||!Object.keys(stockIns).length){
 let stockRef=null, stockBusy=false, stockWho='', stockTs=0;
 let siteUse=0, siteMemo='';        // 120L 현장 사용 수량·비고
 function saveStock(){
-  const d={base:stockIns,at:stockAt,site:siteUse,memo:siteMemo,by:(typeof myId!=='undefined'?myId:''),who:(curStaff||OWNER[curOwner]||''),ts:Date.now()};
+  const d={base:stockIns,at:stockAt,site:siteUse,memo:siteMemo,by:(typeof myId!=='undefined'?myId:''),who:(crewName||OWNER[curOwner]||''),ts:Date.now()};
   try{localStorage.setItem('can_stock',JSON.stringify(d));}catch(e){}
   // 다른 기기에서도 볼 수 있게 공유 저장소에 올림
   if(stockRef){
@@ -1657,11 +1626,10 @@ function saveStock(){
 function usedQty(size){
   let n=0;
   recs.forEach(r=>{
-    if(r.del)return;                // 지운 접수는 재고에서 뺌
     if(r.tp!=='y')return;
     if(stockAt&&(r.dt||'')<stockAt)return;      // 기준일 전 접수는 이미 반영된 것으로 봄
-    const m=(r.content||'').match(new RegExp('(^|[^0-9])'+size+'L\\s*(\\d+)\\s*개'));
-    if(m)n+=Number(m[2]);
+    const m=(r.content||'').match(new RegExp(size+'L\\s*(\\d+)\\s*개'));
+    if(m)n+=Number(m[1]);
   });
   return n;
 }
@@ -1844,7 +1812,6 @@ function checkBookings(){
   if(typeof recs==='undefined'||!recs.length)return;
   const now=Date.now();
   recs.forEach(r=>{
-    if(r.del)return;                         // 지운 건은 알리지 않음
     if(r.tp!=='g'||!r.visitD)return;
     if(r.status&&r.status!=='미완료')return;  // 끝난 건은 알리지 않음
     if(!ownerOk(r))return;                   // 내 담당 건만
@@ -1874,44 +1841,86 @@ setInterval(checkBookings, 60000);          // 1분마다 확인
 setTimeout(checkBookings, 4000);            // 앱을 켰을 때도 한 번
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden)checkBookings(); });
 
-// ── 접수자 (사무실에서 접수한 사람) ──
-const STAFF=['박전무','심실장','권부장','이계장','김주임'];
-let curStaff='';
-try{curStaff=localStorage.getItem('cur_staff')||'';}catch(e){}
-if(STAFF.indexOf(curStaff)<0)curStaff='';        // 목록에 없는 값은 무효
-function renderStaff(){
-  const box=$('staff-row');
-  if(box){
-    box.innerHTML=STAFF.map(v=>
-      '<button type="button" onclick="pickStaff(\''+v+'\')" style="width:100%;padding:14px;border-radius:11px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;'
-      +(v===curStaff
-        ? 'background:#0F1622;color:#fff;border:none'
-        : 'background:#fff;color:#0F1622;border:1.5px solid #E3E7ED')+'">'+v+'</button>').join('');
-  }
-  const tag=$('staff-tag');
-  if(tag)tag.textContent=curStaff?('접수자 '+curStaff+' ✎'):'접수자 고르기 ✎';
+// ── 작업 시작 (수거원·담당 구역 고르기) ──
+let crewName='', zonePick=[];
+try{
+  crewName=localStorage.getItem('crew_name')||'';
+  zonePick=JSON.parse(localStorage.getItem('zone_pick')||'[]');
+}catch(e){}
+// 구역 정의: 일반 지역 + 아파트 단지
+function zoneList(){
+  const z=[{k:'본',n:'잠실동'},{k:'삼',n:'삼전동'},{k:'garak',n:'가락시장'}];
+  const a=APT.map(x=>({k:x.key,n:x.name,apt:true}));
+  return z.concat(a);
 }
-let staffOpen=false;
-function openStaff(){
-  staffOpen=true;                   // 상태와 상관없이 항상 연다
-  renderStaff();
-  const ov=$('staff-ov');
+// 이 접수가 어느 구역인지
+function zoneOf(r){
+  if(r.isApt)return r.aptKey||'';
+  const j=r.jibun||'';
+  if(j.indexOf('가락')>=0)return 'garak';
+  if(j.startsWith('본'))return '본';
+  if(j.startsWith('삼'))return '삼';
+  return '';
+}
+// 구역별 남은(미완료) 건수
+function zoneCount(k){
+  return recs.filter(r=>ownerOk(r)&&(r.status==='미완료'||!r.status)&&zoneOf(r)===k).length;
+}
+function zoneOk(r){
+  if(!zonePick.length)return true;
+  return zonePick.indexOf(zoneOf(r))>=0;
+}
+function stCrewInput(){
+  crewName=(gv('st-name')||'').trim();
+}
+
+function stToggleZone(k){
+  const i=zonePick.indexOf(k);
+  if(i>=0)zonePick.splice(i,1); else zonePick.push(k);
+  renderStZone();
+}
+function stAll(){ zonePick=[]; renderStZone(); }
+function renderStZone(){
+  const mk=(z)=>'<button type="button" class="st-b'+(zonePick.indexOf(z.k)>=0?' on':'')+'" onclick="stToggleZone(\''+z.k+'\')">'
+    +esc(z.n)+' <b style="color:#8FB4FF;margin-left:3px">'+zoneCount(z.k)+'</b></button>';
+  const all=zoneList();
+  const gen=all.filter(z=>!z.apt), apt=all.filter(z=>z.apt);
+  if($('st-zone'))$('st-zone').innerHTML=gen.map(mk).join('');
+  if($('st-apt')) $('st-apt').innerHTML =apt.map(mk).join('');
+  const ab=document.querySelector('#start-ov button[onclick="stAll()"]');
+  if(ab)ab.style.opacity=zonePick.length?'0.5':'1';
+}
+function refreshZoneTag(){
+  const e=$('zone-tag');
+  if(!e)return;
+  const names=zonePick.length
+    ? zoneList().filter(z=>zonePick.indexOf(z.k)>=0).map(z=>z.n).join(', ')
+    : '전체 구역';
+  e.textContent=(crewName?crewName+' · ':'')+names+' ✎';
+}
+let startOpen=false;
+function openStart(){
+  startOpen=true;                   // 상태와 상관없이 항상 연다
+  sv('st-name',crewName);
+  renderStZone();
+  const ov=$('start-ov');
   if(ov)ov.style.display='flex';
 }
-function closeStaff(){
-  if(!curStaff){ alert('접수자를 골라 주세요.'); return; }
-  staffOpen=false;
-  const ov=$('staff-ov');
+function stStart(){
+  if(!crewName){alert('수거원 이름을 적어 주세요.');return;}
+  try{
+    localStorage.setItem('crew_name',crewName);
+    localStorage.setItem('zone_pick',JSON.stringify(zonePick));
+  }catch(e){}
+  startOpen=false;
+  const ov=$('start-ov');
   if(ov)ov.style.display='none';
-}
-function pickStaff(v){
-  curStaff=v;
-  try{localStorage.setItem('cur_staff',curStaff);}catch(e){}
-  renderStaff();
-  staffOpen=false;
-  const ov=$('staff-ov');
-  if(ov)ov.style.display='none';
-  msg(v+' 님으로 접수합니다','ok');
+  refreshZoneTag();
+  renderList(); if(mapReady)drawPins();
+  const names=zonePick.length
+    ? zoneList().filter(z=>zonePick.indexOf(z.k)>=0).map(z=>z.n).join(', ')
+    : '전체 구역';
+  msg(crewName+' 님 · '+names,'ok');
 }
 
 // ── 홈 화면에 앱으로 설치하기 ──
@@ -1948,10 +1957,10 @@ window.addEventListener('popstate',()=>{
     return;
   }
   // 열려 있는 창이 있으면 닫기
-  const ovs=['est-ov','tp-ov','staff-ov','start-ov'];
+  const ovs=['est-ov','staff-ov','start-ov'];
   for(const id of ovs){
     const e=$(id);
-    if(e&&e.style.display==='flex'){ e.style.display='none'; if(id==='staff-ov')staffOpen=false; return; }
+    if(e&&e.style.display==='flex'){ e.style.display='none'; if(id==='start-ov')startOpen=false; return; }
   }
   const ov=$('ov');
   if(ov&&ov.classList.contains('on')){ closeDetail(); return; }
@@ -1964,57 +1973,48 @@ function login(o){
   curOwner=o;
   try{localStorage.setItem('app_user',o);}catch(e){}
   const lg=$('login'); if(lg)lg.style.display='none';
-  staffOpen=false;                                  // 이전 상태를 지우고
-  const ov=$('staff-ov'); if(ov)ov.style.display='none';
-  // 접수자 창을 먼저 예약해 둔다 (아래에서 오류가 나도 창은 뜨도록)
-  if(!curStaff){
-    setTimeout(openStaff,300);
-    setTimeout(()=>{ if(!curStaff)openStaff(); },1200);
+  startOpen=false;
+  const ov=$('start-ov'); if(ov)ov.style.display='none';
+  // 작업 시작 화면을 먼저 예약해 둔다 (아래에서 오류가 나도 뜨도록)
+  if(!crewName){
+    setTimeout(openStart,300);
+    setTimeout(()=>{ if(!crewName)openStart(); },1200);
   }
   try{
     applyOwner();
-    sw('form');
+    sw('list');
   }catch(err){ showBoot('로그인', err); }
 }
 function logout(){
-  if(!confirm('로그아웃할까요?\n\n다음에 업무와 접수자를 다시 고르게 됩니다.'))return;
+  if(!confirm('로그아웃할까요?\n\n다음에 업무와 수거원을 다시 고르게 됩니다.'))return;
   try{
     localStorage.removeItem('app_user');
-    localStorage.removeItem('cur_staff');     // 접수자도 함께 초기화
+    localStorage.removeItem('crew_name');     // 수거원 이름도 초기화
+    localStorage.removeItem('zone_pick');     // 담당 구역도 초기화
   }catch(e){}
-  curOwner=''; curStaff='';
-  staffOpen=false;                                  // 창 상태도 되돌림
-  const ov=$('staff-ov'); if(ov)ov.style.display='none';
-  renderStaff();
+  curOwner=''; crewName=''; zonePick=[];
+  startOpen=false;
+  const ov=$('start-ov'); if(ov)ov.style.display='none';
   const lg=$('login'); if(lg)lg.style.display='flex';
 }
 // 로그인한 담당자에 맞게 화면 전체를 맞춤
-// 로그아웃 없이 민원 <-> 견적 전환
-function swapOwner(){
-  const o=(curOwner==='geum')?'kwon':'geum';
-  curOwner=o;
-  try{localStorage.setItem('app_user',o);}catch(e){}
-  try{ applyOwner(); }catch(err){ showBoot('업무 전환', err); }
-}
 function applyOwner(){
   setOwner(curOwner);
-  // 전환 버튼에는 '넘어갈 쪽' 이름을 보여 준다
   // 집계는 용기 재고가 있는 담당자(권봉석·김정섭)만 사용
   const rt=$('tab-rep');
   if(rt)rt.style.display=(curOwner==='geum')?'none':'';
   if(curOwner==='geum'&&$('pane-rep')&&$('pane-rep').classList.contains('on'))sw('list');
-  listOwner='';                // 목록·지도는 민원·견적을 한꺼번에 본다
-  // 구분 선택지는 다섯 가지 모두
+  listOwner=curOwner;          // 목록·지도도 본인 것만
+  // 목록 구분 선택지도 본인 것만
   const ft=$('ft');
   if(ft){
-    const keep=ft.value;
     ft.innerHTML='<option value="">전체 구분</option>'
-      +['m','c','t','y','g'].map(k=>'<option value="'+k+'">'+TN[k]+'</option>').join('');
-    ft.value=keep||'';
+      +TP_OF[curOwner].map(k=>'<option value="'+k+'">'+TN[k]+'</option>').join('');
+    ft.value='';
   }
   const w2=$('who2');
-  if(w2)w2.textContent='전체 목록';
-  renderStaff();
+  if(w2)w2.textContent=OWNER[curOwner]||'';
+  refreshZoneTag();
   const c=OWNER_COLOR[curOwner]||'#0F1622';
   ['who-bar','who-bar2'].forEach(id=>{const b=$(id);if(b)b.style.background=c;});
   renderList();
@@ -2022,16 +2022,14 @@ function applyOwner(){
 }
 // 저장된 로그인 확인
 function checkLogin(){
-  // 열 때마다 업무를 다시 고르게 한다 (자동으로 들어가지 않음)
-  const AUTO=false;
   let o='';
   try{o=localStorage.getItem('app_user')||'';}catch(e){}
-  if(AUTO&&OWNER[o]){
+  if(OWNER[o]){
     curOwner=o;
     const lg=$('login'); if(lg)lg.style.display='none';
-    if(!curStaff){
-      setTimeout(openStaff,500);
-      setTimeout(()=>{ if(!curStaff)openStaff(); },1500);
+    if(!crewName){                            // 수거원 이름이 없으면 작업 시작 화면
+      setTimeout(openStart,400);
+      setTimeout(()=>{ if(!crewName)openStart(); },1400);
     }
     try{ applyOwner(); }catch(err){ showBoot('시작', err); }
   }
@@ -2040,14 +2038,14 @@ function checkLogin(){
 function showBoot(where,err){
   try{
     const m=(err&&err.message)?err.message:String(err);
-    alert('⚠ '+where+' 중 문제가 생겼습니다\n\n'+m+'\n\n이 화면을 캡처해 주세요.');
+    alert('\u26a0 '+where+' 중 문제가 생겼습니다\n\n'+m+'\n\n이 화면을 캡처해 주세요.');
   }catch(e){}
 }
 window.addEventListener('error',e=>{
   try{
     if(window.__bootShown)return;
     window.__bootShown=true;
-    alert('⚠ 오류\n\n'+(e.message||'')+'\n'+(e.filename||'')+' '+(e.lineno||'')+'\n\n이 화면을 캡처해 주세요.');
+    alert('\u26a0 오류\n\n'+(e.message||'')+'\n'+(e.filename||'')+' '+(e.lineno||'')+'\n\n이 화면을 캡처해 주세요.');
   }catch(x){}
 });
 
@@ -2060,32 +2058,6 @@ function setOwner(o){
     if(b)b.style.display=(TP_OF[o].indexOf(k)>=0)?'':'none';
   });
   setTp(TP_OF[o][0]);
-}
-// ── 접수 구분 고르기 (업무도 같이 바뀜) ──
-function openTpPick(){
-  const box=$('tp-list');
-  if(box){
-    box.innerHTML=['m','c','t','y','g'].map(k=>{
-      const on=(curTp===k), c=PC[k];
-      return '<button type="button" onclick="chooseTp(\''+k+'\')" style="display:flex;align-items:center;gap:10px;'
-        +'width:100%;padding:13px 14px;border-radius:12px;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;'
-        +(on?('background:'+c+';color:#fff;border:1.5px solid '+c):('background:#fff;color:#0F1622;border:1.5px solid var(--line)'))+'">'
-        +'<span style="width:11px;height:11px;border-radius:50%;background:'+(on?'#fff':c)+'"></span>'
-        +TN[k]+'</button>';
-    }).join('');
-  }
-  const ov=$('tp-ov'); if(ov)ov.style.display='flex';
-}
-function closeTpPick(){ const ov=$('tp-ov'); if(ov)ov.style.display='none'; }
-function chooseTp(t){
-  const o=OWNER_OF[t]||curOwner;
-  if(o!==curOwner){
-    curOwner=o;
-    try{localStorage.setItem('app_user',o);}catch(e){}
-    try{ applyOwner(); }catch(err){ showBoot('구분 바꾸기', err); }
-  }
-  setTp(t);
-  closeTpPick();
 }
 function setTp(t){
   curTp=t;
@@ -2320,35 +2292,15 @@ function estSave(){
   sdkBar('ok','견적을 저장했습니다 — 합계 '+won(sum));
 }
 function editMemo(id){ estOpen(id); }
-// ── 지도 구분 고르기 ('' = 전체) ──
-let mapTp='';
-function renderMfil(){
-  const box=$('mfil'); if(!box)return;
-  const list=[['','전체','#0F1622']].concat(
-    ['m','c','t','y','g'].map(k=>[k,TN[k],PC[k]]));
-  box.innerHTML=list.map(([k,n,c])=>{
-    const on=(mapTp===k);
-    const st=on?('background:'+c+';border-color:'+c):'';
-    const dot=k?'<span class="ldot" style="background:'+(on?'#fff':c)+'"></span>':'';
-    return '<button type="button" class="mf-b'+(on?' on':'')+'" style="'+st+'" '
-      +'onclick="setMapTp(\''+k+'\')">'+dot+n+'</button>';
-  }).join('');
-}
-function setMapTp(k){
-  mapTp=k;
-  renderMfil();
-  if(mapReady)drawPins();
-}
 function drawPins(){
-  renderMfil();
   if(!mapReady)return;
   markers.forEach(m=>m.setMap(null));markers=[];
   const seen={};
   recs.forEach(r=>{
-    if(r.del)return;                // 지운 건은 지도에 안 찍음
     if(!r.lat||!r.lng)return;
     if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
-    if(mapTp&&r.tp!==mapTp)return;  // 지도에서 고른 구분만
+    if(!zoneOk(r))return;           // 고른 구역만
+    if(hideDone&&!gv('fs')&&isDone(r))return;   // 끝난 건은 핀도 빼기
     let la=r.lat,ln=r.lng;
     // 단지 기본 좌표로 찍힌 아파트는 동 번호에 따라 규칙적으로 배치
     // (같은 동은 항상 같은 자리 → 현장에서 헷갈리지 않음)
@@ -2437,7 +2389,7 @@ function toggleSelMode(){
   selMode=!selMode;
   if(!selMode)selIds.clear();
   $('sel-tools').style.display=selMode?'flex':'none';
-  $('sel-btn').textContent=selMode?'선택 해제':'선택';
+  $('sel-btn').textContent=selMode?'선택 끝':'선택';
   renderList();
 }
 let listOwner='';       // '' = 전체
@@ -2450,18 +2402,20 @@ function ownerOk(r){
   if(!listOwner)return true;
   return ownerOfRec(r)===listOwner;
 }
-function curRows(){
-  const ft=gv('ft'),fs=gv('fs'),fd=gv('fd'),fd2=gv('fd2');
-  return recs.filter(r=>{
-    if(r.del)return false;
-    if(!ownerOk(r))return false;
-    if(ft&&r.tp!==ft)return false;
-    if(fs&&r.status!==fs)return false;
-    const d=r.dt||'';
-    if(fd&&d<fd)return false;      // 시작일부터
-    if(fd2&&d>fd2)return false;    // 종료일까지
-    return true;
-  });
+// 끝난 건(접수완료·배송완료)을 감출지
+let hideDone=true;
+function isDone(r){ return r.status==='접수완료'||r.status==='배송완료'||r.status==='수거완료'; }
+function toggleDone(){
+  hideDone=!hideDone;
+  const b=$('hd-btn');
+  if(b){
+    b.textContent=hideDone?'끝난 건 숨김':'끝난 건 보기';
+    b.style.background=hideDone?'#0F1622':'#fff';
+    b.style.color=hideDone?'#fff':'#5a6572';
+    b.style.borderColor=hideDone?'#0F1622':'#d7dee8';
+  }
+  renderList();
+  if(mapReady)drawPins();
 }
 // 조회하기 (날짜를 손으로 넣은 뒤 눌러도 되고, 안 눌러도 자동 반영됨)
 function listSearch(){
@@ -2477,6 +2431,20 @@ function listPeriod(k){
   else if(k==='7'){ const a=new Date(t); a.setDate(a.getDate()-6); sv('fd',ymd(a)); sv('fd2',ymd(t)); }
   else if(k==='m'){ sv('fd',ymd(new Date(t.getFullYear(),t.getMonth(),1))); sv('fd2',ymd(t)); }
   renderList();
+  if(mapReady)drawPins();
+}
+function curRows(){
+  const ft=gv('ft'),fs=gv('fs'),fd=gv('fd'),fd2=gv('fd2');
+  return recs.filter(r=>{
+    if(!ownerOk(r)||!zoneOk(r))return false;
+    if(ft&&r.tp!==ft)return false;
+    if(fs&&r.status!==fs)return false;
+    const d=r.dt||'';
+    if(fd&&d<fd)return false;      // 시작일부터
+    if(fd2&&d>fd2)return false;    // 종료일까지
+    if(hideDone&&!fs&&isDone(r))return false;   // 상태를 직접 고르면 그때는 보여 준다
+    return true;
+  });
 }
 function toggleSel(id,ev){
   if(ev)ev.stopPropagation();
@@ -2491,10 +2459,9 @@ function delSelected(){
   const wait=target.filter(r=>r.status==='미완료').length;
   let msg='선택한 '+target.length+'건을 지웁니다.\n';
   if(wait)msg+='\n※ 이 중 미완료가 '+wait+'건 있습니다.\n';
-  msg+='\n목록·지도에서만 사라지고 자료는 남습니다.\n집계의 [조회] 로 다시 볼 수 있습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
+  msg+='\n등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
-  const ts=nowStr();
-  recs.forEach(r=>{ if(selIds.has(r.id)){ r.del=1; r.delAt=ts; } });
+  recs=recs.filter(r=>!selIds.has(r.id));
   selIds.clear();
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
@@ -2542,15 +2509,6 @@ function cmpAddr(a,b){
   if(x[0]!==y[0])return x[0]-y[0];
   return x[1]-y[1];
 }
-// 이 접수가 어느 구역인지 (현장 앱과 같은 기준)
-function zoneOf(r){
-  if(r.isApt)return r.aptKey||'';
-  const j=r.jibun||'';
-  if(j.indexOf('가락')>=0)return 'garak';
-  if(j.startsWith('본'))return '본';
-  if(j.startsWith('삼'))return '삼';
-  return '';
-}
 function groupRows(rows){
   const g={};
   rows.forEach(r=>{
@@ -2569,14 +2527,14 @@ function groupHead(g){
 }
 function renderList(){
   const rows=curRows();
-  const base=recs.filter(r=>!r.del&&ownerOk(r));   // 지운 건 뺀 담당자 범위
+  const base=recs.filter(r=>ownerOk(r)&&zoneOk(r));   // 고른 구역 안에서 집계
   const tot=base.length;
   const c=k=>base.filter(r=>r.status===k).length;
   const who=listOwner?(OWNER[listOwner]+' '):'전체 ';
   $('cbar').innerHTML=who+'<b>'+tot+'</b> &nbsp;·&nbsp; 미완료 <b>'+c('미완료')+'</b> &nbsp;·&nbsp; 접수완료 <b>'+(c('접수완료')+c('수거완료'))+'</b> &nbsp;·&nbsp; 없음 <b>'+c('없음')+'</b> &nbsp;·&nbsp; 배송완료 <b>'+c('배송완료')+'</b>';
   const lb=$('list-body');
   if(!rows.length){lb.innerHTML='<div class="empty">'+(listOwner?OWNER[listOwner]+' 접수가 없습니다.':'아직 접수한 건이 없습니다.<br>접수 탭에서 등록해 보세요.')+'</div>';return;}
-  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>';
+  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();shareRec('+r.id+')" style="font-size:12px;color:#8A6D00;font-weight:800;text-decoration:none">💬 카톡</a>'+'<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>';
   lb.innerHTML=groupRows(rows).map(g=>groupHead(g)+g.list.map(cardHtml).join('')).join('');
   if(selMode)$('cbar').innerHTML+=' &nbsp;·&nbsp; <b style="color:#1e6fd9">선택 '+selIds.size+'건</b>';
 }
@@ -2601,19 +2559,71 @@ function showDetail(id){
     (bookOf(r)?'<div class="d-row"><span class="d-lbl">예약</span><span class="d-val" style="color:#B54708;font-weight:800">'+esc(bookOf(r))+'</span></div>':'')+
     (r.result?'<div class="d-row"><span class="d-lbl">처리결과</span><span class="d-val">'+esc(r.result)+'</span></div>':'')+
     '<div class="d-row"><span class="d-lbl">상태</span><span class="d-val"><span class="badge '+stInfo(r.status).cls+'">'+r.status+'</span>'+(r.doneAt?' <span style="font-size:12px;color:#888">'+r.doneAt+'</span>':'')+'</span></div>'+
-    (r.note?'<div class="d-row"><span class="d-lbl">현장 메모</span><span class="d-val" style="white-space:pre-line;color:#B54708;font-weight:700">'+esc(r.note)+'</span></div>':'')+
+    (r.note?'<div class="d-row"><span class="d-lbl">메모</span><span class="d-val" style="white-space:pre-line;color:#B54708;font-weight:700">'+esc(r.note)+'</span></div>':'')+
     (r.before&&r.before.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 전</span><button onclick="savePhotos('+r.id+',\'before\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.before.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'before\','+i+')">').join('')+'</div>':'')+
     (r.after&&r.after.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 후</span><button onclick="savePhotos('+r.id+',\'after\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.after.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'after\','+i+')">').join('')+'</div>':'');
+  // 길안내 (카카오내비 · 네이버지도)
+  const navBox=$('d-nav');
+  if(navBox){
+    navBox.innerHTML=
+      '<button onclick="goKakaoNavi('+id+')" style="flex:1;background:#FEE500;border:none;color:#191919;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">카카오내비</button>'
+     +'<button onclick="goNaverMap('+id+')" style="flex:1;background:#03C75A;border:none;color:#fff;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">네이버지도</button>';
+  }
   $('d-acts').innerHTML=
     (r.status==='미완료'
       ?'<button class="btn ok" onclick="setStatus('+id+',\'접수완료\')">✅ 접수완료</button><button class="btn sm" onclick="setStatus('+id+',\'없음\')">🚫 없음</button><button class="btn sm" onclick="setStatus('+id+',\'배송완료\')">📦 배송완료</button>'
       :'<button class="btn sm" onclick="setStatus('+id+',\'미완료\')">↩ 미완료로</button>')+
-    (r.lat?'<button class="btn sm" onclick="focusPin('+id+')">지도에서 보기</button>':'<button class="btn sm" onclick="retryCoord('+id+')">좌표 다시 찾기</button>')+
-
+    '<button class="btn sm" onclick="editNote('+id+')">📝 '+(r.note?'메모 수정':'메모')+'</button>'+
     '<button class="btn danger sm" onclick="delRec('+id+')">삭제</button>'+
     '<button class="btn sm" onclick="closeDetail()">닫기</button>';
   $('ov').classList.add('on');
 }
+// ── 길안내 ──
+function navName(r){
+  if(r.isApt){
+    let t=(r.aptName||'')+' '+(r.aptDong||'');
+    return t.trim()||r.jibun||'';
+  }
+  return r.road||r.jibun||'';
+}
+function goKakaoNavi(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  const nm=navName(r);
+  if(r.lat&&r.lng){
+    // 좌표가 있으면 그 자리로 바로
+    location.href='kakaonavi://navigate?name='+encodeURIComponent(nm)
+      +'&x='+r.lng+'&y='+r.lat+'&coord_type=wgs84';
+    setTimeout(()=>{ location.href='https://map.kakao.com/link/to/'
+      +encodeURIComponent(nm)+','+r.lat+','+r.lng; },1200);
+  }else{
+    location.href='https://map.kakao.com/link/search/'+encodeURIComponent(nm);
+  }
+}
+function goNaverMap(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  const nm=navName(r);
+  if(r.lat&&r.lng){
+    location.href='https://map.naver.com/p/directions/-/'+r.lng+','+r.lat+','
+      +encodeURIComponent(nm)+'/-/car';
+  }else{
+    location.href='https://map.naver.com/p/search/'+encodeURIComponent(nm);
+  }
+}
+// ── 현장 메모 ──
+function editNote(id){
+  const r=recs.find(x=>x.id===id);
+  if(!r)return;
+  const where=r.isApt
+    ? ((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim()
+    : (r.jibun||'');
+  const v=prompt('현장 메모를 적어 주세요.\n\n['+where+']\n예) 문 앞에 없어 전화함 / 다음 주 재방문',r.note||'');
+  if(v===null)return;
+  r.note=v.trim();
+  save(); renderList(); drawPins();
+  if($('ov').classList.contains('on'))showDetail(id);
+  msg(r.note?'메모를 저장했습니다':'메모를 지웠습니다','ok');
+}
+
 // ── 동 위치 등록 ──
 let dongPickKey=null, dongPickNo='', dongQueue=[];
 function depotWord(key){
@@ -2874,6 +2884,11 @@ async function retryCoord(id){
 function setStatus(id,st){
   const r=recs.find(x=>x.id===id);
   if(!r)return;
+  if(st==='없음'&&!r.note){
+    const v=prompt('물건이 없었던 이유를 적어 주세요.\n(그냥 확인을 누르셔도 됩니다)','');
+    if(v===null)return;
+    if(v.trim())r.note=v.trim();
+  }
   r.status=st;
   r.doneAt=(st==='미완료')?'':new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
   save();renderList();drawPins();
@@ -2900,20 +2915,14 @@ function cleanOld(){
   let msg=target.length+'건을 지웁니다.\n\n';
   if(days)msg+='· '+days+'일 지난 접수\n';
   msg+='· 처리 끝남 '+done+'건'+(wait?' / 미완료 '+wait+'건':'')+'\n\n';
-  msg+='목록·지도에서만 사라지고 자료는 남습니다.\n집계의 [조회] 로 다시 볼 수 있습니다.\n\n등록해 둔 동·단지 위치도 그대로 남습니다.\n지우시겠습니까?';
+  msg+='등록해 둔 동·단지 위치는 그대로 남습니다.\n지우시겠습니까?';
   if(!confirm(msg))return;
   const ids=new Set(target.map(r=>r.id));
-  const ts2=nowStr();
-  recs.forEach(r=>{ if(ids.has(r.id)){ r.del=1; r.delAt=ts2; } });
+  recs=recs.filter(r=>!ids.has(r.id));
   save();closeDetail();renderList();drawPins();
   alert(target.length+'건을 지웠습니다.\n남은 접수 '+recs.length+'건.');
 }
-function delRec(id){
-  if(!confirm('삭제하시겠습니까?\n\n목록·지도에서는 사라지지만\n집계에서는 그대로 볼 수 있습니다.'))return;
-  const r=recs.find(x=>x.id===id);
-  if(r){ r.del=1; r.delAt=nowStr(); }
-  save();closeDetail();renderList();drawPins();
-}
+function delRec(id){if(!confirm('삭제하시겠습니까?'))return;recs=recs.filter(x=>x.id!==id);save();closeDetail();renderList();drawPins();}
 // ── 사진을 파일로 저장 ──
 // 파일 이름: 날짜_주소_처리전1.jpg  (현장에서 찾기 쉽게)
 function photoName(r,kind,i){
@@ -2946,7 +2955,7 @@ function savePhotos(id,kind){
   msg(arr.length+'장을 저장합니다. 다운로드 폴더를 확인해 주세요.','ok');
 }
 function closeDetail(e){if(!e||e.target===$('ov'))$('ov').classList.remove('on');}
-function resetFilter(){sv('ft','');sv('fs','');sv('fd','');sv('fd2','');renderList();}
+function resetFilter(){sv('ft','');sv('fs','');sv('fd','');sv('fd2','');renderList();if(mapReady)drawPins();}
 
 function $(id){return document.getElementById(id);}
 function gv(id){const e=$(id);return e?e.value:'';}

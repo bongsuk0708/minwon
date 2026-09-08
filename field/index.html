@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v88</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v89</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -649,6 +649,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   <div class="dbox">
     <div class="d-h" id="d-title"></div>
     <div id="d-body"></div>
+    <div id="d-nav" style="display:flex;gap:8px;margin:12px 0 4px"></div>
     <div class="act-row" id="d-acts"></div>
   </div>
 </div>
@@ -2561,6 +2562,13 @@ function showDetail(id){
     (r.note?'<div class="d-row"><span class="d-lbl">메모</span><span class="d-val" style="white-space:pre-line;color:#B54708;font-weight:700">'+esc(r.note)+'</span></div>':'')+
     (r.before&&r.before.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 전</span><button onclick="savePhotos('+r.id+',\'before\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.before.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'before\','+i+')">').join('')+'</div>':'')+
     (r.after&&r.after.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 후</span><button onclick="savePhotos('+r.id+',\'after\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.after.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'after\','+i+')">').join('')+'</div>':'');
+  // 길안내 (카카오내비 · 네이버지도)
+  const navBox=$('d-nav');
+  if(navBox){
+    navBox.innerHTML=
+      '<button onclick="goKakaoNavi('+id+')" style="flex:1;background:#FEE500;border:none;color:#191919;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">카카오내비</button>'
+     +'<button onclick="goNaverMap('+id+')" style="flex:1;background:#03C75A;border:none;color:#fff;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">네이버지도</button>';
+  }
   $('d-acts').innerHTML=
     (r.status==='미완료'
       ?'<button class="btn ok" onclick="setStatus('+id+',\'접수완료\')">✅ 접수완료</button><button class="btn sm" onclick="setStatus('+id+',\'없음\')">🚫 없음</button><button class="btn sm" onclick="setStatus('+id+',\'배송완료\')">📦 배송완료</button>'
@@ -2569,6 +2577,37 @@ function showDetail(id){
     '<button class="btn danger sm" onclick="delRec('+id+')">삭제</button>'+
     '<button class="btn sm" onclick="closeDetail()">닫기</button>';
   $('ov').classList.add('on');
+}
+// ── 길안내 ──
+function navName(r){
+  if(r.isApt){
+    let t=(r.aptName||'')+' '+(r.aptDong||'');
+    return t.trim()||r.jibun||'';
+  }
+  return r.road||r.jibun||'';
+}
+function goKakaoNavi(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  const nm=navName(r);
+  if(r.lat&&r.lng){
+    // 좌표가 있으면 그 자리로 바로
+    location.href='kakaonavi://navigate?name='+encodeURIComponent(nm)
+      +'&x='+r.lng+'&y='+r.lat+'&coord_type=wgs84';
+    setTimeout(()=>{ location.href='https://map.kakao.com/link/to/'
+      +encodeURIComponent(nm)+','+r.lat+','+r.lng; },1200);
+  }else{
+    location.href='https://map.kakao.com/link/search/'+encodeURIComponent(nm);
+  }
+}
+function goNaverMap(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  const nm=navName(r);
+  if(r.lat&&r.lng){
+    location.href='https://map.naver.com/p/directions/-/'+r.lng+','+r.lat+','
+      +encodeURIComponent(nm)+'/-/car';
+  }else{
+    location.href='https://map.naver.com/p/search/'+encodeURIComponent(nm);
+  }
 }
 // ── 현장 메모 ──
 function editNote(id){

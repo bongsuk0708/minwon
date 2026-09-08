@@ -325,7 +325,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v104</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v105</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -405,7 +405,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   </div>
   <div class="form-card">
   <div class="row2">
-    <div class="sec"><div class="lbl">접수일자 <span class="req">*</span></div><input type="date" id="f-date"></div>
+    <div class="sec"><div class="lbl"><span id="date-lbl2">방문일자</span> <span class="req">*</span></div><input type="date" id="f-date"></div>
     <div class="sec"><div class="lbl">연락처</div>
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:17px;font-weight:800;color:#33404F;padding:0 2px;white-space:nowrap">010 -</span>
@@ -463,12 +463,6 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
     <div style="display:flex;gap:7px">
       <input type="date" id="f-visit-d" style="flex:1.3" onchange="bookHint()">
       <input type="time" id="f-visit-t" step="600" style="flex:1" onchange="bookHint()">
-    </div>
-    <div class="type-row" style="margin-top:9px;flex-wrap:wrap;gap:6px">
-      <button type="button" class="type-btn" onclick="bookQuick('visit',0)" style="flex:none;padding:7px 11px;font-size:12.5px">오늘</button>
-      <button type="button" class="type-btn" onclick="bookQuick('visit',1)" style="flex:none;padding:7px 11px;font-size:12.5px">내일</button>
-      <button type="button" class="type-btn" onclick="bookQuick('visit',2)" style="flex:none;padding:7px 11px;font-size:12.5px">모레</button>
-      <button type="button" class="type-btn" onclick="bookClear()" style="flex:none;padding:7px 11px;font-size:12.5px">비우기</button>
     </div>
     <div id="book-hint" class="tip" style="margin-top:7px"></div>
   </div>
@@ -1286,7 +1280,7 @@ async function saveRec(){
   const c=await findCoord(r);
   const rec={
     id:Date.now(),by:myId,tp:pickTp(),own:curOwner,staff:curStaff,dt:gv('f-date'),
-    visitD:gv('f-visit-d'),visitT:gv('f-visit-t'),
+    visitD:(gv('f-visit-d')||(pickTp()==='g'?gv('f-date'):'')),visitT:gv('f-visit-t'),
     jibun:r.jibun,road:r.road,raw:addr,
     isApt:!!r.isApt,aptKey:r.aptKey||'',aptName:r.aptName||'',aptDong:r.aptDong||'',aptHo:r.aptHo||'',noDong:!!r.noDong,
     co:gv('f-co'),tel:fullTel(),
@@ -2345,10 +2339,10 @@ function drawPins(){
   if(!mapReady)return;
   markers.forEach(m=>m.setMap(null));markers=[];
   const seen={};
+  const pinIds=new Set(curRows().map(r=>r.id));   // 목록과 같은 조건으로
   recs.forEach(r=>{
-    if(r.del)return;                // 지운 건은 지도에 안 찍음
     if(!r.lat||!r.lng)return;
-    if(!ownerOk(r))return;          // 담당자 선택에 맞는 핀만
+    if(!pinIds.has(r.id))return;    // 목록에서 걸러진 것만 (기간·상태·예약만)
     if(mapTp&&r.tp!==mapTp)return;  // 지도에서 고른 구분만
     let la=r.lat,ln=r.lng;
     // 단지 기본 좌표로 찍힌 아파트는 동 번호에 따라 규칙적으로 배치
@@ -2587,6 +2581,7 @@ function groupHead(g){
 }
 function renderList(){
   const rows=curRows();
+  if(mapReady)setTimeout(drawPins,0);   // 지도도 같은 조건으로 다시
   const base=recs.filter(r=>!r.del&&ownerOk(r));   // 지운 건 뺀 담당자 범위
   const tot=base.length;
   const c=k=>base.filter(r=>r.status===k).length;

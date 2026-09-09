@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v91</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v92</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -644,6 +644,24 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
       <button onclick="estSave()" style="width:100%;padding:15px;border:none;border-radius:11px;background:#1B5CFF;color:#fff;font-size:17px;font-weight:800;font-family:inherit;cursor:pointer">견적 저장</button>
     </div>
   </div>
+</div>
+<div id="pb-ov" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:16px">
+  <div style="width:100%;max-width:430px;max-height:84vh;overflow:auto;background:#fff;border-radius:16px;padding:18px">
+    <div id="pb-title" style="font-size:18px;font-weight:800;color:#0F1622"></div>
+    <div style="display:flex;gap:9px;margin-top:12px">
+      <button onclick="shotPhoto('before')" style="flex:1;background:#B54708;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📷 처리 전</button>
+      <button onclick="shotPhoto('after')" style="flex:1;background:#0E7C55;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📸 처리 후</button>
+    </div>
+    <input type="file" id="shot-before" accept="image/*" capture="environment" multiple style="display:none" onchange="onShot('before',this)">
+    <input type="file" id="shot-after" accept="image/*" capture="environment" multiple style="display:none" onchange="onShot('after',this)">
+    <div id="pb-body"></div>
+    <button onclick="closePb()" style="width:100%;margin-top:16px;padding:13px;border:1.5px solid var(--line);border-radius:11px;background:#fff;font-size:15px;font-weight:700;font-family:inherit;color:var(--ink-2);cursor:pointer">닫기</button>
+  </div>
+</div>
+<div id="big-ov" onclick="closeBig(event)" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(15,22,34,.9);align-items:center;justify-content:center;padding:14px;flex-direction:column;gap:12px">
+  <img id="big-img" style="max-width:96vw;max-height:78vh;border-radius:12px;background:#fff">
+  <div id="big-cap" style="color:#fff;font-size:14px;font-weight:700"></div>
+  <button id="big-x" onclick="closeBig(event)" style="background:rgba(255,255,255,.16);border:none;color:#fff;border-radius:10px;padding:12px 24px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">닫기</button>
 </div>
 <div class="overlay" id="ov" onclick="closeDetail(event)">
   <div class="dbox">
@@ -1960,7 +1978,7 @@ window.addEventListener('popstate',()=>{
     return;
   }
   // 열려 있는 창이 있으면 닫기
-  const ovs=['est-ov','staff-ov','start-ov'];
+  const ovs=['big-ov','pb-ov','est-ov','staff-ov','start-ov'];
   for(const id of ovs){
     const e=$(id);
     if(e&&e.style.display==='flex'){ e.style.display='none'; if(id==='start-ov')startOpen=false; return; }
@@ -2544,7 +2562,8 @@ function renderList(){
   $('cbar').innerHTML=who+'<b>'+tot+'</b> &nbsp;·&nbsp; 미완료 <b>'+c('미완료')+'</b> &nbsp;·&nbsp; 접수완료 <b>'+(c('접수완료')+c('수거완료'))+'</b> &nbsp;·&nbsp; 없음 <b>'+c('없음')+'</b> &nbsp;·&nbsp; 배송완료 <b>'+c('배송완료')+'</b>';
   const lb=$('list-body');
   if(!rows.length){lb.innerHTML='<div class="empty">'+(listOwner?OWNER[listOwner]+' 접수가 없습니다.':'아직 접수한 건이 없습니다.<br>접수 탭에서 등록해 보세요.')+'</div>';return;}
-  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();shareRec('+r.id+')" style="font-size:12px;color:#8A6D00;font-weight:800;text-decoration:none">💬 카톡</a>'+'<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>';
+  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+photoStrip(r)+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();shareRec('+r.id+')" style="font-size:12px;color:#8A6D00;font-weight:800;text-decoration:none">💬 카톡</a>'+'<a href="javascript:void(0)" onclick="event.stopPropagation();openPhotoBox('+r.id+')" style="font-size:12px;color:#B54708;font-weight:800;text-decoration:none">📷 사진'+(((r.before||[]).length+(r.after||[]).length)?' '+((r.before||[]).length+(r.after||[]).length):'')+'</a>'+
+    '<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>';
   lb.innerHTML=groupRows(rows).map(g=>groupHead(g)+g.list.map(cardHtml).join('')).join('');
   if(selMode)$('cbar').innerHTML+=' &nbsp;·&nbsp; <b style="color:#1e6fd9">선택 '+selIds.size+'건</b>';
 }
@@ -2947,6 +2966,88 @@ function photoName(r,kind,i){
     : (r.jibun||'주소없음')).replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,'');
   const d=(r.dt||today()).replace(/-/g,'');
   return d+'_'+where+'_'+(kind==='before'?'처리전':'처리후')+(i+1)+'.jpg';
+}
+// 목록 카드에 붙는 작은 사진 줄
+function photoStrip(r){
+  const b=(r.before||[]),a=(r.after||[]);
+  if(!b.length&&!a.length)return '';
+  const one=(src,kind,i,tag,col)=>
+    '<div style="position:relative;flex:0 0 auto">'
+    +'<img src="'+src+'" onclick="event.stopPropagation();bigPhoto('+r.id+',\''+kind+'\','+i+')" '
+    +'style="width:74px;height:74px;object-fit:cover;border-radius:9px;border:1.5px solid #E3E7ED">'
+    +'<span style="position:absolute;left:3px;bottom:3px;background:'+col+';color:#fff;'
+    +'border-radius:5px;padding:1px 5px;font-size:10px;font-weight:800">'+tag+'</span></div>';
+  return '<div style="display:flex;gap:6px;overflow-x:auto;margin:6px 0 4px;padding-bottom:2px">'
+    + b.map((src,i)=>one(src,'before',i,'전','#B54708')).join('')
+    + a.map((src,i)=>one(src,'after',i,'후','#0E7C55')).join('')
+    + '</div>';
+}
+// [📷 사진] — 찍고 바로 올리고 바로 본다
+let pbId=null;
+function openPhotoBox(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  pbId=id;
+  const where=(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')):(r.jibun||''));
+  $('pb-title').textContent=where;
+  renderPb();
+  $('pb-ov').style.display='flex';
+}
+function renderPb(){
+  const r=recs.find(x=>x.id===pbId); if(!r)return;
+  const b=(r.before||[]),a=(r.after||[]);
+  const row=(arr,kind,tag,col)=>
+    '<div style="font-size:13px;font-weight:800;color:'+col+';margin:12px 0 6px">'+tag+' '+arr.length+'장</div>'
+    +'<div style="display:flex;gap:7px;flex-wrap:wrap">'
+    +arr.map((src,i)=>'<div style="position:relative">'
+      +'<img src="'+src+'" onclick="bigPhoto('+pbId+',\''+kind+'\','+i+')" style="width:92px;height:92px;object-fit:cover;border-radius:9px;border:1.5px solid #E3E7ED">'
+      +'<button onclick="rmPhoto(\''+kind+'\','+i+')" style="position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:#c62828;color:#fff;border:none;font-size:14px;font-weight:800;cursor:pointer">×</button>'
+      +'</div>').join('')
+    +'</div>';
+  $('pb-body').innerHTML=row(b,'before','처리 전','#B54708')+row(a,'after','처리 후','#0E7C55');
+}
+function shotPhoto(kind){ $('shot-'+kind).click(); }
+function onShot(kind,inp){
+  const r=recs.find(x=>x.id===pbId); if(!r){inp.value='';return;}
+  const files=Array.from(inp.files); inp.value='';
+  if(!files.length)return;
+  let left=files.length;
+  files.forEach(f=>{
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const cv=document.createElement('canvas');
+        const mx=800,sc=Math.min(1,mx/Math.max(img.width,img.height));
+        cv.width=img.width*sc;cv.height=img.height*sc;
+        cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        if(!r[kind])r[kind]=[];
+        r[kind].push(cv.toDataURL('image/jpeg',0.7));
+        if(--left===0){ save(); renderPb(); renderList(); }
+      };
+      img.src=e.target.result;
+    };
+    rd.readAsDataURL(f);
+  });
+}
+function rmPhoto(kind,i){
+  const r=recs.find(x=>x.id===pbId); if(!r)return;
+  if(!confirm('이 사진을 지울까요?'))return;
+  (r[kind]||[]).splice(i,1);
+  save(); renderPb(); renderList();
+}
+function closePb(){ $('pb-ov').style.display='none'; pbId=null; }
+// 사진 크게 보기
+function bigPhoto(id,kind,i){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  const arr=(kind==='before'?r.before:r.after)||[];
+  const src=arr[i]; if(!src)return;
+  $('big-img').src=src;
+  $('big-cap').textContent=(kind==='before'?'처리 전':'처리 후')+' '+(i+1)+'/'+arr.length;
+  $('big-ov').style.display='flex';
+}
+function closeBig(e){
+  if(e&&e.target&&e.target.id!=='big-ov'&&e.target.id!=='big-x')return;
+  $('big-ov').style.display='none';
 }
 function savePhoto(id,kind,i){
   const r=recs.find(x=>x.id===id);

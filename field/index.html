@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v95</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v97</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -2551,6 +2551,20 @@ function groupRows(rows){
     .sort((a,b)=>zoneOrder(a)-zoneOrder(b))
     .map(k=>({key:k,name:zoneName(k),list:g[k].sort(cmpAddr)}));
 }
+// 구분마다 상태를 부르는 이름이 다르다 (저장되는 값은 그대로)
+function stName(r){
+  const st=r.status||'미완료';
+  if(st==='접수완료'||st==='수거완료'){
+    if(r.tp==='m')return '처리완료';
+    if(r.tp==='t')return '수거완료';
+    return '접수완료';
+  }
+  if(st==='배송완료'){
+    if(r.tp==='c'||r.tp==='y')return '설치완료';
+    return '배송완료';
+  }
+  return st;
+}
 function groupHead(g){
   return '<div style="display:flex;align-items:center;gap:8px;margin:14px 2px 8px">'
     +'<span style="font-size:15px;font-weight:800;color:#0F1622">'+esc(g.name)+'</span>'
@@ -2570,7 +2584,7 @@ function renderList(){
     +who+'<b>'+tot+'</b> &nbsp;·&nbsp; 미완료 <b>'+c('미완료')+'</b> &nbsp;·&nbsp; 접수완료 <b>'+(c('접수완료')+c('수거완료'))+'</b> &nbsp;·&nbsp; 없음 <b>'+c('없음')+'</b> &nbsp;·&nbsp; 배송완료 <b>'+c('배송완료')+'</b>';
   const lb=$('list-body');
   if(!rows.length){lb.innerHTML='<div class="empty">'+(listOwner?OWNER[listOwner]+' 접수가 없습니다.':'아직 접수한 건이 없습니다.<br>접수 탭에서 등록해 보세요.')+'</div>';return;}
-  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+photoStrip(r)+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+r.status+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();shareRec('+r.id+')" style="font-size:12px;color:#8A6D00;font-weight:800;text-decoration:none">💬 카톡</a>'+'<a href="javascript:void(0)" onclick="event.stopPropagation();openPhotoBox('+r.id+')" style="font-size:12px;color:#B54708;font-weight:800;text-decoration:none">📷 사진'+(((r.before||[]).length+(r.after||[]).length)?' '+((r.before||[]).length+(r.after||[]).length):'')+'</a>'+
+  const cardHtml=r=>'<div class="card t-'+r.tp+'" onclick="'+(selMode?('toggleSel('+r.id+',event)'):('showDetail('+r.id+')'))+'"'+(selMode&&selIds.has(r.id)?' style="outline:2.5px solid #1e6fd9;outline-offset:-2px"':'')+'><div class="c-head">'+(selMode?'<span style="font-size:16px;margin-right:2px">'+(selIds.has(r.id)?'☑':'☐')+'</span>':'')+'<span class="badge b-'+r.tp+'">'+TN[r.tp]+'</span><span class="c-addr">'+(r.isApt?((r.aptName||'')+' '+(r.aptDong||'')+' '+(r.aptHo||'')).trim():r.jibun)+'</span><span class="c-date">'+fdate(r.dt)+' '+r.at+'</span></div>'+(r.staff?'<div style="margin:3px 0 5px"><span style="display:inline-block;background:#EEF3FB;color:#33506F;border-radius:6px;padding:2px 8px;font-size:11.5px;font-weight:800">✍ '+esc(r.staff)+' 접수</span></div>':'')+(r.note?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:#FFF4E6;color:#B54708;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📝 '+esc(r.note.length>40?r.note.slice(0,40)+'…':r.note)+'</span></div>':'')+(bookOf(r)?'<div style="margin:1px 0 6px"><span style="display:inline-block;background:'+bookBg(r)+';color:'+bookFg(r)+';border-radius:7px;padding:3px 9px;font-size:12px;font-weight:800">📅 '+esc(bookOf(r))+bookTag(r)+'</span></div>':'')+photoStrip(r)+'<div class="c-body" style="white-space:pre-line">'+((r.content&&r.content.trim())?esc(r.content.length>90?r.content.slice(0,90)+'…':r.content):(r.tp==='g'?'<a href="javascript:void(0)" onclick="event.stopPropagation();estOpen('+r.id+')" style="color:#B54708;font-weight:800;text-decoration:none">💰 견적 담기 — 눌러서 품목 선택</a>':'<span style="color:#b0b7c0">내용 없음</span>'))+'</div><div class="c-foot"><span class="badge '+(r.status==='완료'?'b-done':'b-wait')+'">'+stName(r)+'</span>'+(r.tel?'<a href="'+telHref(r.tel)+'" onclick="event.stopPropagation()" style="font-size:12px;color:#1B5CFF;font-weight:800;text-decoration:none;margin-left:2px">📞 '+esc(telShow(r.tel))+'</a>':'')+(r.lat?'<span style="font-size:11px;color:#2e7d32">📍 지도표시</span>':'<span style="font-size:11px;color:#bbb">좌표없음</span>')+'<a href="javascript:void(0)" onclick="event.stopPropagation();shareRec('+r.id+')" style="font-size:12px;color:#8A6D00;font-weight:800;text-decoration:none">💬 카톡</a>'+'<a href="javascript:void(0)" onclick="event.stopPropagation();openPhotoBox('+r.id+')" style="font-size:12px;color:#B54708;font-weight:800;text-decoration:none">📷 사진'+(((r.before||[]).length+(r.after||[]).length)?' '+((r.before||[]).length+(r.after||[]).length):'')+'</a>'+
     '<a href="javascript:void(0)" onclick="event.stopPropagation();editRec('+r.id+')" style="font-size:12px;color:#5a6572;font-weight:800;text-decoration:none">✏️ 수정</a>'+'</div></div>';
   lb.innerHTML=groupRows(rows).map(g=>groupHead(g)+g.list.map(cardHtml).join('')).join('');
   if(selMode)$('cbar').innerHTML+=' &nbsp;·&nbsp; <b style="color:#1e6fd9">선택 '+selIds.size+'건</b>';
@@ -2595,7 +2609,7 @@ function showDetail(id){
     (r.staff?'<div class="d-row"><span class="d-lbl">접수자</span><span class="d-val"><b>'+esc(r.staff)+'</b></span></div>':'')+
     (bookOf(r)?'<div class="d-row"><span class="d-lbl">예약</span><span class="d-val" style="color:#B54708;font-weight:800">'+esc(bookOf(r))+'</span></div>':'')+
     (r.result?'<div class="d-row"><span class="d-lbl">처리결과</span><span class="d-val">'+esc(r.result)+'</span></div>':'')+
-    '<div class="d-row"><span class="d-lbl">상태</span><span class="d-val"><span class="badge '+stInfo(r.status).cls+'">'+r.status+'</span>'+(r.doneAt?' <span style="font-size:12px;color:#888">'+r.doneAt+'</span>':'')+'</span></div>'+
+    '<div class="d-row"><span class="d-lbl">상태</span><span class="d-val"><span class="badge '+stInfo(r.status).cls+'">'+stName(r)+'</span>'+(r.doneAt?' <span style="font-size:12px;color:#888">'+r.doneAt+'</span>':'')+'</span></div>'+
     (r.note?'<div class="d-row"><span class="d-lbl">메모</span><span class="d-val" style="white-space:pre-line;color:#B54708;font-weight:700">'+esc(r.note)+'</span></div>':'')+
     (r.before&&r.before.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 전</span><button onclick="savePhotos('+r.id+',\'before\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.before.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'before\','+i+')">').join('')+'</div>':'')+
     (r.after&&r.after.length?'<div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 5px"><span style="font-size:12px;color:#888;font-weight:700">처리 후</span><button onclick="savePhotos('+r.id+',\'after\')" style="background:#fff;border:1.5px solid #d7dee8;color:#5a6572;border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">⬇ 사진 저장</button></div><div class="pv">'+r.after.map((s,i)=>'<img src="'+s+'" onclick="savePhoto('+r.id+',\'after\','+i+')">').join('')+'</div>':'');
@@ -2606,9 +2620,19 @@ function showDetail(id){
       '<button onclick="goKakaoNavi('+id+')" style="flex:1;background:#FEE500;border:none;color:#191919;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">카카오내비</button>'
      +'<button onclick="goNaverMap('+id+')" style="flex:1;background:#03C75A;border:none;color:#fff;border-radius:11px;padding:13px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">네이버지도</button>';
   }
+  // 구분마다 끝내는 버튼이 다르다
+  //   견적 → 접수완료 / 민원 → 처리완료 / 특수마대 → 수거완료 (모두 '접수완료'로 저장)
+  //   공동용기·용기 → 설치완료 ('배송완료'로 저장)
+  let doneBtn;
+  if(r.tp==='c'||r.tp==='y'){
+    doneBtn='<button class="btn ok" onclick="setStatus('+id+',\'배송완료\')">📦 설치완료</button>';
+  }else{
+    const nm=(r.tp==='m')?'처리완료':(r.tp==='t')?'수거완료':'접수완료';
+    doneBtn='<button class="btn ok" onclick="setStatus('+id+',\'접수완료\')">✅ '+nm+'</button>';
+  }
   $('d-acts').innerHTML=
     (r.status==='미완료'
-      ?'<button class="btn ok" onclick="setStatus('+id+',\'접수완료\')">✅ 접수완료</button><button class="btn sm" onclick="setStatus('+id+',\'없음\')">🚫 없음</button><button class="btn sm" onclick="setStatus('+id+',\'배송완료\')">📦 배송완료</button>'
+      ? doneBtn+'<button class="btn sm" onclick="setStatus('+id+',\'없음\')">🚫 없음</button>'
       :'<button class="btn sm" onclick="setStatus('+id+',\'미완료\')">↩ 미완료로</button>')+
     '<button class="btn sm" onclick="editNote('+id+')">📝 '+(r.note?'메모 수정':'메모')+'</button>'+
     '<button class="btn danger sm" onclick="delRec('+id+')">삭제</button>'+

@@ -1,6 +1,6 @@
 // 계근 전표 입력 - 서비스워커
 // 네트워크 우선. 수정한 화면이 바로 반영되고, 오프라인일 때만 저장본을 씁니다.
-const CACHE = 'gyegeun-v7';
+const CACHE = 'gyegeun-v8';
 const SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e=>{

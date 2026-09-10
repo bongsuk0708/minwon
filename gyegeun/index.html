@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#14171C">
 <title>계근 전표 입력</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="계근전표">
 <style>
 :root{
   --bg:#14171C; --card:#1E232B; --card2:#262C36; --line:#333B47;
@@ -583,6 +589,13 @@ document.querySelector('nav').onclick = e=>{
   $('#dock').style.display = b.dataset.p==='in' ? 'block':'none';
   if(b.dataset.p==='li') drawList();
 };
+
+/* ================= 서비스워커 ================= */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 
 /* ================= 시작 ================= */
 drawVeh(); drawFil(); initForm(); drawList(); drawNet();

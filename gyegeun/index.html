@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14171C">
+<title>계근 전표 입력</title>
+<style>
+:root{
+  --bg:#14171C; --card:#1E232B; --card2:#262C36; --line:#333B47;
+  --tx:#E8ECF1; --dim:#8D98A7; --amber:#F2A93B; --ok:#4FB477; --bad:#E4574A;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--tx)}
+body{
+  font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:16px;line-height:1.5;padding-bottom:96px;
+  -webkit-user-select:none;user-select:none;
+}
+input,select,textarea{font-family:inherit;-webkit-user-select:text;user-select:text}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- 상단 ---------- */
+header{
+  position:sticky;top:0;z-index:20;background:rgba(20,23,28,.94);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  display:flex;align-items:center;gap:12px;
+}
+.veh{display:flex;align-items:baseline;gap:8px;flex:1;min-width:0}
+.veh b{font-size:26px;font-weight:800;letter-spacing:.5px;color:var(--amber)}
+.veh span{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.net{font-size:12px;padding:4px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.net.on{color:var(--ok);border-color:rgba(79,180,119,.45)}
+.net.off{color:var(--bad);border-color:rgba(228,87,74,.45)}
+
+/* ---------- 탭 ---------- */
+nav{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;background:var(--bg)}
+nav button{
+  flex:1;background:none;border:none;color:var(--dim);font-size:15px;font-weight:600;
+  padding:13px 0;cursor:pointer;border-bottom:2px solid transparent;
+}
+nav button.sel{color:var(--tx);border-bottom-color:var(--amber)}
+
+main{padding:16px}
+.pane{display:none}.pane.sel{display:block}
+
+/* ---------- 공통 ---------- */
+.lbl{font-size:13px;color:var(--dim);margin:20px 0 8px;font-weight:600}
+.lbl:first-child{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{
+  background:var(--card);border:1px solid var(--line);color:var(--tx);
+  padding:11px 15px;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;
+}
+.chip.sel{background:var(--amber);border-color:var(--amber);color:#14171C}
+.chip.sm{padding:8px 12px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+
+input[type=text],input[type=number],input[type=date],input[type=url],select{
+  width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;
+  color:var(--tx);padding:13px 14px;font-size:16px;outline:none;
+}
+input:focus,select:focus{border-color:var(--amber)}
+input[type=number]{font-variant-numeric:tabular-nums}
+
+.btn{
+  width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);
+  padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;
+}
+.btn.go{background:var(--amber);border-color:var(--amber);color:#14171C}
+.btn.gh{background:none;color:var(--dim)}
+.btn:disabled{opacity:.4}
+
+/* ---------- 사진 ---------- */
+.shot{
+  border:2px dashed var(--line);border-radius:var(--r);padding:28px 16px;text-align:center;
+  color:var(--dim);font-size:15px;font-weight:600;cursor:pointer;background:var(--card);
+}
+.shot.has{padding:0;border-style:solid;overflow:hidden;position:relative}
+.shot img{width:100%;display:block;max-height:270px;object-fit:cover}
+.shot .re{
+  position:absolute;right:10px;bottom:10px;background:rgba(20,23,28,.85);
+  border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--tx)
+}
+
+/* ---------- 전표 행 ---------- */
+.slip{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px}
+.slip .top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.slip .no{
+  width:27px;height:27px;border-radius:8px;background:var(--card2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--amber);flex-shrink:0
+}
+.slip .site{flex:1;font-size:14px;color:var(--dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slip .tog{background:none;border:none;color:var(--dim);font-size:13px;padding:4px 6px;cursor:pointer;flex-shrink:0}
+.wt{position:relative}
+.wt input{font-size:30px;font-weight:800;padding:12px 52px 12px 14px;text-align:right;letter-spacing:-.5px}
+.wt .kg{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:15px;font-weight:700;pointer-events:none}
+.more{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);display:none}
+.more.open{display:block}
+.two{display:flex;gap:9px}.two>div{flex:1}
+.mini{font-size:12px;color:var(--dim);margin-bottom:5px;display:block}
+.calc{margin-top:9px;font-size:13px;font-weight:700}
+.calc.ok{color:var(--ok)}.calc.bad{color:var(--bad)}
+
+/* ---------- 하단 고정 ---------- */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:25;background:rgba(20,23,28,.96);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);
+  padding:12px 16px calc(env(safe-area-inset-bottom) + 12px);
+}
+.sum{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:9px}
+.sum b{color:var(--tx);font-size:15px}
+
+/* ---------- 목록 ---------- */
+.rec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;display:flex;gap:11px;align-items:center}
+.rec .m{flex:1;min-width:0}
+.rec .m .a{font-size:15px;font-weight:700}
+.rec .m .b{font-size:12.5px;color:var(--dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rec .w{font-size:19px;font-weight:800;white-space:nowrap}
+.rec .q{font-size:11px;color:var(--amber);border:1px solid rgba(242,169,59,.4);border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.rec .th{width:44px;height:44px;border-radius:9px;object-fit:cover;flex-shrink:0;border:1px solid var(--line)}
+.tot{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.tot b{font-size:23px;font-weight:800;color:var(--amber)}
+.empty{text-align:center;color:var(--dim);padding:52px 20px;font-size:15px}
+
+.toast{
+  position:fixed;left:16px;right:16px;bottom:112px;z-index:60;background:var(--card2);
+  border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;
+  opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none;text-align:center;
+}
+.toast.on{opacity:1;transform:none}
+.toast.good{border-color:rgba(79,180,119,.5);color:var(--ok)}
+.toast.err{border-color:rgba(228,87,74,.5);color:var(--bad)}
+.hint{font-size:12.5px;color:var(--dim);line-height:1.65;margin-top:8px}
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+.viewer.on{display:flex}
+.viewer img{max-width:100%;max-height:100%;object-fit:contain}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="veh"><b id="hVeh">—</b><span id="hSeong">차량을 먼저 정하세요</span></div>
+  <div class="net" id="hNet">확인 중</div>
+</header>
+
+<nav>
+  <button class="sel" data-p="in">입력</button>
+  <button data-p="li">목록</button>
+  <button data-p="st">설정</button>
+</nav>
+
+<main>
+
+<!-- ============ 입력 ============ -->
+<section class="pane sel" id="p-in">
+  <div class="lbl">계근일</div>
+  <div class="two">
+    <input type="date" id="fDate">
+    <button class="chip" id="bYest" style="flex:0 0 auto">어제</button>
+  </div>
+
+  <div class="lbl">성상</div>
+  <div class="chips" id="fSeong"></div>
+
+  <div class="lbl">반입처</div>
+  <div class="chips" id="fSite"></div>
+  <input type="text" id="fSiteEtc" placeholder="시설명 직접 입력" style="display:none;margin-top:8px">
+
+  <div class="lbl">전표 사진</div>
+  <div class="shot" id="fShot">전표를 펼쳐놓고 촬영</div>
+  <input type="file" id="fFile" accept="image/*" capture="environment" style="display:none">
+
+  <div class="lbl">전표 몇 장</div>
+  <div class="chips" id="fCnt"></div>
+
+  <div class="lbl">실중량</div>
+  <div id="fSlips"></div>
+
+  <div style="height:8px"></div>
+</section>
+
+<!-- ============ 목록 ============ -->
+<section class="pane" id="p-li">
+  <div class="chips" id="lFil"></div>
+  <div style="height:14px"></div>
+  <div class="tot"><span>합계</span><b id="lTot" class="num">0 kg</b></div>
+  <div id="lList"></div>
+  <div style="height:12px"></div>
+  <button class="btn" id="bCsv">엑셀용 CSV 내려받기</button>
+  <div class="hint">사무실 대장 시트에 붙여넣는 파일입니다.</div>
+</section>
+
+<!-- ============ 설정 ============ -->
+<section class="pane" id="p-st">
+  <div class="lbl">내 차량</div>
+  <div class="chips" id="sVeh"></div>
+  <input type="text" id="sVehEtc" placeholder="목록에 없으면 끝 4자리 입력" style="margin-top:9px">
+  <div class="hint">한 번 정하면 이 폰에 저장됩니다. 성상과 반입처도 이 차량 기준으로 미리 선택됩니다.</div>
+
+  <div class="lbl">서버 주소</div>
+  <input type="url" id="sDb" placeholder="https://xxx.firebasedatabase.app">
+  <div class="hint">Firebase 실시간 데이터베이스 주소입니다. 비워두면 폰에만 저장되고 사무실로 전송되지 않습니다.</div>
+
+  <div class="lbl">전송 대기</div>
+  <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:14px;color:var(--dim)">아직 못 보낸 건</span>
+    <b id="sQ" class="num" style="font-size:20px">0</b>
+  </div>
+  <button class="btn" id="bSync">지금 전송</button>
+
+  <div class="lbl">앱</div>
+  <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
+  <div class="hint">v1 · 계근 전표 입력 · 본에코</div>
+  <div style="height:20px"></div>
+</section>
+
+</main>
+
+<div class="dock" id="dock">
+  <div class="sum"><span id="dCnt">전표 0장</span><b id="dSum" class="num">0 kg</b></div>
+  <button class="btn go" id="bSave">저장</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="viewer" id="viewer"><img id="viewerImg" alt=""></div>
+
+<script>
+/* ================= 기준 데이터 ================= */
+const SEONG = ['생활','음식물','재활용','대형','기타'];
+
+// 차량 → 기본 성상 / 기본 반입처
+const CARS = {
+  '7201':{s:'생활',  d:'자원순환공원'},
+  '2759':{s:'생활',  d:'자원순환공원'},
+  '3587':{s:'생활',  d:'강남자원회수시설'},
+  '4359':{s:'생활',  d:'강남자원회수시설'},
+  '9033':{s:'음식물',d:'자원순환공원'},
+  '8078':{s:'음식물',d:'자원순환공원'},
+  '4985':{s:'재활용',d:'자원순환공원'},
+  '2350':{s:'재활용',d:'자원순환공원'},
+  '4980':{s:'재활용',d:'자원순환공원'},
+  '1351':{s:'재활용',d:'자원순환공원'},
+  '5635':{s:'재활용',d:'자원순환공원'},
+  '1286':{s:'대형',  d:'자원순환공원'},
+  '4830':{s:'대형',  d:'자원순환공원'},
+  '4968':{s:'대형',  d:'자원순환공원'}
+};
+const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍','기타'];
+
+/* ================= 저장소 ================= */
+const LS = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+let cfg  = LS.get('gg_cfg',{veh:'',db:''});
+let recs = LS.get('gg_recs',[]);   // {id,date,veh,seong,site,weight,gross,tare,batch,sent}
+let pics = LS.get('gg_pics',{});   // batchId -> dataURL
+
+const saveAll = ()=>{ LS.set('gg_cfg',cfg); LS.set('gg_recs',recs); LS.set('gg_pics',pics); };
+const $ = s=>document.querySelector(s);
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const comma = n=> (n||0).toLocaleString('ko-KR');
+
+function toast(msg,kind){
+  const t=$('#toast'); t.textContent=msg; t.className='toast on '+(kind||'');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400);
+}
+
+/* ================= 입력 폼 상태 ================= */
+let form = { date:'', seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
+
+function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
+function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+
+function initForm(){
+  const c = CARS[cfg.veh] || {s:'생활',d:'자원순환공원'};
+  form = { date:today(), seong:c.s, site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
+  $('#fDate').value = form.date;
+  $('#fSiteEtc').value='';
+  drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
+}
+
+function drawSeong(){
+  $('#fSeong').innerHTML = SEONG.map(s=>
+    `<button class="chip${s===form.seong?' sel':''}" data-s="${s}">${s}</button>`).join('');
+}
+function drawSite(){
+  $('#fSite').innerHTML = SITES.map(s=>
+    `<button class="chip${s===form.site?' sel':''}" data-t="${s}">${s}</button>`).join('');
+  $('#fSiteEtc').style.display = form.site==='기타' ? 'block':'none';
+}
+function drawCnt(){
+  let h='';
+  for(let i=1;i<=8;i++) h+=`<button class="chip${i===form.cnt?' sel':''}" data-c="${i}">${i}</button>`;
+  $('#fCnt').innerHTML=h;
+}
+function drawShot(){
+  const el=$('#fShot');
+  if(form.photo){
+    el.className='shot has';
+    el.innerHTML=`<img src="${form.photo}" alt="전표 사진"><div class="re">다시 찍기</div>`;
+  }else{
+    el.className='shot';
+    el.textContent='전표를 펼쳐놓고 촬영';
+  }
+}
+function siteName(){ return form.site==='기타' ? (form.etc.trim()||'기타') : form.site; }
+
+function drawSlips(){
+  $('#fSlips').innerHTML = form.rows.map((r,i)=>{
+    const s = r.site || siteName();
+    return `<div class="slip" data-i="${i}">
+      <div class="top">
+        <div class="no num">${i+1}</div>
+        <div class="site">${s}</div>
+        <button class="tog">${r.open?'접기':'다르면 수정'}</button>
+      </div>
+      <div class="wt">
+        <input type="number" inputmode="numeric" class="w" placeholder="0" value="${r.w}">
+        <span class="kg">kg</span>
+      </div>
+      <div class="more${r.open?' open':''}">
+        <span class="mini">이 전표만 반입처가 다를 때</span>
+        <select class="ss">
+          <option value="">${siteName()} (기본)</option>
+          ${SITES.filter(x=>x!=='기타').map(x=>`<option value="${x}"${r.site===x?' selected':''}>${x}</option>`).join('')}
+        </select>
+        <div class="two" style="margin-top:10px">
+          <div><span class="mini">총중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
+          <div><span class="mini">차중량(공차)</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
+        </div>
+        <div class="calc ${calcCls(r)}">${calcTxt(r)}</div>
+      </div>
+    </div>`;
+  }).join('');
+  updateDock();
+}
+function calcCls(r){
+  const g=+r.g,t=+r.t,w=+r.w;
+  if(!g||!t) return '';
+  return (g-t)===w ? 'ok':'bad';
+}
+function calcTxt(r){
+  const g=+r.g,t=+r.t,w=+r.w;
+  if(!g||!t) return '총중량과 차중량을 넣으면 실중량을 검산합니다';
+  const d=g-t;
+  if(!w) return `실중량 ${comma(d)} kg — 위 칸에 넣으려면 눌러서 입력`;
+  return d===w ? `검산 맞음 · ${comma(g)} − ${comma(t)} = ${comma(d)}`
+               : `안 맞음 · ${comma(g)} − ${comma(t)} = ${comma(d)} (입력값 ${comma(w)})`;
+}
+function updateDock(){
+  const n = form.rows.filter(r=>+r.w>0).length;
+  const s = form.rows.reduce((a,r)=>a+(+r.w||0),0);
+  $('#dCnt').textContent = `전표 ${n}장`;
+  $('#dSum').textContent = comma(s)+' kg';
+  $('#bSave').disabled = n===0 || !cfg.veh;
+}
+
+/* ================= 입력 이벤트 ================= */
+$('#fDate').onchange = e=> form.date=e.target.value;
+$('#bYest').onclick = ()=>{ form.date=yesterday(); $('#fDate').value=form.date; };
+
+$('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
+$('#fSite').onclick  = e=>{ const b=e.target.closest('[data-t]'); if(!b)return; form.site=b.dataset.t; drawSite(); drawSlips(); };
+$('#fSiteEtc').oninput = e=>{ form.etc=e.target.value; drawSlips(); };
+
+$('#fCnt').onclick = e=>{
+  const b=e.target.closest('[data-c]'); if(!b)return;
+  const n=+b.dataset.c; form.cnt=n;
+  while(form.rows.length<n) form.rows.push({w:'',g:'',t:'',site:'',open:false});
+  form.rows.length=n;
+  drawCnt(); drawSlips();
+};
+
+$('#fShot').onclick = ()=> $('#fFile').click();
+$('#fFile').onchange = e=>{
+  const f=e.target.files[0]; if(!f) return;
+  shrink(f, url=>{ form.photo=url; drawShot(); });
+  e.target.value='';
+};
+function shrink(file,cb){
+  const img=new Image(), rd=new FileReader();
+  rd.onload=()=>{ img.onload=()=>{
+    const max=1500, sc=Math.min(1,max/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');
+    c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',0.55));
+  }; img.src=rd.result; };
+  rd.readAsDataURL(file);
+}
+
+$('#fSlips').addEventListener('input', e=>{
+  const box=e.target.closest('.slip'); if(!box) return;
+  const r=form.rows[+box.dataset.i];
+  if(e.target.classList.contains('w')) r.w=e.target.value;
+  if(e.target.classList.contains('g')) r.g=e.target.value;
+  if(e.target.classList.contains('t')) r.t=e.target.value;
+  const c=box.querySelector('.calc'); if(c){ c.textContent=calcTxt(r); c.className='calc '+calcCls(r); }
+  updateDock();
+});
+$('#fSlips').addEventListener('change', e=>{
+  const box=e.target.closest('.slip'); if(!box) return;
+  if(e.target.classList.contains('ss')){
+    form.rows[+box.dataset.i].site=e.target.value;
+    box.querySelector('.site').textContent = e.target.value || siteName();
+  }
+});
+$('#fSlips').addEventListener('click', e=>{
+  if(!e.target.classList.contains('tog')) return;
+  const box=e.target.closest('.slip'), r=form.rows[+box.dataset.i];
+  r.open=!r.open; drawSlips();
+});
+
+/* ================= 저장 ================= */
+$('#bSave').onclick = ()=>{
+  if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
+  const rows = form.rows.filter(r=>+r.w>0);
+  if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
+
+  const bad = rows.find(r=> +r.g && +r.t && (+r.g - +r.t)!== +r.w);
+  if(bad && !confirm('검산이 맞지 않는 전표가 있습니다. 그대로 저장할까요?')) return;
+
+  const batch=uid();
+  if(form.photo){ pics[batch]=form.photo; }
+  rows.forEach(r=>{
+    recs.push({
+      id:uid(), date:form.date, veh:cfg.veh, seong:form.seong,
+      site: r.site || siteName(),
+      weight:+r.w, gross:+r.g||null, tare:+r.t||null,
+      batch: form.photo?batch:null, at:Date.now(), sent:false
+    });
+  });
+  saveAll();
+  toast(`전표 ${rows.length}장 저장`, 'good');
+  initForm();
+  push();
+  drawList();
+};
+
+/* ================= 전송 ================= */
+function pending(){ return recs.filter(r=>!r.sent); }
+function online(){ return navigator.onLine; }
+
+function drawNet(){
+  const q=pending().length, el=$('#hNet');
+  if(!cfg.db){ el.className='net'; el.textContent='폰 저장만'; }
+  else if(!online()){ el.className='net off'; el.textContent=`오프라인 ${q?'· '+q:''}`; }
+  else if(q){ el.className='net'; el.textContent=`대기 ${q}`; }
+  else { el.className='net on'; el.textContent='전송됨'; }
+  $('#sQ').textContent=q;
+}
+
+async function push(){
+  if(!cfg.db || !online()) { drawNet(); return; }
+  const base = cfg.db.replace(/\/+$/,'');
+  const list = pending();
+  if(!list.length){ drawNet(); return; }
+  let done=0;
+  for(const r of list){
+    try{
+      const res = await fetch(`${base}/gyegeun/records/${r.id}.json`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          date:r.date, veh:r.veh, seong:r.seong, site:r.site,
+          weight:r.weight, gross:r.gross, tare:r.tare, batch:r.batch, at:r.at
+        })
+      });
+      if(!res.ok) throw new Error(res.status);
+      if(r.batch && pics[r.batch]){
+        await fetch(`${base}/gyegeun/photos/${r.batch}.json`, {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(pics[r.batch])
+        });
+      }
+      r.sent=true; done++;
+    }catch(e){ break; }
+  }
+  saveAll(); drawNet(); drawList();
+  if(done) toast(`${done}건 전송 완료`,'good');
+  else if(list.length) toast('전송 실패 — 나중에 다시 시도합니다','err');
+}
+$('#bSync').onclick = ()=>{
+  if(!cfg.db){ toast('서버 주소를 먼저 넣으세요','err'); return; }
+  if(!online()){ toast('오프라인입니다','err'); return; }
+  push();
+};
+window.addEventListener('online', ()=>{ drawNet(); push(); });
+window.addEventListener('offline', drawNet);
+
+/* ================= 목록 ================= */
+let fil='today';
+function drawFil(){
+  const F=[['today','오늘'],['7','최근7일'],['month','이번달'],['all','전체']];
+  $('#lFil').innerHTML = F.map(([k,t])=>`<button class="chip sm${k===fil?' sel':''}" data-f="${k}">${t}</button>`).join('');
+}
+$('#lFil').onclick = e=>{ const b=e.target.closest('[data-f]'); if(!b)return; fil=b.dataset.f; drawFil(); drawList(); };
+
+function inRange(d){
+  const t=today();
+  if(fil==='all') return true;
+  if(fil==='today') return d===t;
+  if(fil==='month') return d.slice(0,7)===t.slice(0,7);
+  const lim=new Date(); lim.setDate(lim.getDate()-6);
+  return d >= lim.toISOString().slice(0,10);
+}
+function drawList(){
+  const list = recs.filter(r=>inRange(r.date)).sort((a,b)=>b.at-a.at);
+  $('#lTot').textContent = comma(list.reduce((a,r)=>a+r.weight,0))+' kg';
+  if(!list.length){ $('#lList').innerHTML='<div class="empty">아직 올린 전표가 없습니다.</div>'; return; }
+  $('#lList').innerHTML = list.map(r=>{
+    const p = r.batch && pics[r.batch];
+    return `<div class="rec" data-id="${r.id}">
+      ${p?`<img class="th" src="${p}" alt="전표" data-pic="${r.batch}">`:''}
+      <div class="m">
+        <div class="a">${r.seong} · ${r.site}${r.sent?'':'<span class="q">대기</span>'}</div>
+        <div class="b num">${r.date.slice(5).replace('-','/')} · ${r.veh}</div>
+      </div>
+      <div class="w num">${comma(r.weight)}</div>
+    </div>`;
+  }).join('');
+}
+$('#lList').onclick = e=>{
+  const pic=e.target.dataset.pic;
+  if(pic){ $('#viewerImg').src=pics[pic]; $('#viewer').classList.add('on'); return; }
+  const box=e.target.closest('.rec'); if(!box) return;
+  const r=recs.find(x=>x.id===box.dataset.id); if(!r) return;
+  if(confirm(`${r.date} ${r.seong} ${comma(r.weight)}kg — 삭제할까요?`)){
+    recs=recs.filter(x=>x.id!==r.id); saveAll(); drawList(); drawNet();
+    toast('삭제했습니다');
+  }
+};
+$('#viewer').onclick = ()=> $('#viewer').classList.remove('on');
+
+/* ================= CSV ================= */
+$('#bCsv').onclick = ()=>{
+  const list = recs.filter(r=>inRange(r.date)).sort((a,b)=> a.date.localeCompare(b.date)||a.at-b.at);
+  if(!list.length){ toast('내려받을 기록이 없습니다','err'); return; }
+  const head='날짜,차량번호,성상,반입처,실중량,총중량,차중량';
+  const body=list.map(r=>[r.date,r.veh,r.seong,r.site,r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`계근대장_${cfg.veh||'전체'}_${today()}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ================= 설정 ================= */
+function drawVeh(){
+  $('#sVeh').innerHTML = Object.keys(CARS).map(v=>
+    `<button class="chip${v===cfg.veh?' sel':''}" data-v="${v}">${v}</button>`).join('');
+  const c=CARS[cfg.veh];
+  $('#hVeh').textContent = cfg.veh||'—';
+  $('#hSeong').textContent = cfg.veh ? (c?`${c.s} · ${c.d}`:'직접 입력한 차량') : '차량을 먼저 정하세요';
+  $('#sDb').value = cfg.db||'';
+}
+$('#sVeh').onclick = e=>{
+  const b=e.target.closest('[data-v]'); if(!b)return;
+  cfg.veh=b.dataset.v; $('#sVehEtc').value='';
+  saveAll(); drawVeh(); initForm(); toast(`${cfg.veh} 차량으로 설정`,'good');
+};
+$('#sVehEtc').onchange = e=>{
+  const v=e.target.value.trim(); if(!v) return;
+  cfg.veh=v; saveAll(); drawVeh(); initForm(); toast(`${v} 차량으로 설정`,'good');
+};
+$('#sDb').onchange = e=>{ cfg.db=e.target.value.trim(); saveAll(); drawNet(); push(); };
+$('#bWipe').onclick = ()=>{
+  if(!confirm('이 폰에 저장된 기록과 사진을 모두 지웁니다. 전송하지 않은 건은 복구할 수 없습니다.')) return;
+  recs=[]; pics={}; saveAll(); drawList(); drawNet(); toast('모두 지웠습니다');
+};
+
+/* ================= 탭 ================= */
+document.querySelector('nav').onclick = e=>{
+  const b=e.target.closest('[data-p]'); if(!b)return;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('sel',x===b));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.toggle('sel',x.id==='p-'+b.dataset.p));
+  $('#dock').style.display = b.dataset.p==='in' ? 'block':'none';
+  if(b.dataset.p==='li') drawList();
+};
+
+/* ================= 시작 ================= */
+drawVeh(); drawFil(); initForm(); drawList(); drawNet();
+if(cfg.db) push();
+</script>
+</body>
+</html>

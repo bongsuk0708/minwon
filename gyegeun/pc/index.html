@@ -178,7 +178,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 
 <script>
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
-const SEONG = ['생활','음식물','재활용','대형','기타'];
+const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
 const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍'];
 const CARS = {
   '7201':{s:'생활',  d:'자원순환공원'},
@@ -188,11 +188,13 @@ const CARS = {
   '9033':{s:'음식물',d:'자원순환공원'},
   '8078':{s:'음식물',d:'자원순환공원'},
   '2350':{s:'재활용',d:'자원순환공원'},
+  '7657':{s:'재활용',d:'자원순환공원'},
   '1351':{s:'재활용',d:'자원순환공원'},
   '8686':{s:'대형',  d:'자원순환공원'},
   '8666':{s:'대형',  d:'자원순환공원'},
   '1286':{s:'',      d:'자원순환공원'},
   '5635':{s:'',      d:'자원순환공원'},
+  '7507':{s:'',      d:'자원순환공원'},
   '6110':{s:'',      d:'자원순환공원'}
 };
 
@@ -277,7 +279,7 @@ function render(){
   </table>` : '';
 
   $('#list').innerHTML = rows.length ? `<table>
-    <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">총중량</th><th class="r">차중량</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">1차</th><th class="r">2차</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...rows].reverse().map(r=>`<tr>
       <td class="num">${r.date.slice(5).replace('-','/')}</td>
       <td class="veh num">${r.veh}</td>
@@ -414,7 +416,7 @@ $('#bReload').onclick = load;
 $('#bCsv').onclick = ()=>{
   const rows=picked();
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,차량번호,성상,반입처,실중량,총중량,차중량';
+  const head='날짜,차량번호,성상,반입처,실중량,1차중량,2차중량';
   const body=rows.map(r=>[r.date,r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');

@@ -440,16 +440,18 @@ function ePreview(){
 }
 function eInit(){
   $('#eDate').value = today();
-  $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option value="${v}">${v} · ${CARS[v].f||''}</option>`).join('');
-  $('#eSeong').innerHTML = SEONG.map(s=>`<option>${s}</option>`).join('');
+  $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option value="${v}">${v}</option>`).join('');
+  $('#eSeong').innerHTML = '<option value="">— 성상을 고르세요 —</option>'+SEONG.map(s=>`<option>${s}</option>`).join('');
   $('#eSite').innerHTML = SITES.map(s=>`<option>${s}</option>`).join('');
   eSync(); ePreview();
 }
 function eSync(){
   const c=CARS[$('#eVeh').value];
   if(!c) return;
-  if(c.s) $('#eSeong').value=c.s;
-  $('#eSite').value=c.d;
+  $('#eSeong').value = c.s || '';
+  $('#eSite').value = c.d;
+  const sel=$('#eSeong');
+  sel.style.borderColor = c.s ? '' : 'var(--acc)';
 }
 $('#bToggle').onclick = ()=>{
   const el=$('#entry'), on=el.classList.toggle('on');
@@ -464,6 +466,7 @@ $('#eSave').onclick = async ()=>{
   if(!nums.length){ toast('실중량을 입력하세요','err'); return; }
   const date=$('#eDate').value, veh=$('#eVeh').value, seong=$('#eSeong').value, site=$('#eSite').value;
   if(!date){ toast('계근일을 정하세요','err'); return; }
+  if(!seong){ toast('성상을 고르세요','err'); $('#eSeong').focus(); return; }
   if(!confirm(`${date} · ${veh} · ${seong} · ${site}\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b,0))} kg)\n\n저장할까요?`)) return;
   $('#eSave').disabled=true; $('#eSave').textContent='저장 중';
   let ok=0;

@@ -76,6 +76,18 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .epv{font-size:14px;color:var(--dim)}
 .epv b{color:var(--tx);font-size:16px}
 .ehint{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.7}
+/* ---------- 수정 창 ---------- */
+.modal{position:fixed;inset:0;background:rgba(24,28,34,.55);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(460px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22)}
+.mbox h3{margin:0 0 4px;font-size:17px;font-weight:800}
+.mbox .sub{font-size:12.5px;color:var(--dim);margin-bottom:18px}
+.mf{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.mf label{font-size:12px;color:var(--dim);font-weight:700}
+.mf input,.mf select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:10px 12px;border-radius:9px;outline:none;font-size:15px;width:100%}
+.mf input:focus,.mf select:focus{border-color:var(--acc)}
+.mf input.w{font-size:22px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.mfoot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 .empty{text-align:center;color:var(--dim);padding:60px 20px}
 .msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
 .msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
@@ -171,6 +183,22 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
   <div class="vstage" id="vStage">
     <img id="vImg" alt="전표 사진">
     <div class="vhint">휠로 확대 · 끌어서 이동 · 두 번 누르면 원래대로 · Esc 닫기</div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h3>전표 수정</h3>
+    <div class="sub" id="mSub"></div>
+    <div class="mf"><label>계근일</label><input type="date" id="mDate"></div>
+    <div class="mf"><label>차량</label><select id="mVeh"></select></div>
+    <div class="mf"><label>성상</label><select id="mSeong"></select></div>
+    <div class="mf"><label>반입처</label><select id="mSite"></select></div>
+    <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
+    <div class="mfoot">
+      <button class="chip" id="mCancel">취소</button>
+      <button class="go" id="mSave">저장</button>
+    </div>
   </div>
 </div>
 
@@ -370,20 +398,46 @@ window.addEventListener('keydown', e=>{
 window.addEventListener('resize', ()=>{ if($('#viewer').classList.contains('on')) fit(); });
 
 /* ---------- 수정 / 삭제 ---------- */
-async function edit(id){
+let mId=null;
+function edit(id){
   const r=all.find(x=>x.id===id); if(!r) return;
-  const w=prompt(`실중량 (kg)\n${r.date} · ${r.veh} · ${r.seong} · ${r.site}`, r.weight);
-  if(w===null) return;
-  const n=parseInt(String(w).replace(/[^0-9]/g,''),10);
-  if(!n){ toast('숫자를 넣으세요','err'); return; }
-  const site=prompt('반입처', r.site||'');
-  if(site===null) return;
-  try{
-    const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({weight:n,site:site.trim()||r.site})});
-    if(!res.ok) throw new Error();
-    r.weight=n; r.site=site.trim()||r.site; render(); toast('고쳤습니다','good');
-  }catch(e){ toast('수정 실패','err'); }
+  mId=id;
+  $('#mSub').textContent = `전표번호 없이 기록된 건 · 등록 ${new Date(r.at).toLocaleString('ko-KR')}`;
+  $('#mVeh').innerHTML   = Object.keys(CARS).map(v=>`<option>${v}</option>`).join('')
+                         + (CARS[r.veh]?'':`<option>${r.veh}</option>`);
+  $('#mSeong').innerHTML = SEONG.map(x=>`<option>${x}</option>`).join('');
+  $('#mSite').innerHTML  = SITES.map(x=>`<option>${x}</option>`).join('')
+                         + (SITES.includes(r.site)?'':`<option>${r.site}</option>`);
+  $('#mDate').value=r.date; $('#mVeh').value=r.veh;
+  $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
+  $('#modal').classList.add('on');
+  setTimeout(()=>$('#mW').focus(),50);
 }
+$('#mCancel').onclick = ()=>{ $('#modal').classList.remove('on'); mId=null; };
+$('#modal').onclick = e=>{ if(e.target.id==='modal'){ $('#modal').classList.remove('on'); mId=null; } };
+$('#mSave').onclick = async ()=>{
+  if(!mId) return;
+  const r=all.find(x=>x.id===mId); if(!r) return;
+  const w=parseInt(String($('#mW').value).replace(/[^0-9]/g,''),10);
+  if(!w){ toast('실중량을 확인하세요','err'); return; }
+  const body={ date:$('#mDate').value, veh:$('#mVeh').value, seong:$('#mSeong').value,
+               site:$('#mSite').value, weight:w };
+  if(!body.date){ toast('계근일을 확인하세요','err'); return; }
+  try{
+    const res=await fetch(`${DB}/gyegeun/records/${mId}.json`,{method:'PATCH',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok) throw new Error();
+    Object.assign(r, body);
+    $('#modal').classList.remove('on'); mId=null;
+    render(); toast('고쳤습니다','good');
+  }catch(e){ toast('수정 실패','err'); }
+};
+window.addEventListener('keydown', e=>{
+  if(!$('#modal').classList.contains('on')) return;
+  if(e.key==='Escape'){ $('#modal').classList.remove('on'); mId=null; }
+  if(e.key==='Enter'){ $('#mSave').click(); }
+});
+
 async function del(id){
   const r=all.find(x=>x.id===id); if(!r) return;
   if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n이 전표를 지웁니다. 되돌릴 수 없습니다.`)) return;

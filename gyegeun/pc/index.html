@@ -60,6 +60,22 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .mini.x:hover{color:var(--bad);border-color:var(--bad)}
 .mini.pic{color:var(--acc);border-color:rgba(160,99,26,.35);background:var(--accbg);font-weight:600}
 
+/* ---------- 일괄 입력 ---------- */
+.entry{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px;display:none}
+.entry.on{display:block}
+.erow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+.ef{display:flex;flex-direction:column;gap:5px}
+.ef label{font-size:12px;color:var(--dim);font-weight:700}
+.ef input[type=date],.ef select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none;min-width:130px}
+.ef input:focus,.ef select:focus{border-color:var(--acc)}
+.etext{width:100%;min-height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;font-family:'Consolas','D2Coding',monospace;font-size:17px;line-height:1.7;
+  color:var(--tx);outline:none;resize:vertical;font-variant-numeric:tabular-nums}
+.etext:focus{border-color:var(--acc)}
+.efoot{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+.epv{font-size:14px;color:var(--dim)}
+.epv b{color:var(--tx);font-size:16px}
+.ehint{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.7}
 .empty{text-align:center;color:var(--dim);padding:60px 20px}
 .msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
 .msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
@@ -107,7 +123,26 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <select id="fVeh"><option value="">전체 차량</option></select>
     <select id="fSeong"><option value="">전체 성상</option></select>
     <div class="sp"></div>
+    <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
+  </div>
+
+  <div class="entry" id="entry">
+    <div class="erow">
+      <div class="ef"><label>계근일</label><input type="date" id="eDate"></div>
+      <div class="ef"><label>차량</label><select id="eVeh"></select></div>
+      <div class="ef"><label>성상</label><select id="eSeong"></select></div>
+      <div class="ef"><label>반입처</label><select id="eSite"></select></div>
+    </div>
+    <label style="font-size:12px;color:var(--dim);font-weight:700">실중량 — 한 줄에 한 장씩</label>
+    <textarea class="etext" id="eText" placeholder="5530&#10;5390&#10;5600" spellcheck="false"></textarea>
+    <div class="ehint">전표 보면서 숫자만 치고 Enter. 쉼표는 있어도 되고 없어도 됩니다. 빈 줄은 무시합니다.</div>
+    <div class="efoot">
+      <span class="epv" id="ePv">전표 <b>0</b>장 · 합계 <b>0</b> kg</span>
+      <div class="sp" style="flex:1"></div>
+      <button class="chip" id="eClear">지우기</button>
+      <button class="go" id="eSave">저장</button>
+    </div>
   </div>
 
   <div id="msg"></div>
@@ -144,6 +179,22 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 <script>
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SEONG = ['생활','음식물','재활용','대형','기타'];
+const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍'];
+const CARS = {
+  '7201':{s:'생활',  d:'자원순환공원'},
+  '2759':{s:'생활',  d:'자원순환공원'},
+  '3587':{s:'생활',  d:'강남자원회수시설'},
+  '4359':{s:'생활',  d:'강남자원회수시설'},
+  '9033':{s:'음식물',d:'자원순환공원'},
+  '8078':{s:'음식물',d:'자원순환공원'},
+  '2350':{s:'재활용',d:'자원순환공원'},
+  '1351':{s:'재활용',d:'자원순환공원'},
+  '8686':{s:'대형',  d:'자원순환공원'},
+  '8666':{s:'대형',  d:'자원순환공원'},
+  '1286':{s:'',      d:'자원순환공원'},
+  '5635':{s:'',      d:'자원순환공원'},
+  '6110':{s:'',      d:'자원순환공원'}
+};
 
 let all = [], picCache = {}, rots = {}, mode = 'month';
 const $ = s=>document.querySelector(s);
@@ -372,7 +423,62 @@ $('#bCsv').onclick = ()=>{
   a.click(); URL.revokeObjectURL(a.href);
 };
 
+/* ---------- 일괄 입력 ---------- */
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function eNums(){
+  return $('#eText').value.split(/[\n,;\t]+/)
+    .map(x=>parseInt(String(x).replace(/[^0-9]/g,''),10))
+    .filter(n=>n>0);
+}
+function ePreview(){
+  const n=eNums();
+  $('#ePv').innerHTML=`전표 <b>${n.length}</b>장 · 합계 <b class="num">${comma(n.reduce((a,b)=>a+b,0))}</b> kg`;
+}
+function eInit(){
+  $('#eDate').value = today();
+  $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option>${v}</option>`).join('');
+  $('#eSeong').innerHTML = SEONG.map(s=>`<option>${s}</option>`).join('');
+  $('#eSite').innerHTML = SITES.map(s=>`<option>${s}</option>`).join('');
+  eSync(); ePreview();
+}
+function eSync(){
+  const c=CARS[$('#eVeh').value];
+  if(!c) return;
+  if(c.s) $('#eSeong').value=c.s;
+  $('#eSite').value=c.d;
+}
+$('#bToggle').onclick = ()=>{
+  const el=$('#entry'), on=el.classList.toggle('on');
+  $('#bToggle').classList.toggle('sel',on);
+  if(on) $('#eText').focus();
+};
+$('#eVeh').onchange = eSync;
+$('#eText').oninput = ePreview;
+$('#eClear').onclick = ()=>{ $('#eText').value=''; ePreview(); $('#eText').focus(); };
+$('#eSave').onclick = async ()=>{
+  const nums=eNums();
+  if(!nums.length){ toast('실중량을 입력하세요','err'); return; }
+  const date=$('#eDate').value, veh=$('#eVeh').value, seong=$('#eSeong').value, site=$('#eSite').value;
+  if(!date){ toast('계근일을 정하세요','err'); return; }
+  if(!confirm(`${date} · ${veh} · ${seong} · ${site}\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b,0))} kg)\n\n저장할까요?`)) return;
+  $('#eSave').disabled=true; $('#eSave').textContent='저장 중';
+  let ok=0;
+  for(const w of nums){
+    const id=uid();
+    try{
+      const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({date,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
+      if(res.ok) ok++;
+    }catch(e){}
+  }
+  $('#eSave').disabled=false; $('#eSave').textContent='저장';
+  if(ok===nums.length){ $('#eText').value=''; ePreview(); toast(`${ok}장 저장했습니다`,'good'); $('#eText').focus(); }
+  else toast(`${ok}/${nums.length}장만 저장됐습니다`,'err');
+  load();
+};
+
 /* ---------- 시작 ---------- */
+eInit();
 $('#fMonth').value = today().slice(0,7);
 load();
 setInterval(()=>{ if(!$('#viewer').classList.contains('on')) load(); }, 120000);

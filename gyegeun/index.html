@@ -170,7 +170,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
     <button class="chip" id="bYest" style="flex:0 0 auto">어제</button>
   </div>
 
-  <div class="lbl">성상</div>
+  <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
 
   <div class="lbl">반입처</div>
@@ -237,7 +237,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <script>
 /* ================= 기준 데이터 ================= */
-const SEONG = ['생활','음식물','재활용','대형','기타'];
+const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
 
 // 차량 → 기본 성상 / 기본 반입처
 const CARS = {
@@ -248,12 +248,14 @@ const CARS = {
   '9033':{s:'음식물',d:'자원순환공원'},
   '8078':{s:'음식물',d:'자원순환공원'},
   '2350':{s:'재활용',d:'자원순환공원'},
+  '7657':{s:'재활용',d:'자원순환공원'},
   '1351':{s:'재활용',d:'자원순환공원'},
   '8686':{s:'대형',  d:'자원순환공원'},
   '8666':{s:'대형',  d:'자원순환공원'},
   // 여러 성상을 오가는 차량 — 성상을 매번 고릅니다
   '1286':{s:'',      d:'자원순환공원', n:'다목적'},
   '5635':{s:'',      d:'자원순환공원', n:'다목적'},
+  '7507':{s:'',      d:'자원순환공원', n:'신차'},
   '6110':{s:'',      d:'자원순환공원', n:'예비'}
 };
 const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍','기타'];
@@ -339,8 +341,8 @@ function drawSlips(){
           ${SITES.filter(x=>x!=='기타').map(x=>`<option value="${x}"${r.site===x?' selected':''}>${x}</option>`).join('')}
         </select>
         <div class="two" style="margin-top:10px">
-          <div><span class="mini">총중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
-          <div><span class="mini">차중량(공차)</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
+          <div><span class="mini">1차 중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
+          <div><span class="mini">2차 중량</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
         </div>
         <div class="calc ${calcCls(r)}">${calcTxt(r)}</div>
       </div>
@@ -351,15 +353,15 @@ function drawSlips(){
 function calcCls(r){
   const g=+r.g,t=+r.t,w=+r.w;
   if(!g||!t) return '';
-  return (g-t)===w ? 'ok':'bad';
+  return Math.abs(g-t)===w ? 'ok':'bad';
 }
 function calcTxt(r){
   const g=+r.g,t=+r.t,w=+r.w;
-  if(!g||!t) return '총중량과 차중량을 넣으면 실중량을 검산합니다';
-  const d=g-t;
-  if(!w) return `실중량 ${comma(d)} kg — 위 칸에 넣으려면 눌러서 입력`;
-  return d===w ? `검산 맞음 · ${comma(g)} − ${comma(t)} = ${comma(d)}`
-               : `안 맞음 · ${comma(g)} − ${comma(t)} = ${comma(d)} (입력값 ${comma(w)})`;
+  if(!g||!t) return '1차·2차 중량을 넣으면 실중량을 검산합니다';
+  const hi=Math.max(g,t), lo=Math.min(g,t), d=hi-lo;
+  if(!w) return `실중량 ${comma(d)} kg — 위 칸에 넣으세요`;
+  return d===w ? `검산 맞음 · ${comma(hi)} − ${comma(lo)} = ${comma(d)}`
+               : `안 맞음 · ${comma(hi)} − ${comma(lo)} = ${comma(d)} (입력값 ${comma(w)})`;
 }
 function updateDock(){
   const n = form.rows.filter(r=>+r.w>0).length;
@@ -432,7 +434,7 @@ $('#bSave').onclick = ()=>{
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
 
-  const bad = rows.find(r=> +r.g && +r.t && (+r.g - +r.t)!== +r.w);
+  const bad = rows.find(r=> +r.g && +r.t && Math.abs(+r.g - +r.t)!== +r.w);
   if(bad && !confirm('검산이 맞지 않는 전표가 있습니다. 그대로 저장할까요?')) return;
 
   const batch=uid();

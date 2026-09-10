@@ -249,10 +249,12 @@ const CARS = {
   '8078':{s:'음식물',d:'자원순환공원'},
   '2350':{s:'재활용',d:'자원순환공원'},
   '1351':{s:'재활용',d:'자원순환공원'},
-  '5635':{s:'재활용',d:'자원순환공원'},
-  '1286':{s:'대형',  d:'자원순환공원'},
   '8686':{s:'대형',  d:'자원순환공원'},
-  '8666':{s:'대형',  d:'자원순환공원'}
+  '8666':{s:'대형',  d:'자원순환공원'},
+  // 여러 성상을 오가는 차량 — 성상을 매번 고릅니다
+  '1286':{s:'',      d:'자원순환공원', n:'다목적'},
+  '5635':{s:'',      d:'자원순환공원', n:'다목적'},
+  '6110':{s:'',      d:'자원순환공원', n:'예비'}
 };
 const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍','기타'];
 
@@ -284,8 +286,8 @@ function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
 function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
 
 function initForm(){
-  const c = CARS[cfg.veh] || {s:'생활',d:'자원순환공원'};
-  form = { date:today(), seong:c.s, site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
+  const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
+  form = { date:today(), seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
   $('#fDate').value = form.date;
   $('#fSiteEtc').value='';
   drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
@@ -362,9 +364,9 @@ function calcTxt(r){
 function updateDock(){
   const n = form.rows.filter(r=>+r.w>0).length;
   const s = form.rows.reduce((a,r)=>a+(+r.w||0),0);
-  $('#dCnt').textContent = `전표 ${n}장`;
+  $('#dCnt').textContent = form.seong ? `전표 ${n}장` : '성상을 고르세요';
   $('#dSum').textContent = comma(s)+' kg';
-  $('#bSave').disabled = n===0 || !cfg.veh;
+  $('#bSave').disabled = n===0 || !cfg.veh || !form.seong;
 }
 
 /* ================= 입력 이벤트 ================= */
@@ -426,6 +428,7 @@ $('#fSlips').addEventListener('click', e=>{
 /* ================= 저장 ================= */
 $('#bSave').onclick = ()=>{
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
+  if(!form.seong){ toast('성상을 고르세요','err'); return; }
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
 
@@ -562,7 +565,9 @@ function drawVeh(){
     `<button class="chip${v===cfg.veh?' sel':''}" data-v="${v}">${v}</button>`).join('');
   const c=CARS[cfg.veh];
   $('#hVeh').textContent = cfg.veh||'차량 선택';
-  $('#hSeong').textContent = cfg.veh ? (c?`${c.s} · ${c.d}`:'직접 입력한 차량') : '차량을 먼저 정하세요';
+  $('#hSeong').textContent = !cfg.veh ? '차량을 먼저 정하세요'
+      : !c ? '직접 입력한 차량'
+      : c.s ? `${c.s} · ${c.d}` : `${c.n||'다목적'} · 성상 선택`;
   $('#sDb').value = cfg.db||'';
 }
 $('#sVeh').onclick = e=>{

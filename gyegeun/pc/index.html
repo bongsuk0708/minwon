@@ -1,1 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>계근 대장 · 본에코</title>
+<style>
+:root{
+  --bg:#14171C; --card:#1E232B; --card2:#262C36; --line:#333B47;
+  --tx:#E8ECF1; --dim:#8D98A7; --amber:#F2A93B; --ok:#4FB477; --bad:#E4574A;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx)}
+body{font-family:'Pretendard','Malgun Gothic',-apple-system,sans-serif;font-size:15px;line-height:1.5}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
 
+header{
+  border-bottom:1px solid var(--line);padding:16px 24px;display:flex;align-items:center;gap:18px;
+  position:sticky;top:0;background:rgba(20,23,28,.96);backdrop-filter:blur(8px);z-index:10;flex-wrap:wrap
+}
+header h1{font-size:19px;margin:0;font-weight:800;letter-spacing:-.3px}
+header h1 span{color:var(--amber)}
+.sp{flex:1}
+.st{font-size:13px;color:var(--dim)}
+
+.wrap{max-width:1240px;margin:0 auto;padding:22px 24px 60px}
+
+.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+button,input,select{font-family:inherit;font-size:14px}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 15px;border-radius:10px;font-weight:600;cursor:pointer}
+.chip.sel{background:var(--amber);border-color:var(--amber);color:#14171C}
+.chip:hover{border-color:var(--amber)}
+input[type=month],select{background:var(--card2);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:10px;outline:none}
+input[type=month]:focus,select:focus{border-color:var(--amber)}
+.go{background:var(--amber);border:1px solid var(--amber);color:#14171C;padding:9px 17px;border-radius:10px;font-weight:700;cursor:pointer}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+.c .k{font-size:13px;color:var(--dim);font-weight:600}
+.c .v{font-size:25px;font-weight:800;margin-top:5px;letter-spacing:-.5px}
+.c .s{font-size:12px;color:var(--dim);margin-top:2px}
+.c.tot{background:var(--card2);border-color:rgba(242,169,59,.35)}
+.c.tot .v{color:var(--amber)}
+
+h2{font-size:14px;color:var(--dim);font-weight:700;margin:26px 0 10px}
+
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden}
+th{font-size:12.5px;color:var(--dim);font-weight:700;text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--card2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid rgba(51,59,71,.5);font-size:14px}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(38,44,54,.6)}
+.r{text-align:right}
+.r.b{font-weight:700}
+tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line)}
+
+.mini{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;padding:5px 10px;font-size:12.5px;cursor:pointer;margin-right:5px}
+.mini:hover{color:var(--tx);border-color:var(--amber)}
+.mini.x:hover{color:var(--bad);border-color:var(--bad)}
+.pic{color:var(--amber)}
+
+.empty{text-align:center;color:var(--dim);padding:60px 20px}
+.msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
+.msg.err{border-color:rgba(228,87,74,.45);color:var(--bad)}
+
+.viewer{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:60;display:none;align-items:center;justify-content:center;padding:28px;flex-direction:column;gap:14px}
+.viewer.on{display:flex}
+.viewer img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:8px}
+.viewer .cap{color:var(--dim);font-size:13.5px}
+
+.toast{position:fixed;right:24px;bottom:24px;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:13px 18px;font-weight:600;opacity:0;transform:translateY(8px);transition:.2s;z-index:70}
+.toast.on{opacity:1;transform:none}
+.toast.good{border-color:rgba(79,180,119,.5);color:var(--ok)}
+.toast.err{border-color:rgba(228,87,74,.5);color:var(--bad)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>계근 대장 <span>·</span> 본에코</h1>
+  <div class="sp"></div>
+  <div class="st" id="st">불러오는 중</div>
+  <button class="chip" id="bReload">새로고침</button>
+</header>
+
+<div class="wrap">
+
+  <div class="bar">
+    <button class="chip" data-q="today">오늘</button>
+    <button class="chip" data-q="7">최근 7일</button>
+    <button class="chip sel" data-q="month">이번 달</button>
+    <input type="month" id="fMonth">
+    <select id="fVeh"><option value="">전체 차량</option></select>
+    <select id="fSeong"><option value="">전체 성상</option></select>
+    <div class="sp"></div>
+    <button class="go" id="bCsv">대장 CSV 내려받기</button>
+  </div>
+
+  <div id="msg"></div>
+  <div class="cards" id="cards"></div>
+
+  <h2>차량별</h2>
+  <div id="byVeh"></div>
+
+  <h2>일자별</h2>
+  <div id="byDate"></div>
+
+  <h2>전표 목록</h2>
+  <div id="list"></div>
+
+</div>
+
+<div class="viewer" id="viewer">
+  <img id="vImg" alt="전표 사진">
+  <div class="cap" id="vCap"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
+const SEONG = ['생활','음식물','재활용','대형','기타'];
+
+let all = [];      // 전체 기록
+let picCache = {}; // batch -> dataURL
+let mode = 'month';
+
+const $ = s=>document.querySelector(s);
+const comma = n=> (n||0).toLocaleString('ko-KR');
+const ton = n=> (n/1000).toFixed(2);
+const today = ()=> new Date().toISOString().slice(0,10);
+
+function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on '+(k||''); clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400); }
+
+/* ---------- 불러오기 ---------- */
+async function load(){
+  $('#st').textContent='불러오는 중';
+  try{
+    const res = await fetch(`${DB}/gyegeun/records.json`);
+    if(!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
+    all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
+    $('#msg').innerHTML='';
+    $('#st').textContent = `전표 ${comma(all.length)}건 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 기준`;
+    fillSelects();
+    render();
+  }catch(e){
+    $('#msg').innerHTML='<div class="msg err">데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침하세요.</div>';
+    $('#st').textContent='연결 실패';
+  }
+}
+
+function fillSelects(){
+  const vs=[...new Set(all.map(r=>r.veh))].sort();
+  const cur=$('#fVeh').value;
+  $('#fVeh').innerHTML='<option value="">전체 차량</option>'+vs.map(v=>`<option${v===cur?' selected':''}>${v}</option>`).join('');
+  const ss=[...new Set(all.map(r=>r.seong))];
+  const cs=$('#fSeong').value;
+  $('#fSeong').innerHTML='<option value="">전체 성상</option>'+SEONG.filter(s=>ss.includes(s)).map(s=>`<option${s===cs?' selected':''}>${s}</option>`).join('');
+}
+
+/* ---------- 기간 ---------- */
+function inRange(d){
+  if(mode==='today') return d===today();
+  if(mode==='7'){ const l=new Date(); l.setDate(l.getDate()-6); return d>=l.toISOString().slice(0,10); }
+  const m=$('#fMonth').value || today().slice(0,7);
+  return d.slice(0,7)===m;
+}
+function picked(){
+  const v=$('#fVeh').value, s=$('#fSeong').value;
+  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s));
+}
+
+/* ---------- 그리기 ---------- */
+function render(){
+  const rows = picked();
+
+  // 성상별 요약
+  const sum={}; SEONG.forEach(s=>sum[s]=0);
+  rows.forEach(r=> sum[r.seong]=(sum[r.seong]||0)+r.weight );
+  const total = rows.reduce((a,r)=>a+r.weight,0);
+  $('#cards').innerHTML =
+    SEONG.filter(s=>sum[s]>0).map(s=>
+      `<div class="c"><div class="k">${s}</div><div class="v num">${ton(sum[s])}<span style="font-size:14px;color:var(--dim)"> t</span></div><div class="s num">${comma(sum[s])} kg</div></div>`
+    ).join('') +
+    `<div class="c tot"><div class="k">합계</div><div class="v num">${ton(total)}<span style="font-size:14px"> t</span></div><div class="s num">전표 ${comma(rows.length)}장 · ${comma(total)} kg</div></div>`;
+
+  // 차량별
+  const vm={};
+  rows.forEach(r=>{ vm[r.veh]=vm[r.veh]||{n:0,w:0,s:new Set()}; vm[r.veh].n++; vm[r.veh].w+=r.weight; vm[r.veh].s.add(r.seong); });
+  const vk=Object.keys(vm).sort();
+  $('#byVeh').innerHTML = vk.length ? `<table>
+    <thead><tr><th>차량</th><th>성상</th><th class="r">전표</th><th class="r">중량(kg)</th><th class="r">톤</th></tr></thead>
+    <tbody>${vk.map(v=>`<tr><td style="font-weight:700;color:var(--amber)" class="num">${v}</td><td>${[...vm[v].s].join(', ')}</td><td class="r num">${vm[v].n}</td><td class="r b num">${comma(vm[v].w)}</td><td class="r num">${ton(vm[v].w)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r num">${rows.length}</td><td class="r num">${comma(total)}</td><td class="r num">${ton(total)}</td></tr></tfoot>
+  </table>` : '<div class="empty">해당 기간에 기록이 없습니다.</div>';
+
+  // 일자별 × 성상
+  const use = SEONG.filter(s=>sum[s]>0);
+  const dm={};
+  rows.forEach(r=>{ dm[r.date]=dm[r.date]||{}; dm[r.date][r.seong]=(dm[r.date][r.seong]||0)+r.weight; });
+  const dk=Object.keys(dm).sort();
+  $('#byDate').innerHTML = dk.length ? `<table>
+    <thead><tr><th>날짜</th>${use.map(s=>`<th class="r">${s}</th>`).join('')}<th class="r">합계</th></tr></thead>
+    <tbody>${dk.map(d=>{
+      const t=use.reduce((a,s)=>a+(dm[d][s]||0),0);
+      return `<tr><td class="num">${d.slice(5).replace('-','/')}</td>${use.map(s=>`<td class="r num">${dm[d][s]?comma(dm[d][s]):'<span style="color:var(--dim)">-</span>'}</td>`).join('')}<td class="r b num">${comma(t)}</td></tr>`;
+    }).join('')}</tbody>
+    <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
+  </table>` : '';
+
+  // 전표 목록
+  $('#list').innerHTML = rows.length ? `<table>
+    <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">총중량</th><th class="r">차중량</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <tbody>${[...rows].reverse().map(r=>`<tr data-id="${r.id}">
+      <td class="num">${r.date.slice(5).replace('-','/')}</td>
+      <td class="num" style="color:var(--amber);font-weight:700">${r.veh}</td>
+      <td>${r.seong}</td>
+      <td>${r.site||''}</td>
+      <td class="r num" style="color:var(--dim)">${r.gross?comma(r.gross):'-'}</td>
+      <td class="r num" style="color:var(--dim)">${r.tare?comma(r.tare):'-'}</td>
+      <td class="r b num">${comma(r.weight)}</td>
+      <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="mini" data-ed="${r.id}">수정</button>
+        <button class="mini x" data-del="${r.id}">삭제</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>` : '';
+}
+
+/* ---------- 사진 ---------- */
+async function showPic(batch){
+  $('#vCap').textContent='사진 불러오는 중';
+  $('#vImg').src=''; $('#viewer').classList.add('on');
+  try{
+    if(!picCache[batch]){
+      const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
+      picCache[batch]=await res.json();
+    }
+    if(!picCache[batch]) throw new Error('없음');
+    $('#vImg').src=picCache[batch];
+    const n=all.filter(r=>r.batch===batch);
+    $('#vCap').textContent=`전표 ${n.length}장 · ${n.map(r=>comma(r.weight)).join(' / ')} kg · 화면을 누르면 닫힙니다`;
+  }catch(e){ $('#vCap').textContent='사진을 불러오지 못했습니다.'; }
+}
+$('#viewer').onclick = ()=> $('#viewer').classList.remove('on');
+
+/* ---------- 수정 / 삭제 ---------- */
+async function patch(id,body){
+  const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!res.ok) throw new Error(res.status);
+}
+async function edit(id){
+  const r=all.find(x=>x.id===id); if(!r) return;
+  const w=prompt(`실중량 (kg)\n${r.date} · ${r.veh} · ${r.seong} · ${r.site}`, r.weight);
+  if(w===null) return;
+  const n=parseInt(String(w).replace(/[^0-9]/g,''),10);
+  if(!n){ toast('숫자를 넣으세요','err'); return; }
+  const site=prompt('반입처', r.site||'');
+  if(site===null) return;
+  try{
+    await patch(id,{weight:n, site:site.trim()||r.site});
+    r.weight=n; r.site=site.trim()||r.site;
+    render(); toast('고쳤습니다','good');
+  }catch(e){ toast('수정 실패','err'); }
+}
+async function del(id){
+  const r=all.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n이 전표를 지웁니다. 되돌릴 수 없습니다.`)) return;
+  try{
+    const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'DELETE'});
+    if(!res.ok) throw new Error();
+    all=all.filter(x=>x.id!==id); render(); toast('지웠습니다','good');
+    $('#st').textContent=`전표 ${comma(all.length)}건`;
+  }catch(e){ toast('삭제 실패','err'); }
+}
+
+/* ---------- 이벤트 ---------- */
+document.body.addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.pic) showPic(b.dataset.pic);
+  if(b.dataset.ed)  edit(b.dataset.ed);
+  if(b.dataset.del) del(b.dataset.del);
+  if(b.dataset.q){
+    mode=b.dataset.q;
+    document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x===b));
+    render();
+  }
+});
+$('#fMonth').onchange = ()=>{
+  mode='month';
+  document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
+  render();
+};
+$('#fVeh').onchange = render;
+$('#fSeong').onchange = render;
+$('#bReload').onclick = load;
+
+/* ---------- CSV ---------- */
+$('#bCsv').onclick = ()=>{
+  const rows=picked();
+  if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
+  const head='날짜,차량번호,성상,반입처,실중량,총중량,차중량';
+  const body=rows.map(r=>[r.date,r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`계근대장_${$('#fMonth').value||today().slice(0,7)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ---------- 시작 ---------- */
+$('#fMonth').value = today().slice(0,7);
+load();
+setInterval(load, 120000); // 2분마다 자동 갱신
+</script>
+</body>
+</html>

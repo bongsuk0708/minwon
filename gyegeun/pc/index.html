@@ -208,6 +208,33 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
 const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍'];
+// 기본 목록 + 지금까지 실제로 쓰인 시설명 + 사무실에서 추가한 시설명
+function allSites(){
+  let extra=[];
+  try{ extra = JSON.parse(localStorage.getItem('gg_sites')||'[]'); }catch(e){}
+  const used = all.map(r=>r.site).filter(Boolean);
+  return [...new Set([...SITES, ...extra, ...used])];
+}
+function addSite(name){
+  name=(name||'').trim(); if(!name) return '';
+  if(!allSites().includes(name)){
+    try{
+      const cur=JSON.parse(localStorage.getItem('gg_sites')||'[]');
+      cur.push(name); localStorage.setItem('gg_sites',JSON.stringify(cur));
+    }catch(e){}
+  }
+  return name;
+}
+function siteOptions(sel){
+  return allSites().map(x=>`<option${x===sel?' selected':''}>${x}</option>`).join('')
+       + `<option value="__new">＋ 직접 입력…</option>`;
+}
+function siteChange(el){
+  if(el.value!=='__new') return;
+  const name=addSite(prompt('추가할 반입처 이름을 넣으세요'));
+  if(name){ el.innerHTML=siteOptions(name); el.value=name; }
+  else el.innerHTML=siteOptions(allSites()[0]);
+}
 const CARS = {
   '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201'},
   '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759'},
@@ -406,13 +433,13 @@ function edit(id){
   $('#mVeh').innerHTML   = Object.keys(CARS).map(v=>`<option>${v}</option>`).join('')
                          + (CARS[r.veh]?'':`<option>${r.veh}</option>`);
   $('#mSeong').innerHTML = SEONG.map(x=>`<option>${x}</option>`).join('');
-  $('#mSite').innerHTML  = SITES.map(x=>`<option>${x}</option>`).join('')
-                         + (SITES.includes(r.site)?'':`<option>${r.site}</option>`);
+  $('#mSite').innerHTML  = siteOptions(r.site);
   $('#mDate').value=r.date; $('#mVeh').value=r.veh;
   $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
   $('#modal').classList.add('on');
   setTimeout(()=>$('#mW').focus(),50);
 }
+$('#mSite').onchange = e=>siteChange(e.target);
 $('#mCancel').onclick = ()=>{ $('#modal').classList.remove('on'); mId=null; };
 $('#modal').onclick = e=>{ if(e.target.id==='modal'){ $('#modal').classList.remove('on'); mId=null; } };
 $('#mSave').onclick = async ()=>{
@@ -498,13 +525,15 @@ function eInit(){
   $('#eDate').value = today();
   $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option value="${v}">${v}</option>`).join('');
   $('#eSeong').innerHTML = '<option value="">— 성상을 고르세요 —</option>'+SEONG.map(s=>`<option>${s}</option>`).join('');
-  $('#eSite').innerHTML = SITES.map(s=>`<option>${s}</option>`).join('');
+  $('#eSite').innerHTML = siteOptions();
   eSync(); ePreview();
 }
 function eSync(){
   const c=CARS[$('#eVeh').value];
   if(!c) return;
   $('#eSeong').value = c.s || '';
+  if(!allSites().includes(c.d)) addSite(c.d);
+  $('#eSite').innerHTML = siteOptions(c.d);
   $('#eSite').value = c.d;
   const sel=$('#eSeong');
   sel.style.borderColor = c.s ? '' : 'var(--acc)';
@@ -515,6 +544,7 @@ $('#bToggle').onclick = ()=>{
   if(on) $('#eText').focus();
 };
 $('#eVeh').onchange = eSync;
+$('#eSite').onchange = e=>siteChange(e.target);
 $('#eText').oninput = ePreview;
 $('#eClear').onclick = ()=>{ $('#eText').value=''; ePreview(); $('#eText').focus(); };
 $('#eSave').onclick = async ()=>{

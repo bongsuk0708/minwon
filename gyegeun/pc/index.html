@@ -207,7 +207,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 <script>
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
-const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍'];
+const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
 // 기본 목록 + 지금까지 실제로 쓰인 시설명 + 사무실에서 추가한 시설명
 function allSites(){
   let extra=[];
@@ -499,7 +499,12 @@ $('#bReload').onclick = load;
 
 /* ---------- CSV ---------- */
 $('#bCsv').onclick = ()=>{
-  const rows=picked();
+  const rows=picked().slice().sort((a,b)=>
+      a.date.localeCompare(b.date)
+   || String(a.veh).localeCompare(String(b.veh))
+   || String(a.seong).localeCompare(String(b.seong))
+   || String(a.site||'').localeCompare(String(b.site||''))
+   || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
   const head='날짜,차량번호,성상,반입처,실중량,1차중량,2차중량';
   const body=rows.map(r=>[r.date,r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');

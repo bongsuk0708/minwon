@@ -62,6 +62,9 @@ main{padding:16px}
 }
 .chip.sel{background:var(--amber);border-color:var(--amber);color:#fff}
 .chip.sm{padding:8px 12px;font-size:14px}
+.chip.day{flex:1;padding:14px 8px;text-align:center;line-height:1.25}
+.chip.day b{display:block;font-size:18px;font-weight:800}
+.chip.day span{font-size:12px;opacity:.75}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
 
 input[type=text],input[type=number],input[type=date],input[type=url],select{
@@ -164,18 +167,16 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
 <!-- ============ 입력 ============ -->
 <section class="pane sel" id="p-in">
-  <div class="lbl">계근일</div>
-  <div class="two">
-    <input type="date" id="fDate">
-    <button class="chip" id="bYest" style="flex:0 0 auto">어제</button>
-  </div>
+  <div class="lbl">계근일 <span style="font-weight:400">— 전표에 찍힌 날짜</span></div>
+  <div class="chips" id="fDay"></div>
+  <input type="date" id="fDate" style="display:none;margin-top:8px">
 
   <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
 
   <div class="lbl">반입처</div>
   <div class="chips" id="fSite"></div>
-  <input type="text" id="fSiteEtc" placeholder="시설명 직접 입력" style="display:none;margin-top:8px">
+  <input type="text" id="fSiteEtc" placeholder="시설명을 넣으면 다음부터 버튼으로 나옵니다" style="display:none;margin-top:8px">
 
   <div class="lbl">전표 사진</div>
   <div class="shot" id="fShot">전표를 펼쳐놓고 촬영</div>
@@ -261,7 +262,18 @@ const CARS = {
   '6110':{s:'',      d:'자원순환공원', f:'86모6110',  n:'예비'},
   '7507':{s:'',      d:'자원순환공원', f:'85노7507',  n:'신차'}
 };
-const SITES = ['자원순환공원','강남자원회수시설','리누','번영','케이텍','기타'];
+const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
+// 직접 입력해서 쓴 시설은 이 폰에 기억해두고 다음부터 버튼으로 보여줍니다
+function allSites(){
+  const extra = LS.get('gg_sites',[]);
+  const used  = recs.map(r=>r.site).filter(Boolean);
+  return [...new Set([...SITES, ...extra, ...used])];
+}
+function rememberSite(name){
+  name=(name||'').trim(); if(!name) return;
+  const extra = LS.get('gg_sites',[]);
+  if(!SITES.includes(name) && !extra.includes(name)){ extra.push(name); LS.set('gg_sites',extra); }
+}
 
 /* ================= 저장소 ================= */
 const LS = {
@@ -287,15 +299,32 @@ function toast(msg,kind){
 /* ================= 입력 폼 상태 ================= */
 let form = { date:'', seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
 
-function today(){ const d=new Date(); return d.toISOString().slice(0,10); }
-function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); }
+function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function today(){ return ymd(new Date()); }
+function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
+const WD=['일','월','화','수','목','금','토'];
+function label(iso){
+  const [y,m,d]=iso.split('-').map(Number);
+  return `${m}/${d} (${WD[new Date(y,m-1,d).getDay()]})`;
+}
+// 새벽에 앱을 열면 전날이 기본 — 야간조는 전날 밤 계근분이 먼저 나옵니다
+function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today(); }
+function drawDay(){
+  const t=today(), y=yesterday(), cur=form.date;
+  const mk=(iso,cap)=>`<button class="chip day${iso===cur?' sel':''}" data-d="${iso}"><b>${label(iso)}</b><span>${cap}</span></button>`;
+  let h = mk(y,'어제') + mk(t,'오늘');
+  const other = (cur!==t && cur!==y);
+  h += `<button class="chip day${other?' sel':''}" data-d="other"><b>${other?label(cur):'다른 날'}</b><span>직접 선택</span></button>`;
+  $('#fDay').innerHTML=h;
+  $('#fDate').style.display = other ? 'block':'none';
+  $('#fDate').value = cur;
+}
 
 function initForm(){
   const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
-  form = { date:today(), seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
-  $('#fDate').value = form.date;
+  form = { date:defaultDay(), seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
   $('#fSiteEtc').value='';
-  drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
+  drawDay(); drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
 }
 
 function drawSeong(){
@@ -303,9 +332,10 @@ function drawSeong(){
     `<button class="chip${s===form.seong?' sel':''}" data-s="${s}">${s}</button>`).join('');
 }
 function drawSite(){
-  $('#fSite').innerHTML = SITES.map(s=>
+  const list = [...allSites(),'＋ 직접 입력'];
+  $('#fSite').innerHTML = list.map(s=>
     `<button class="chip${s===form.site?' sel':''}" data-t="${s}">${s}</button>`).join('');
-  $('#fSiteEtc').style.display = form.site==='기타' ? 'block':'none';
+  $('#fSiteEtc').style.display = form.site==='＋ 직접 입력' ? 'block':'none';
 }
 function drawCnt(){
   let h='';
@@ -322,7 +352,7 @@ function drawShot(){
     el.textContent='전표를 펼쳐놓고 촬영';
   }
 }
-function siteName(){ return form.site==='기타' ? (form.etc.trim()||'기타') : form.site; }
+function siteName(){ return form.site==='＋ 직접 입력' ? (form.etc.trim()||'') : form.site; }
 
 function drawSlips(){
   $('#fSlips').innerHTML = form.rows.map((r,i)=>{
@@ -340,8 +370,8 @@ function drawSlips(){
       <div class="more${r.open?' open':''}">
         <span class="mini">이 전표만 반입처가 다를 때</span>
         <select class="ss">
-          <option value="">${siteName()} (기본)</option>
-          ${SITES.filter(x=>x!=='기타').map(x=>`<option value="${x}"${r.site===x?' selected':''}>${x}</option>`).join('')}
+          <option value="">${siteName()||'위에서 고른 곳'} (기본)</option>
+          ${allSites().map(x=>`<option value="${x}"${r.site===x?' selected':''}>${x}</option>`).join('')}
         </select>
         <div class="two" style="margin-top:10px">
           <div><span class="mini">1차 중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
@@ -375,12 +405,17 @@ function updateDock(){
 }
 
 /* ================= 입력 이벤트 ================= */
-$('#fDate').onchange = e=> form.date=e.target.value;
-$('#bYest').onclick = ()=>{ form.date=yesterday(); $('#fDate').value=form.date; };
+$('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); } };
+$('#fDay').onclick = e=>{
+  const b=e.target.closest('[data-d]'); if(!b) return;
+  if(b.dataset.d==='other'){ $('#fDate').style.display='block'; $('#fDate').showPicker?.(); return; }
+  form.date=b.dataset.d; drawDay();
+};
 
 $('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
 $('#fSite').onclick  = e=>{ const b=e.target.closest('[data-t]'); if(!b)return; form.site=b.dataset.t; drawSite(); drawSlips(); };
 $('#fSiteEtc').oninput = e=>{ form.etc=e.target.value; drawSlips(); };
+$('#fSiteEtc').onchange = e=>{ rememberSite(e.target.value); };
 
 $('#fCnt').onclick = e=>{
   const b=e.target.closest('[data-c]'); if(!b)return;
@@ -434,6 +469,8 @@ $('#fSlips').addEventListener('click', e=>{
 $('#bSave').onclick = ()=>{
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
   if(!form.seong){ toast('성상을 고르세요','err'); return; }
+  if(!siteName()){ toast('반입처를 고르세요','err'); return; }
+  rememberSite(siteName());
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
 
@@ -451,8 +488,10 @@ $('#bSave').onclick = ()=>{
     });
   });
   saveAll();
+  const keepDate=form.date;
   toast(`전표 ${rows.length}장 저장`, 'good');
   initForm();
+  form.date=keepDate; drawDay();
   push();
   drawList();
 };

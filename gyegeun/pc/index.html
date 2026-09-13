@@ -24,7 +24,17 @@ header h1 span{color:var(--acc)}
 .sp{flex:1}
 .st{font-size:13px;color:var(--dim)}
 
-.wrap{max-width:1240px;margin:0 auto;padding:22px 24px 60px}
+.wrap{max-width:1680px;margin:0 auto;padding:22px 24px 40px}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+@media (max-width:1180px){ .cols{grid-template-columns:minmax(0,1fr)} }
+.colR{position:sticky;top:70px}
+.listbox{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.listwrap{max-height:calc(100vh - 200px);overflow:auto}
+.listwrap table{border:none;border-radius:0}
+.listwrap th{position:sticky;top:0;z-index:2}
+.colhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--card2)}
+.colhead h2{margin:0;font-size:14px}
+.colhead .n{font-size:12.5px;color:var(--dim);margin-left:auto}
 .bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
 button,input,select{font-family:inherit;font-size:14px}
 .chip{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 15px;border-radius:9px;font-weight:600;cursor:pointer}
@@ -158,16 +168,23 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
   </div>
 
   <div id="msg"></div>
-  <div class="cards" id="cards"></div>
 
-  <h2>차량별</h2>
-  <div id="byVeh"></div>
+  <div class="cols">
+    <div class="colL">
+      <div class="cards" id="cards"></div>
+      <h2 style="margin-top:4px">차량별</h2>
+      <div id="byVeh"></div>
+      <h2>일자별</h2>
+      <div id="byDate"></div>
+    </div>
 
-  <h2>일자별</h2>
-  <div id="byDate"></div>
-
-  <h2>전표 목록</h2>
-  <div id="list"></div>
+    <div class="colR">
+      <div class="listbox">
+        <div class="colhead"><h2>전표 목록</h2><span class="n" id="lCnt"></span></div>
+        <div class="listwrap" id="list"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="viewer" id="viewer">
@@ -337,6 +354,7 @@ function render(){
     <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
   </table>` : '';
 
+  $('#lCnt').textContent = rows.length ? `${comma(rows.length)}장 · ${comma(total)} kg` : '';
   $('#list').innerHTML = rows.length ? `<table>
     <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">1차</th><th class="r">2차</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...rows].reverse().map(r=>`<tr>
@@ -353,7 +371,7 @@ function render(){
         <button class="mini x" data-del="${r.id}">삭제</button>
       </td>
     </tr>`).join('')}</tbody>
-  </table>` : '';
+  </table>` : '<div class="empty">해당 기간에 전표가 없습니다.</div>';
 }
 
 /* ---------- 사진 뷰어 ---------- */

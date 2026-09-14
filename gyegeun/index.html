@@ -65,6 +65,8 @@ main{padding:16px}
 .chip.day{flex:1;padding:14px 8px;text-align:center;line-height:1.25}
 .chip.day b{display:block;font-size:18px;font-weight:800}
 .chip.day span{font-size:12px;opacity:.75}
+#fDate{font-size:17px;font-weight:600;padding:15px 14px}
+#fDate.pick{border-color:var(--amber);background:#FFF5E4;color:var(--amber);font-weight:800}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
 
 input[type=text],input[type=number],input[type=date],input[type=url],select{
@@ -169,7 +171,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 <section class="pane sel" id="p-in">
   <div class="lbl">계근일 <span style="font-weight:400">— 전표에 찍힌 날짜</span></div>
   <div class="chips" id="fDay"></div>
-  <input type="date" id="fDate" style="display:none;margin-top:8px">
+  <div class="lbl" style="margin:12px 0 6px">다른 날짜는 아래를 눌러 고르세요</div>
+  <input type="date" id="fDate">
 
   <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
@@ -312,12 +315,10 @@ function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today();
 function drawDay(){
   const t=today(), y=yesterday(), cur=form.date;
   const mk=(iso,cap)=>`<button class="chip day${iso===cur?' sel':''}" data-d="${iso}"><b>${label(iso)}</b><span>${cap}</span></button>`;
-  let h = mk(y,'어제') + mk(t,'오늘');
-  const other = (cur!==t && cur!==y);
-  h += `<button class="chip day${other?' sel':''}" data-d="other"><b>${other?label(cur):'다른 날'}</b><span>직접 선택</span></button>`;
-  $('#fDay').innerHTML=h;
-  $('#fDate').style.display = other ? 'block':'none';
-  $('#fDate').value = cur;
+  $('#fDay').innerHTML = mk(y,'어제') + mk(t,'오늘');
+  const el=$('#fDate');
+  el.value = cur;
+  el.classList.toggle('pick', cur!==t && cur!==y);
 }
 
 function initForm(){
@@ -408,7 +409,6 @@ function updateDock(){
 $('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); } };
 $('#fDay').onclick = e=>{
   const b=e.target.closest('[data-d]'); if(!b) return;
-  if(b.dataset.d==='other'){ $('#fDate').style.display='block'; $('#fDate').showPicker?.(); return; }
   form.date=b.dataset.d; drawDay();
 };
 

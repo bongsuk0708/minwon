@@ -45,6 +45,15 @@ input[type=month]:focus,select:focus{border-color:var(--acc)}
 .go{background:var(--acc);border:1px solid var(--acc);color:#fff;padding:9px 17px;border-radius:9px;font-weight:700;cursor:pointer}
 .go:hover{background:#8A5415}
 
+.srch{position:relative}
+.srch input{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 30px 9px 12px;
+  border-radius:9px;outline:none;width:230px;font-size:14px}
+.srch input:focus{border-color:var(--acc);width:280px}
+.srch input::-webkit-search-cancel-button{display:none}
+.xq{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;
+  color:var(--dim);cursor:pointer;font-size:14px;padding:4px 7px;display:none}
+.xq.on{display:block}
+.xq:hover{color:var(--bad)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
 .c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
 .c .k{font-size:13px;color:var(--dim);font-weight:600}
@@ -145,6 +154,10 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <select id="fVeh"><option value="">전체 차량</option></select>
     <select id="fSeong"><option value="">전체 성상</option></select>
     <div class="sp"></div>
+    <div class="srch">
+      <input type="search" id="fQ" placeholder="차량번호·성상·반입처·중량 검색" autocomplete="off">
+      <button class="xq" id="bQx" title="지우기">✕</button>
+    </div>
     <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
@@ -317,7 +330,13 @@ function inRange(d){
 }
 function picked(){
   const v=$('#fVeh').value, s=$('#fSeong').value;
-  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s));
+  const q=($('#fQ').value||'').trim().toLowerCase().replace(/,/g,'');
+  return all.filter(r=>{
+    if(!inRange(r.date) || (v&&r.veh!==v) || (s&&r.seong!==s)) return false;
+    if(!q) return true;
+    return [r.veh, r.seong, r.site, String(r.weight), r.date]
+      .some(x=> String(x||'').toLowerCase().includes(q));
+  });
 }
 
 /* ---------- 그리기 ---------- */
@@ -511,6 +530,8 @@ $('#fMonth').onchange = ()=>{
   document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
   render();
 };
+$('#fQ').oninput = ()=>{ $('#bQx').classList.toggle('on', !!$('#fQ').value); render(); };
+$('#bQx').onclick = ()=>{ $('#fQ').value=''; $('#bQx').classList.remove('on'); render(); $('#fQ').focus(); };
 $('#fVeh').onchange = render;
 $('#fSeong').onchange = render;
 $('#bReload').onclick = load;

@@ -40,20 +40,16 @@ button,input,select{font-family:inherit;font-size:14px}
 .chip{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 15px;border-radius:9px;font-weight:600;cursor:pointer}
 .chip.sel{background:var(--tx);border-color:var(--tx);color:#fff}
 .chip:not(.sel):hover{border-color:var(--acc);color:var(--acc)}
-input[type=month],select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none}
+input[type=month],input[type=date],select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none}
 input[type=month]:focus,select:focus{border-color:var(--acc)}
 .go{background:var(--acc);border:1px solid var(--acc);color:#fff;padding:9px 17px;border-radius:9px;font-weight:700;cursor:pointer}
+.srch{position:relative}
+.srch input{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px 9px 32px;
+  border-radius:9px;outline:none;width:180px;font-size:14px}
+.srch input:focus{border-color:var(--acc);width:220px}
+.srch::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:17px}
 .go:hover{background:#8A5415}
 
-.srch{position:relative}
-.srch input{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 30px 9px 12px;
-  border-radius:9px;outline:none;width:230px;font-size:14px}
-.srch input:focus{border-color:var(--acc);width:280px}
-.srch input::-webkit-search-cancel-button{display:none}
-.xq{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:none;
-  color:var(--dim);cursor:pointer;font-size:14px;padding:4px 7px;display:none}
-.xq.on{display:block}
-.xq:hover{color:var(--bad)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
 .c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
 .c .k{font-size:13px;color:var(--dim);font-weight:600}
@@ -151,13 +147,12 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <button class="chip" data-q="7">최근 7일</button>
     <button class="chip sel" data-q="month">이번 달</button>
     <input type="month" id="fMonth">
+    <input type="date" id="fDay" title="특정 날짜만 보기">
+    <button class="chip" id="bDayClear" style="display:none">날짜 해제</button>
     <select id="fVeh"><option value="">전체 차량</option></select>
     <select id="fSeong"><option value="">전체 성상</option></select>
     <div class="sp"></div>
-    <div class="srch">
-      <input type="search" id="fQ" placeholder="차량번호·성상·반입처·중량 검색" autocomplete="off">
-      <button class="xq" id="bQx" title="지우기">✕</button>
-    </div>
+    <span class="srch"><input type="search" id="fQ" placeholder="차량번호 검색" autocomplete="off"></span>
     <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
@@ -324,19 +319,14 @@ function fillSelects(){
 
 /* ---------- 기간 ---------- */
 function inRange(d){
+  if(mode==='day')   return d===$('#fDay').value;
   if(mode==='today') return d===today();
   if(mode==='7'){ const l=new Date(); l.setDate(l.getDate()-6); return d>=l.toISOString().slice(0,10); }
   return d.slice(0,7)===($('#fMonth').value || today().slice(0,7));
 }
 function picked(){
   const v=$('#fVeh').value, s=$('#fSeong').value;
-  const q=($('#fQ').value||'').trim().toLowerCase().replace(/,/g,'');
-  return all.filter(r=>{
-    if(!inRange(r.date) || (v&&r.veh!==v) || (s&&r.seong!==s)) return false;
-    if(!q) return true;
-    return [r.veh, r.seong, r.site, String(r.weight), r.date]
-      .some(x=> String(x||'').toLowerCase().includes(q));
-  });
+  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s));
 }
 
 /* ---------- 그리기 ---------- */
@@ -373,10 +363,17 @@ function render(){
     <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
   </table>` : '';
 
-  $('#lCnt').textContent = rows.length ? `${comma(rows.length)}장 · ${comma(total)} kg` : '';
-  $('#list').innerHTML = rows.length ? `<table>
+  const q=($('#fQ').value||'').trim();
+  const shown = q ? rows.filter(r=>
+      String(r.veh).includes(q) || (r.seong||'').includes(q) ||
+      (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
+    ) : rows;
+  const shownSum = shown.reduce((a,r)=>a+r.weight,0);
+  $('#lCnt').textContent = shown.length
+      ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg` : '';
+  $('#list').innerHTML = shown.length ? `<table>
     <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">1차</th><th class="r">2차</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${[...rows].reverse().map(r=>`<tr>
+    <tbody>${[...shown].reverse().map(r=>`<tr>
       <td class="num">${r.date.slice(5).replace('-','/')}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
@@ -390,7 +387,7 @@ function render(){
         <button class="mini x" data-del="${r.id}">삭제</button>
       </td>
     </tr>`).join('')}</tbody>
-  </table>` : '<div class="empty">해당 기간에 전표가 없습니다.</div>';
+  </table>` : `<div class="empty">${q?`'${q}' 에 해당하는 전표가 없습니다.`:'해당 기간에 전표가 없습니다.'}</div>`;
 }
 
 /* ---------- 사진 뷰어 ---------- */
@@ -521,20 +518,32 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.del) del(b.dataset.del);
   if(b.dataset.q){
     mode=b.dataset.q;
+    $('#fDay').value=''; $('#bDayClear').style.display='none';
     document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x===b));
     render();
   }
+  if(b.id==='bDayClear'){
+    $('#fDay').value=''; b.style.display='none'; mode='month';
+    document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
+    render();
+  }
 });
+$('#fDay').onchange = e=>{
+  if(!e.target.value){ $('#bDayClear').click(); return; }
+  mode='day'; $('#bDayClear').style.display='inline-block';
+  document.querySelectorAll('[data-q]').forEach(x=>x.classList.remove('sel'));
+  render();
+};
 $('#fMonth').onchange = ()=>{
-  mode='month';
+  mode='month'; $('#fDay').value=''; $('#bDayClear').style.display='none';
   document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
   render();
 };
-$('#fQ').oninput = ()=>{ $('#bQx').classList.toggle('on', !!$('#fQ').value); render(); };
-$('#bQx').onclick = ()=>{ $('#fQ').value=''; $('#bQx').classList.remove('on'); render(); $('#fQ').focus(); };
 $('#fVeh').onchange = render;
 $('#fSeong').onchange = render;
 $('#bReload').onclick = load;
+$('#fQ').oninput = render;
+$('#fQ').onkeydown = e=>{ if(e.key==='Escape'){ e.target.value=''; render(); } };
 
 /* ---------- CSV ---------- */
 $('#bCsv').onclick = ()=>{

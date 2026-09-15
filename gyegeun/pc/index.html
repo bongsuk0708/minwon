@@ -29,6 +29,14 @@ header h1 span{color:var(--acc)}
 @media (max-width:1180px){ .cols{grid-template-columns:minmax(0,1fr)} }
 .colR{position:sticky;top:70px}
 .listbox{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.scrollbox{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:auto}
+.scrollbox table{border:none;border-radius:0}
+.scrollbox th{position:sticky;top:0;z-index:2}
+.scrollbox tfoot td{position:sticky;bottom:0;z-index:2;box-shadow:0 -1px 0 var(--line)}
+.scrollbox .empty{padding:30px 20px}
+#vehBox{max-height:calc(46vh - 60px)}
+#dateBox{max-height:calc(46vh - 60px)}
+.colL{position:sticky;top:70px}
 .listwrap{max-height:calc(100vh - 200px);overflow:auto}
 .listwrap table{border:none;border-radius:0}
 .listwrap th{position:sticky;top:0;z-index:2}
@@ -181,9 +189,9 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <div class="colL">
       <div class="cards" id="cards"></div>
       <h2 style="margin-top:4px">차량별</h2>
-      <div id="byVeh"></div>
+      <div class="scrollbox" id="vehBox"><div id="byVeh"></div></div>
       <h2>일자별</h2>
-      <div id="byDate"></div>
+      <div class="scrollbox" id="dateBox"><div id="byDate"></div></div>
     </div>
 
     <div class="colR">

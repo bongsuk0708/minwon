@@ -317,7 +317,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v97</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">현장 v98</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -648,10 +648,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="pb-ov" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(15,22,34,.55);align-items:center;justify-content:center;padding:16px">
   <div style="width:100%;max-width:430px;max-height:84vh;overflow:auto;background:#fff;border-radius:16px;padding:18px">
     <div id="pb-title" style="font-size:18px;font-weight:800;color:#0F1622"></div>
-    <div style="display:flex;gap:9px;margin-top:12px">
-      <button onclick="shotPhoto('before')" style="flex:1;background:#B54708;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📷 처리 전</button>
-      <button onclick="shotPhoto('after')" style="flex:1;background:#0E7C55;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📸 처리 후</button>
-    </div>
+    <div id="pb-btns" style="display:flex;gap:9px;margin-top:12px"></div>
     <input type="file" id="shot-before" accept="image/*" capture="environment" multiple style="display:none" onchange="onShot('before',this)">
     <input type="file" id="shot-after" accept="image/*" capture="environment" multiple style="display:none" onchange="onShot('after',this)">
     <div id="pb-body"></div>
@@ -3024,8 +3021,18 @@ function openPhotoBox(id){
   renderPb();
   $('pb-ov').style.display='flex';
 }
+// 전·후로 나눠 찍는 구분 (민원·공동용기·특수마대)
+function twoShot(r){ return r.tp==='m'||r.tp==='c'||r.tp==='t'; }
 function renderPb(){
   const r=recs.find(x=>x.id===pbId); if(!r)return;
+  const two=twoShot(r);
+  const bb=$('pb-btns');
+  if(bb){
+    bb.innerHTML=two
+      ?'<button onclick="shotPhoto(\'before\')" style="flex:1;background:#B54708;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📷 처리 전</button>'
+       +'<button onclick="shotPhoto(\'after\')" style="flex:1;background:#0E7C55;border:none;color:#fff;border-radius:11px;padding:15px;font-size:15px;font-weight:800;font-family:inherit;cursor:pointer">📸 처리 후</button>'
+      :'<button onclick="shotPhoto(\'before\')" style="flex:1;background:#1B5CFF;border:none;color:#fff;border-radius:11px;padding:16px;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer">📷 사진 찍기</button>';
+  }
   const b=(r.before||[]),a=(r.after||[]);
   const row=(arr,kind,tag,col)=>
     '<div style="font-size:13px;font-weight:800;color:'+col+';margin:12px 0 6px">'+tag+' '+arr.length+'장</div>'
@@ -3035,7 +3042,9 @@ function renderPb(){
       +'<button onclick="rmPhoto(\''+kind+'\','+i+')" style="position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;background:#c62828;color:#fff;border:none;font-size:14px;font-weight:800;cursor:pointer">×</button>'
       +'</div>').join('')
     +'</div>';
-  $('pb-body').innerHTML=row(b,'before','처리 전','#B54708')+row(a,'after','처리 후','#0E7C55');
+  $('pb-body').innerHTML= two
+    ? row(b,'before','처리 전','#B54708')+row(a,'after','처리 후','#0E7C55')
+    : row(b,'before','사진','#1B5CFF')+(a.length?row(a,'after','처리 후','#0E7C55'):'');
 }
 function shotPhoto(kind){ $('shot-'+kind).click(); }
 function onShot(kind,inp){

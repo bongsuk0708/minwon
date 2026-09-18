@@ -176,9 +176,9 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
       <div class="ef"><label>조</label><select id="eJo"></select></div>
       <div class="ef"><label>근무일</label><input type="date" id="eWDate"></div>
     </div>
-    <label style="font-size:12px;color:var(--dim);font-weight:700">실중량 — 한 줄에 한 장씩</label>
-    <textarea class="etext" id="eText" placeholder="5530&#10;5390&#10;5600" spellcheck="false"></textarea>
-    <div class="ehint">전표 보면서 숫자만 치고 Enter. 쉼표는 있어도 되고 없어도 됩니다. 빈 줄은 무시합니다.</div>
+    <label style="font-size:12px;color:var(--dim);font-weight:700">실중량 · 1차 시간 — 한 줄에 한 장씩</label>
+    <textarea class="etext" id="eText" placeholder="5530 2340&#10;5390 0004&#10;5600" spellcheck="false"></textarea>
+    <div class="ehint">한 줄에 <b>실중량</b>, 시각을 같이 넣으려면 띄우고 <b>2340</b> 처럼 네 자리. 시각은 없어도 됩니다.<br>야간조는 시각이 08시 이전이면 근무일을 하루 앞으로 잡습니다.</div>
     <div class="efoot">
       <span class="epv" id="ePv">전표 <b>0</b>장 · 합계 <b>0</b> kg</span>
       <div class="sp" style="flex:1"></div>
@@ -239,6 +239,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <div class="mf"><label>반입처</label><select id="mSite"></select></div>
     <div class="mf"><label>조</label><select id="mJo"></select></div>
     <div class="mf"><label>근무일</label><input type="date" id="mWDate"></div>
+    <div class="mf"><label>1차 시간</label><input type="text" id="mT1" placeholder="2340"></div>
     <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
     <div class="mfoot">
       <button class="chip" id="mCancel">취소</button>
@@ -304,6 +305,15 @@ const CARS = {
 };
 // 조가 저장되지 않은 옛 전표는 차량 기본값으로 봅니다
 const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
+// "2340" "23:40" "934" 를 "23:40" 꼴로. 잘못된 값은 빈 문자열.
+function hhmm(v){
+  let d=String(v||'').replace(/[^0-9]/g,'');
+  if(d.length===5 || d.length===6) d=d.slice(0,d.length-2);   // 초까지 넣은 경우
+  if(d.length<3 || d.length>4) return '';
+  const h=+d.slice(0,d.length-2), m=+d.slice(-2);
+  if(h>23 || m>59) return '';
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
 const wdOf = r => r.wdate || r.date;
 function addDays(iso,n){ const [y,m,d]=iso.split('-').map(Number);
   const t=new Date(y,m-1,d); t.setDate(t.getDate()+n);
@@ -403,16 +413,18 @@ function render(){
 
   const q=($('#fQ').value||'').trim();
   const shown = q ? rows.filter(r=>
-      String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
+      String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) || (r.t1||'').includes(q) ||
       (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
     ) : rows;
   const shownSum = shown.reduce((a,r)=>a+r.weight,0);
   $('#lCnt').textContent = shown.length
       ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg` : '';
   $('#list').innerHTML = shown.length ? `<table>
-    <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <thead><tr><th>날짜</th><th>근무일</th><th class="r">시각</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...shown].reverse().map(r=>`<tr>
-      <td class="num" title="근무일 ${wdOf(r)}">${r.date.slice(5).replace('-','/')}</td>
+      <td class="num">${r.date.slice(5).replace('-','/')}</td>
+      <td class="num" style="color:${wdOf(r)!==r.date?'var(--acc)':'var(--dim)'}">${wdOf(r).slice(5).replace('-','/')}</td>
+      <td class="r num" style="color:var(--dim)">${r.t1||'-'}</td>
       <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
@@ -508,7 +520,7 @@ function edit(id){
   $('#mJo').innerHTML    = '<option value="">— 조 —</option>'+JO.map(x=>`<option>${x}</option>`).join('');
   $('#mDate').value=r.date; $('#mVeh').value=r.veh;
   $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
-  $('#mJo').value=joOf(r); $('#mWDate').value=wdOf(r);
+  $('#mJo').value=joOf(r); $('#mWDate').value=wdOf(r); $('#mT1').value=r.t1||'';
   $('#modal').classList.add('on');
   setTimeout(()=>$('#mW').focus(),50);
 }
@@ -522,7 +534,9 @@ $('#mSave').onclick = async ()=>{
   if(!w){ toast('실중량을 확인하세요','err'); return; }
   const body={ date:$('#mDate').value, veh:$('#mVeh').value, seong:$('#mSeong').value,
                site:$('#mSite').value, weight:w,
-               jo:$('#mJo').value, wdate:$('#mWDate').value||$('#mDate').value };
+               jo:$('#mJo').value, wdate:$('#mWDate').value||$('#mDate').value,
+               t1:hhmm($('#mT1').value)||null };
+  if($('#mT1').value.trim() && !body.t1){ toast('시각은 2340 처럼 네 자리로','err'); return; }
   if(!body.date){ toast('계근일을 확인하세요','err'); return; }
   try{
     const res=await fetch(`${DB}/gyegeun/records/${mId}.json`,{method:'PATCH',
@@ -600,8 +614,8 @@ $('#bCsv').onclick = ()=>{
    || String(a.site||'').localeCompare(String(b.site||''))
    || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,근무일,조,차량번호,성상,반입처,실중량,1차중량,2차중량';
-  const body=rows.map(r=>[r.date,wdOf(r),joOf(r),r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const head='날짜,근무일,조,1차시간,2차시간,차량번호,성상,반입처,실중량,1차중량,2차중량';
+  const body=rows.map(r=>[r.date,wdOf(r),joOf(r),r.t1||'',r.t2||'',r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -611,14 +625,24 @@ $('#bCsv').onclick = ()=>{
 
 /* ---------- 일괄 입력 ---------- */
 const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+// 한 줄에 "실중량" 또는 "실중량 시각" — 5530 2340
+// 4,280 처럼 천단위 쉼표는 지우고, 나머지는 띄어쓰기로만 나눕니다.
 function eNums(){
-  return $('#eText').value.split(/[\n,;\t]+/)
-    .map(x=>parseInt(String(x).replace(/[^0-9]/g,''),10))
-    .filter(n=>n>0);
+  return $('#eText').value.split(/\n+/).map(line=>{
+    const t = line.replace(/(\d),(?=\d{3}(\D|$))/g,'$1').trim();
+    if(!t) return null;
+    const p = t.split(/\s+/).filter(Boolean);
+    const w = parseInt(String(p[0]).replace(/[^0-9]/g,''),10);
+    if(!(w>0)) return null;
+    const raw = p.length>1 ? p[1] : '';
+    return { w, t1:hhmm(raw), bad: (!!raw && !hhmm(raw)) || w>60000 };
+  }).filter(Boolean);
 }
 function ePreview(){
-  const n=eNums();
-  $('#ePv').innerHTML=`전표 <b>${n.length}</b>장 · 합계 <b class="num">${comma(n.reduce((a,b)=>a+b,0))}</b> kg`;
+  const n=eNums(), tn=n.filter(x=>x.t1).length, bn=n.filter(x=>x.bad).length;
+  $('#ePv').innerHTML=`전표 <b>${n.length}</b>장 · 합계 <b class="num">${comma(n.reduce((a,b)=>a+b.w,0))}</b> kg`
+    + (tn?` · 시각 ${tn}건`:'')
+    + (bn?` · <b style="color:var(--bad)">확인 필요 ${bn}줄</b>`:'');
 }
 function eInit(){
   $('#eDate').value = today();
@@ -665,15 +689,18 @@ $('#eSave').onclick = async ()=>{
   const jo=$('#eJo').value, wdate=$('#eWDate').value||date;
   if(!date){ toast('계근일을 정하세요','err'); return; }
   if(!jo){ toast('조를 고르세요','err'); $('#eJo').focus(); return; }
+  if(nums.some(x=>x.bad) && !confirm('중량이나 시각이 이상한 줄이 있습니다. 그대로 저장할까요?')) return;
   if(!seong){ toast('성상을 고르세요','err'); $('#eSeong').focus(); return; }
-  if(!confirm(`${date} · ${veh} · ${seong} · ${site} · ${jo}(근무일 ${wdate})\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b,0))} kg)\n\n저장할까요?`)) return;
+  if(!confirm(`${date} · ${veh} · ${seong} · ${site} · ${jo}(근무일 ${wdate})\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b.w,0))} kg)\n\n저장할까요?`)) return;
   $('#eSave').disabled=true; $('#eSave').textContent='저장 중';
   let ok=0;
-  for(const w of nums){
-    const id=uid();
+  for(const it of nums){
+    const w=it.w, id=uid();
+    // 야간조는 시각이 있으면 시각으로, 없으면 위에서 고른 근무일로
+    const wd = (jo==='야간' && it.t1) ? (+it.t1.slice(0,2) < 8 ? addDays(date,-1) : date) : wdate;
     try{
       const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({date,wdate,jo,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
+        body:JSON.stringify({date,wdate:wd,jo,t1:it.t1||null,t2:null,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
       if(res.ok) ok++;
     }catch(e){}
   }

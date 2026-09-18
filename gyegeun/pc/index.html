@@ -47,6 +47,7 @@ header h1 span{color:var(--acc)}
 button,input,select{font-family:inherit;font-size:14px}
 .chip{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 15px;border-radius:9px;font-weight:600;cursor:pointer}
 .chip.sel{background:var(--tx);border-color:var(--tx);color:#fff}
+.chip.sm{padding:5px 11px;font-size:12.5px;font-weight:600}
 .chip:not(.sel):hover{border-color:var(--acc);color:var(--acc)}
 input[type=month],input[type=date],select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none}
 input[type=month]:focus,select:focus{border-color:var(--acc)}
@@ -159,6 +160,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <button class="chip" id="bDayClear" style="display:none">날짜 해제</button>
     <select id="fVeh"><option value="">전체 차량</option></select>
     <select id="fSeong"><option value="">전체 성상</option></select>
+    <select id="fJo"><option value="">전체 조</option><option>주간</option><option>야간</option></select>
     <div class="sp"></div>
     <span class="srch"><input type="search" id="fQ" placeholder="차량번호 검색" autocomplete="off"></span>
     <button class="chip" id="bToggle">전표 직접 입력</button>
@@ -171,6 +173,8 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
       <div class="ef"><label>차량</label><select id="eVeh"></select></div>
       <div class="ef"><label>성상</label><select id="eSeong"></select></div>
       <div class="ef"><label>반입처</label><select id="eSite"></select></div>
+      <div class="ef"><label>조</label><select id="eJo"></select></div>
+      <div class="ef"><label>근무일</label><input type="date" id="eWDate"></div>
     </div>
     <label style="font-size:12px;color:var(--dim);font-weight:700">실중량 — 한 줄에 한 장씩</label>
     <textarea class="etext" id="eText" placeholder="5530&#10;5390&#10;5600" spellcheck="false"></textarea>
@@ -188,9 +192,15 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
   <div class="cols">
     <div class="colL">
       <div class="cards" id="cards"></div>
-      <h2 style="margin-top:4px">차량별</h2>
+      <h2 style="margin-top:4px">근무조별</h2>
+      <div id="byJo"></div>
+      <h2>차량별</h2>
       <div class="scrollbox" id="vehBox"><div id="byVeh"></div></div>
-      <h2>일자별</h2>
+      <h2 style="display:flex;align-items:center;gap:9px">일자별
+        <span class="sp" style="flex:1"></span>
+        <button class="chip sm sel" data-base="date">전표 날짜</button>
+        <button class="chip sm" data-base="wdate">근무일</button>
+      </h2>
       <div class="scrollbox" id="dateBox"><div id="byDate"></div></div>
     </div>
 
@@ -227,6 +237,8 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <div class="mf"><label>차량</label><select id="mVeh"></select></div>
     <div class="mf"><label>성상</label><select id="mSeong"></select></div>
     <div class="mf"><label>반입처</label><select id="mSite"></select></div>
+    <div class="mf"><label>조</label><select id="mJo"></select></div>
+    <div class="mf"><label>근무일</label><input type="date" id="mWDate"></div>
     <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
     <div class="mfoot">
       <button class="chip" id="mCancel">취소</button>
@@ -268,29 +280,36 @@ function siteChange(el){
   if(name){ el.innerHTML=siteOptions(name); el.value=name; }
   else el.innerHTML=siteOptions(allSites()[0]);
 }
+const JO = ['주간','야간'];
 const CARS = {
-  '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201'},
-  '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759'},
-  '3587':{s:'생활',  d:'강남자원회수시설',  f:'84루3587'},
-  '4359':{s:'생활',  d:'강남자원회수시설',  f:'89머4359'},
-  '9033':{s:'음식물',d:'자원순환공원',      f:'90오9033'},
-  '8078':{s:'음식물',d:'자원순환공원',      f:'90오8078'},
-  '1351':{s:'재활용',d:'자원순환공원',      f:'804조1351'},
-  '7538':{s:'재활용',d:'자원순환공원',      f:'82마7538'},
-  '8326':{s:'재활용',d:'자원순환공원',      f:'90오8326'},
-  '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657'},
-  '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686'},
-  '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666'},
+  '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201',  j:'야간'},
+  '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759',  j:'야간'},
+  '3587':{s:'생활',  d:'강남자원회수시설',  f:'84루3587',  j:'야간'},
+  '4359':{s:'생활',  d:'강남자원회수시설',  f:'89머4359',  j:'야간'},
+  '9033':{s:'음식물',d:'자원순환공원',      f:'90오9033',  j:'야간'},
+  '8078':{s:'음식물',d:'자원순환공원',      f:'90오8078',  j:'야간'},
+  '1351':{s:'재활용',d:'자원순환공원',      f:'804조1351', j:'야간'},
+  '7538':{s:'재활용',d:'자원순환공원',      f:'82마7538',  j:'야간'},
+  '8326':{s:'재활용',d:'자원순환공원',      f:'90오8326',  j:'야간'},
+  '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657',  j:'야간'},
+  '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686', j:'주간'},
+  '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666', j:'주간'},
   // 성상을 매번 고르는 차량
-  '1286':{s:'',      d:'자원순환공원', f:'83도1286',  n:'다목적'},
-  '5635':{s:'',      d:'자원순환공원', f:'84도5635',  n:'다목적'},
-  '4830':{s:'',      d:'자원순환공원', f:'86마4830'},
-  '4968':{s:'',      d:'자원순환공원', f:'86마4968'},
-  '6110':{s:'',      d:'자원순환공원', f:'86모6110',  n:'예비'},
-  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  n:'신차'}
+  '1286':{s:'',      d:'자원순환공원', f:'83도1286',  j:'주간'},
+  '5635':{s:'',      d:'자원순환공원', f:'84도5635',  j:'주간'},
+  '4830':{s:'',      d:'자원순환공원', f:'86마4830',  j:'주간'},
+  '4968':{s:'',      d:'자원순환공원', f:'86마4968',  j:'주간'},
+  '6110':{s:'',      d:'자원순환공원', f:'86모6110',  j:'야간'},
+  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'야간'}
 };
+// 조가 저장되지 않은 옛 전표는 차량 기본값으로 봅니다
+const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
+const wdOf = r => r.wdate || r.date;
+function addDays(iso,n){ const [y,m,d]=iso.split('-').map(Number);
+  const t=new Date(y,m-1,d); t.setDate(t.getDate()+n);
+  return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
 
-let all = [], picCache = {}, rots = {}, mode = 'month';
+let all = [], picCache = {}, rots = {}, mode = 'month', dbase = 'date';
 const $ = s=>document.querySelector(s);
 const comma = n=> (n||0).toLocaleString('ko-KR');
 const ton = n=> (n/1000).toFixed(2);
@@ -333,8 +352,8 @@ function inRange(d){
   return d.slice(0,7)===($('#fMonth').value || today().slice(0,7));
 }
 function picked(){
-  const v=$('#fVeh').value, s=$('#fSeong').value;
-  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s));
+  const v=$('#fVeh').value, s=$('#fSeong').value, j=$('#fJo').value;
+  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s) && (!j||joOf(r)===j));
 }
 
 /* ---------- 그리기 ---------- */
@@ -350,6 +369,16 @@ function render(){
     ).join('') +
     `<div class="c tot"><div class="k">합계</div><div class="v num">${ton(total)}<span style="font-size:14px"> t</span></div><div class="s num">전표 ${comma(rows.length)}장 · ${comma(total)} kg</div></div>`;
 
+  const jm={};
+  rows.forEach(r=>{ const j=joOf(r)||'(미지정)';
+    jm[j]=jm[j]||{n:0,w:0,v:new Set()}; jm[j].n++; jm[j].w+=r.weight; jm[j].v.add(r.veh); });
+  const jk=Object.keys(jm).sort();
+  $('#byJo').innerHTML = jk.length ? `<table>
+    <thead><tr><th>조</th><th class="r">차량</th><th class="r">전표</th><th class="r">중량(kg)</th><th class="r">톤</th></tr></thead>
+    <tbody>${jk.map(j=>`<tr><td class="veh">${j}</td><td class="r num">${jm[j].v.size}</td><td class="r num">${jm[j].n}</td><td class="r b num">${comma(jm[j].w)}</td><td class="r num">${ton(jm[j].w)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>합계</td><td class="r num">${new Set(rows.map(r=>r.veh)).size}</td><td class="r num">${rows.length}</td><td class="r num">${comma(total)}</td><td class="r num">${ton(total)}</td></tr></tfoot>
+  </table>` : '';
+
   const vm={};
   rows.forEach(r=>{ vm[r.veh]=vm[r.veh]||{n:0,w:0,s:new Set()}; vm[r.veh].n++; vm[r.veh].w+=r.weight; vm[r.veh].s.add(r.seong); });
   const vk=Object.keys(vm).sort();
@@ -360,10 +389,11 @@ function render(){
   </table>` : '<div class="empty">해당 기간에 기록이 없습니다.</div>';
 
   const use = SEONG.filter(s=>sum[s]>0), dm={};
-  rows.forEach(r=>{ dm[r.date]=dm[r.date]||{}; dm[r.date][r.seong]=(dm[r.date][r.seong]||0)+r.weight; });
+  rows.forEach(r=>{ const k = dbase==='wdate' ? wdOf(r) : r.date;
+    dm[k]=dm[k]||{}; dm[k][r.seong]=(dm[k][r.seong]||0)+r.weight; });
   const dk=Object.keys(dm).sort();
   $('#byDate').innerHTML = dk.length ? `<table>
-    <thead><tr><th>날짜</th>${use.map(s=>`<th class="r">${s}</th>`).join('')}<th class="r">합계</th></tr></thead>
+    <thead><tr><th>${dbase==='wdate'?'근무일':'날짜'}</th>${use.map(s=>`<th class="r">${s}</th>`).join('')}<th class="r">합계</th></tr></thead>
     <tbody>${dk.map(d=>{
       const t=use.reduce((a,s)=>a+(dm[d][s]||0),0);
       return `<tr><td class="num">${d.slice(5).replace('-','/')}</td>${use.map(s=>`<td class="r num">${dm[d][s]?comma(dm[d][s]):'<span style="color:var(--dim)">-</span>'}</td>`).join('')}<td class="r b num">${comma(t)}</td></tr>`;
@@ -373,21 +403,20 @@ function render(){
 
   const q=($('#fQ').value||'').trim();
   const shown = q ? rows.filter(r=>
-      String(r.veh).includes(q) || (r.seong||'').includes(q) ||
+      String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
       (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
     ) : rows;
   const shownSum = shown.reduce((a,r)=>a+r.weight,0);
   $('#lCnt').textContent = shown.length
       ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg` : '';
   $('#list').innerHTML = shown.length ? `<table>
-    <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">1차</th><th class="r">2차</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...shown].reverse().map(r=>`<tr>
-      <td class="num">${r.date.slice(5).replace('-','/')}</td>
+      <td class="num" title="근무일 ${wdOf(r)}">${r.date.slice(5).replace('-','/')}</td>
+      <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
       <td>${r.site||''}</td>
-      <td class="r num" style="color:var(--dim)">${r.gross?comma(r.gross):'-'}</td>
-      <td class="r num" style="color:var(--dim)">${r.tare?comma(r.tare):'-'}</td>
       <td class="r b num">${comma(r.weight)}</td>
       <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
       <td style="text-align:right;white-space:nowrap">
@@ -476,8 +505,10 @@ function edit(id){
                          + (CARS[r.veh]?'':`<option>${r.veh}</option>`);
   $('#mSeong').innerHTML = SEONG.map(x=>`<option>${x}</option>`).join('');
   $('#mSite').innerHTML  = siteOptions(r.site);
+  $('#mJo').innerHTML    = '<option value="">— 조 —</option>'+JO.map(x=>`<option>${x}</option>`).join('');
   $('#mDate').value=r.date; $('#mVeh').value=r.veh;
   $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
+  $('#mJo').value=joOf(r); $('#mWDate').value=wdOf(r);
   $('#modal').classList.add('on');
   setTimeout(()=>$('#mW').focus(),50);
 }
@@ -490,7 +521,8 @@ $('#mSave').onclick = async ()=>{
   const w=parseInt(String($('#mW').value).replace(/[^0-9]/g,''),10);
   if(!w){ toast('실중량을 확인하세요','err'); return; }
   const body={ date:$('#mDate').value, veh:$('#mVeh').value, seong:$('#mSeong').value,
-               site:$('#mSite').value, weight:w };
+               site:$('#mSite').value, weight:w,
+               jo:$('#mJo').value, wdate:$('#mWDate').value||$('#mDate').value };
   if(!body.date){ toast('계근일을 확인하세요','err'); return; }
   try{
     const res=await fetch(`${DB}/gyegeun/records/${mId}.json`,{method:'PATCH',
@@ -524,6 +556,11 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.pic) showPic(b.dataset.pic);
   if(b.dataset.ed)  edit(b.dataset.ed);
   if(b.dataset.del) del(b.dataset.del);
+  if(b.dataset.base){
+    dbase=b.dataset.base;
+    document.querySelectorAll('[data-base]').forEach(x=>x.classList.toggle('sel',x===b));
+    render(); return;
+  }
   if(b.dataset.q){
     mode=b.dataset.q;
     $('#fDay').value=''; $('#bDayClear').style.display='none';
@@ -549,6 +586,7 @@ $('#fMonth').onchange = ()=>{
 };
 $('#fVeh').onchange = render;
 $('#fSeong').onchange = render;
+$('#fJo').onchange = render;
 $('#bReload').onclick = load;
 $('#fQ').oninput = render;
 $('#fQ').onkeydown = e=>{ if(e.key==='Escape'){ e.target.value=''; render(); } };
@@ -562,8 +600,8 @@ $('#bCsv').onclick = ()=>{
    || String(a.site||'').localeCompare(String(b.site||''))
    || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,차량번호,성상,반입처,실중량,1차중량,2차중량';
-  const body=rows.map(r=>[r.date,r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const head='날짜,근무일,조,차량번호,성상,반입처,실중량,1차중량,2차중량';
+  const body=rows.map(r=>[r.date,wdOf(r),joOf(r),r.veh,r.seong,r.site||'',r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -584,9 +622,11 @@ function ePreview(){
 }
 function eInit(){
   $('#eDate').value = today();
+  $('#eWDate').value = today();
   $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option value="${v}">${v}</option>`).join('');
   $('#eSeong').innerHTML = '<option value="">— 성상을 고르세요 —</option>'+SEONG.map(s=>`<option>${s}</option>`).join('');
   $('#eSite').innerHTML = siteOptions();
+  $('#eJo').innerHTML = '<option value="">— 조 —</option>'+JO.map(j=>`<option>${j}</option>`).join('');
   eSync(); ePreview();
 }
 function eSync(){
@@ -596,6 +636,8 @@ function eSync(){
   if(!allSites().includes(c.d)) addSite(c.d);
   $('#eSite').innerHTML = siteOptions(c.d);
   $('#eSite').value = c.d;
+  $('#eJo').value = c.j || '';
+  eWSync();
   const sel=$('#eSeong');
   sel.style.borderColor = c.s ? '' : 'var(--acc)';
 }
@@ -604,7 +646,15 @@ $('#bToggle').onclick = ()=>{
   $('#bToggle').classList.toggle('sel',on);
   if(on) $('#eText').focus();
 };
+// 야간조는 자정을 넘긴 계근분이 섞이므로 근무일을 하루 앞으로 잡아둡니다
+function eWSync(){
+  const d=$('#eDate').value;
+  if(!d){ $('#eWDate').value=''; return; }
+  $('#eWDate').value = $('#eJo').value==='야간' ? addDays(d,-1) : d;
+}
 $('#eVeh').onchange = eSync;
+$('#eJo').onchange = eWSync;
+$('#eDate').onchange = eWSync;
 $('#eSite').onchange = e=>siteChange(e.target);
 $('#eText').oninput = ePreview;
 $('#eClear').onclick = ()=>{ $('#eText').value=''; ePreview(); $('#eText').focus(); };
@@ -612,16 +662,18 @@ $('#eSave').onclick = async ()=>{
   const nums=eNums();
   if(!nums.length){ toast('실중량을 입력하세요','err'); return; }
   const date=$('#eDate').value, veh=$('#eVeh').value, seong=$('#eSeong').value, site=$('#eSite').value;
+  const jo=$('#eJo').value, wdate=$('#eWDate').value||date;
   if(!date){ toast('계근일을 정하세요','err'); return; }
+  if(!jo){ toast('조를 고르세요','err'); $('#eJo').focus(); return; }
   if(!seong){ toast('성상을 고르세요','err'); $('#eSeong').focus(); return; }
-  if(!confirm(`${date} · ${veh} · ${seong} · ${site}\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b,0))} kg)\n\n저장할까요?`)) return;
+  if(!confirm(`${date} · ${veh} · ${seong} · ${site} · ${jo}(근무일 ${wdate})\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b,0))} kg)\n\n저장할까요?`)) return;
   $('#eSave').disabled=true; $('#eSave').textContent='저장 중';
   let ok=0;
   for(const w of nums){
     const id=uid();
     try{
       const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({date,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
+        body:JSON.stringify({date,wdate,jo,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
       if(res.ok) ok++;
     }catch(e){}
   }

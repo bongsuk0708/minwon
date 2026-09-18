@@ -65,6 +65,8 @@ main{padding:16px}
 .chip.day{flex:1;padding:14px 8px;text-align:center;line-height:1.25}
 .chip.day b{display:block;font-size:18px;font-weight:800}
 .chip.day span{font-size:12px;opacity:.75}
+.wday{margin-top:9px;padding:11px 14px;border-radius:11px;background:#FFF5E4;
+  border:1px solid rgba(160,99,26,.3);font-size:14px;font-weight:700;color:var(--amber)}
 #fDate{font-size:17px;font-weight:600;padding:15px 14px}
 #fDate.pick{border-color:var(--amber);background:#FFF5E4;color:var(--amber);font-weight:800}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
@@ -174,6 +176,14 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="lbl" style="margin:12px 0 6px">다른 날짜는 아래를 눌러 고르세요</div>
   <input type="date" id="fDate">
 
+  <div class="lbl">근무조</div>
+  <div class="chips" id="fJo"></div>
+  <div id="fCross" style="display:none">
+    <div class="lbl" style="margin:12px 0 6px">이 전표는</div>
+    <div class="chips" id="fCrossBtn"></div>
+    <div class="wday" id="fWday"></div>
+  </div>
+
   <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
 
@@ -244,26 +254,27 @@ input[type=number]{font-variant-numeric:tabular-nums}
 const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
 
 // 차량 → 기본 성상 / 기본 반입처
+const JO = ['주간','야간'];
 const CARS = {
-  '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201'},
-  '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759'},
-  '3587':{s:'생활',  d:'강남자원회수시설',  f:'84루3587'},
-  '4359':{s:'생활',  d:'강남자원회수시설',  f:'89머4359'},
-  '9033':{s:'음식물',d:'자원순환공원',      f:'90오9033'},
-  '8078':{s:'음식물',d:'자원순환공원',      f:'90오8078'},
-  '1351':{s:'재활용',d:'자원순환공원',      f:'804조1351'},
-  '7538':{s:'재활용',d:'자원순환공원',      f:'82마7538'},
-  '8326':{s:'재활용',d:'자원순환공원',      f:'90오8326'},
-  '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657'},
-  '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686'},
-  '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666'},
+  '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201',  j:'야간'},
+  '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759',  j:'야간'},
+  '3587':{s:'생활',  d:'강남자원회수시설',  f:'84루3587',  j:'야간'},
+  '4359':{s:'생활',  d:'강남자원회수시설',  f:'89머4359',  j:'야간'},
+  '9033':{s:'음식물',d:'자원순환공원',      f:'90오9033',  j:'야간'},
+  '8078':{s:'음식물',d:'자원순환공원',      f:'90오8078',  j:'야간'},
+  '1351':{s:'재활용',d:'자원순환공원',      f:'804조1351', j:'야간'},
+  '7538':{s:'재활용',d:'자원순환공원',      f:'82마7538',  j:'야간'},
+  '8326':{s:'재활용',d:'자원순환공원',      f:'90오8326',  j:'야간'},
+  '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657',  j:'야간'},
+  '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686', j:'주간'},
+  '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666', j:'주간'},
   // 성상을 매번 고르는 차량
-  '1286':{s:'',      d:'자원순환공원', f:'83도1286',  n:'다목적'},
-  '5635':{s:'',      d:'자원순환공원', f:'84도5635',  n:'다목적'},
-  '4830':{s:'',      d:'자원순환공원', f:'86마4830',  n:'매각(과거분)'},
-  '4968':{s:'',      d:'자원순환공원', f:'86마4968',  n:'매각(과거분)'},
-  '6110':{s:'',      d:'자원순환공원', f:'86모6110',  n:'예비'},
-  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  n:'신차'}
+  '1286':{s:'',      d:'자원순환공원', f:'83도1286',  j:'주간', n:'다목적'},
+  '5635':{s:'',      d:'자원순환공원', f:'84도5635',  j:'주간', n:'다목적'},
+  '4830':{s:'',      d:'자원순환공원', f:'86마4830',  j:'주간', n:'매각(과거분)'},
+  '4968':{s:'',      d:'자원순환공원', f:'86마4968',  j:'주간', n:'매각(과거분)'},
+  '6110':{s:'',      d:'자원순환공원', f:'86모6110',  j:'야간', n:'예비'},
+  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'야간', n:'신차'}
 };
 const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
 // 직접 입력해서 쓴 시설은 이 폰에 기억해두고 다음부터 버튼으로 보여줍니다
@@ -300,11 +311,14 @@ function toast(msg,kind){
 }
 
 /* ================= 입력 폼 상태 ================= */
-let form = { date:'', seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
+let form = { date:'', jo:'', cross:false, seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
 
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function today(){ return ymd(new Date()); }
 function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
+function addDays(iso,n){ const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d); t.setDate(t.getDate()+n); return ymd(t); }
+// 근무일 = 출근한 날. 야간조가 자정을 넘겨 계근한 전표는 하루 앞으로 당깁니다.
+function workDay(){ return (form.jo==='야간' && form.cross) ? addDays(form.date,-1) : form.date; }
 const WD=['일','월','화','수','목','금','토'];
 function label(iso){
   const [y,m,d]=iso.split('-').map(Number);
@@ -312,6 +326,17 @@ function label(iso){
 }
 // 새벽에 앱을 열면 전날이 기본 — 야간조는 전날 밤 계근분이 먼저 나옵니다
 function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today(); }
+function drawJo(){
+  $('#fJo').innerHTML = JO.map(j=>
+    `<button class="chip${j===form.jo?' sel':''}" data-j="${j}">${j}</button>`).join('');
+  const night = form.jo==='야간';
+  $('#fCross').style.display = night ? 'block':'none';
+  if(night){
+    const mk=(v,t)=>`<button class="chip${form.cross===v?' sel':''}" data-x="${v?1:0}">${t}</button>`;
+    $('#fCrossBtn').innerHTML = mk(false,'출근한 날 것') + mk(true,'자정 넘긴 것');
+    $('#fWday').textContent = `근무일 ${label(workDay())}`;
+  }
+}
 function drawDay(){
   const t=today(), y=yesterday(), cur=form.date;
   const mk=(iso,cap)=>`<button class="chip day${iso===cur?' sel':''}" data-d="${iso}"><b>${label(iso)}</b><span>${cap}</span></button>`;
@@ -323,9 +348,12 @@ function drawDay(){
 
 function initForm(){
   const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
-  form = { date:defaultDay(), seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null, rows:[{w:'',g:'',t:'',site:'',open:false}] };
+  const d0 = defaultDay();
+  form = { date:d0, jo:c.j||'', cross:(c.j==='야간' && d0===today() && new Date().getHours()<12),
+           seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null,
+           rows:[{w:'',g:'',t:'',site:'',open:false}] };
   $('#fSiteEtc').value='';
-  drawDay(); drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
+  drawJo(); drawDay(); drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
 }
 
 function drawSeong(){
@@ -400,16 +428,25 @@ function calcTxt(r){
 function updateDock(){
   const n = form.rows.filter(r=>+r.w>0).length;
   const s = form.rows.reduce((a,r)=>a+(+r.w||0),0);
-  $('#dCnt').textContent = form.seong ? `전표 ${n}장` : '성상을 고르세요';
+  $('#dCnt').textContent = !form.seong ? '성상을 고르세요'
+      : !form.jo ? '근무조를 고르세요' : `전표 ${n}장`;
   $('#dSum').textContent = comma(s)+' kg';
-  $('#bSave').disabled = n===0 || !cfg.veh || !form.seong;
+  $('#bSave').disabled = n===0 || !cfg.veh || !form.seong || !form.jo;
 }
 
 /* ================= 입력 이벤트 ================= */
-$('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); } };
+$('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); drawJo(); } };
 $('#fDay').onclick = e=>{
   const b=e.target.closest('[data-d]'); if(!b) return;
-  form.date=b.dataset.d; drawDay();
+  form.date=b.dataset.d; drawDay(); drawJo();
+};
+$('#fJo').onclick = e=>{
+  const b=e.target.closest('[data-j]'); if(!b) return;
+  form.jo=b.dataset.j; drawJo(); updateDock();
+};
+$('#fCrossBtn').onclick = e=>{
+  const b=e.target.closest('[data-x]'); if(!b) return;
+  form.cross = b.dataset.x==='1'; drawJo();
 };
 
 $('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
@@ -469,6 +506,7 @@ $('#fSlips').addEventListener('click', e=>{
 $('#bSave').onclick = ()=>{
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
   if(!form.seong){ toast('성상을 고르세요','err'); return; }
+  if(!form.jo){ toast('근무조를 고르세요','err'); return; }
   if(!siteName()){ toast('반입처를 고르세요','err'); return; }
   rememberSite(siteName());
   const rows = form.rows.filter(r=>+r.w>0);
@@ -481,17 +519,18 @@ $('#bSave').onclick = ()=>{
   if(form.photo){ pics[batch]=form.photo; }
   rows.forEach(r=>{
     recs.push({
-      id:uid(), date:form.date, veh:cfg.veh, seong:form.seong,
+      id:uid(), date:form.date, wdate:workDay(), jo:form.jo,
+      veh:cfg.veh, seong:form.seong,
       site: r.site || siteName(),
       weight:+r.w, gross:+r.g||null, tare:+r.t||null,
       batch: form.photo?batch:null, at:Date.now(), sent:false
     });
   });
   saveAll();
-  const keepDate=form.date;
+  const keep={date:form.date, jo:form.jo, cross:form.cross};
   toast(`전표 ${rows.length}장 저장`, 'good');
   initForm();
-  form.date=keepDate; drawDay();
+  Object.assign(form, keep); drawDay(); drawJo();
   push();
   drawList();
 };
@@ -520,7 +559,8 @@ async function push(){
       const res = await fetch(`${base}/gyegeun/records/${r.id}.json`, {
         method:'PUT', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
-          date:r.date, veh:r.veh, seong:r.seong, site:r.site,
+          date:r.date, wdate:r.wdate||r.date, jo:r.jo||'',
+          veh:r.veh, seong:r.seong, site:r.site,
           weight:r.weight, gross:r.gross, tare:r.tare, batch:r.batch, at:r.at
         })
       });
@@ -594,8 +634,8 @@ $('#viewer').onclick = ()=> $('#viewer').classList.remove('on');
 $('#bCsv').onclick = ()=>{
   const list = recs.filter(r=>inRange(r.date)).sort((a,b)=> a.date.localeCompare(b.date)||a.at-b.at);
   if(!list.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,차량번호,성상,반입처,실중량,총중량,차중량';
-  const body=list.map(r=>[r.date,r.veh,r.seong,r.site,r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const head='날짜,근무일,조,차량번호,성상,반입처,실중량,1차중량,2차중량';
+  const body=list.map(r=>[r.date,r.wdate||r.date,r.jo||'',r.veh,r.seong,r.site,r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -611,7 +651,7 @@ function drawVeh(){
   $('#hVeh').textContent = cfg.veh||'차량 선택';
   $('#hSeong').textContent = !cfg.veh ? '차량을 먼저 정하세요'
       : !c ? '직접 입력한 차량'
-      : c.s ? `${c.f} · ${c.s}` : `${c.f} · ${c.n||'성상 선택'}`;
+      : `${c.f} · ${c.j||'조 선택'}${c.s?' · '+c.s:''}`;
   $('#sDb').value = cfg.db||'';
 }
 $('#sVeh').onclick = e=>{

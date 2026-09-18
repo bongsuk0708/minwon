@@ -65,8 +65,6 @@ main{padding:16px}
 .chip.day{flex:1;padding:14px 8px;text-align:center;line-height:1.25}
 .chip.day b{display:block;font-size:18px;font-weight:800}
 .chip.day span{font-size:12px;opacity:.75}
-.wday{margin-top:9px;padding:11px 14px;border-radius:11px;background:#FFF5E4;
-  border:1px solid rgba(160,99,26,.3);font-size:14px;font-weight:700;color:var(--amber)}
 #fDate{font-size:17px;font-weight:600;padding:15px 14px}
 #fDate.pick{border-color:var(--amber);background:#FFF5E4;color:var(--amber);font-weight:800}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
@@ -185,12 +183,6 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">근무조</div>
   <div class="chips" id="fJo"></div>
-  <div id="fCross" style="display:none">
-    <div class="lbl" style="margin:12px 0 6px">이 전표는</div>
-    <div class="chips" id="fCrossBtn"></div>
-    <div class="wday" id="fWday"></div>
-  </div>
-
   <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
 
@@ -318,14 +310,12 @@ function toast(msg,kind){
 }
 
 /* ================= 입력 폼 상태 ================= */
-let form = { date:'', jo:'', cross:false, seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
+let form = { date:'', jo:'', seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
 
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function today(){ return ymd(new Date()); }
 function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
 function addDays(iso,n){ const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d); t.setDate(t.getDate()+n); return ymd(t); }
-// 근무일 = 출근한 날. 야간조가 자정을 넘겨 계근한 전표는 하루 앞으로 당깁니다.
-function workDay(){ return (form.jo==='야간' && form.cross) ? addDays(form.date,-1) : form.date; }
 const WD=['일','월','화','수','목','금','토'];
 function label(iso){
   const [y,m,d]=iso.split('-').map(Number);
@@ -336,13 +326,6 @@ function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today();
 function drawJo(){
   $('#fJo').innerHTML = JO.map(j=>
     `<button class="chip${j===form.jo?' sel':''}" data-j="${j}">${j}</button>`).join('');
-  const night = form.jo==='야간';
-  $('#fCross').style.display = night ? 'block':'none';
-  if(night){
-    const mk=(v,t)=>`<button class="chip${form.cross===v?' sel':''}" data-x="${v?1:0}">${t}</button>`;
-    $('#fCrossBtn').innerHTML = mk(false,'출근한 날 것') + mk(true,'자정 넘긴 것');
-    $('#fWday').textContent = `근무일 ${label(workDay())}`;
-  }
 }
 function drawDay(){
   const t=today(), y=yesterday(), cur=form.date;
@@ -356,7 +339,7 @@ function drawDay(){
 function initForm(){
   const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
   const d0 = defaultDay();
-  form = { date:d0, jo:c.j||'', cross:(c.j==='야간' && d0===today() && new Date().getHours()<12),
+  form = { date:d0, jo:c.j||'',
            seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null,
            rows:[{w:'',g:'',t:'',t1:'',t2:'',site:'',open:false}] };
   $('#fSiteEtc').value='';
@@ -419,9 +402,9 @@ function drawSlips(){
           <div><span class="mini">1차 중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
           <div><span class="mini">2차 중량</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
         </div>
-        <div class="two" style="margin-top:10px">
-          <div><span class="mini">2차 시간</span><input type="number" inputmode="numeric" class="t2${timeBad(r.t2)?' bad':''}" placeholder="0004" value="${r.t2||''}"></div>
-          <div><span class="mini">근무일</span><input type="text" value="${label(rowWorkDay(r))}" readonly style="background:#FFF5E4;border-color:rgba(160,99,26,.3);color:var(--amber);font-weight:700"></div>
+        <div style="margin-top:10px">
+          <span class="mini">2차 시간</span>
+          <input type="number" inputmode="numeric" class="t2${timeBad(r.t2)?' bad':''}" placeholder="0004" value="${r.t2||''}">
         </div>
         <div class="calc ${calcCls(r)}">${calcTxt(r)}</div>
       </div>
@@ -439,13 +422,11 @@ function hhmm(v){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
 function timeBad(v){ return String(v||'').trim()!=='' && !hhmm(v); }
-// 야간조가 자정을 넘겨 계근한 전표는 근무일이 하루 앞입니다.
-// 시각을 넣으면 시각으로 판정하고, 없으면 위 버튼을 따릅니다.
+// 야간조가 자정을 넘겨 계근한 전표(1차 시간이 08시 이전)는 근무일이 하루 앞입니다.
 function rowWorkDay(r){
   if(form.jo!=='야간') return form.date;
   const t=hhmm(r.t1);
-  if(t) return (+t.slice(0,2) < 8) ? addDays(form.date,-1) : form.date;
-  return form.cross ? addDays(form.date,-1) : form.date;
+  return (t && +t.slice(0,2) < 8) ? addDays(form.date,-1) : form.date;
 }
 function calcCls(r){
   const g=+r.g,t=+r.t,w=+r.w;
@@ -477,11 +458,7 @@ $('#fDay').onclick = e=>{
 };
 $('#fJo').onclick = e=>{
   const b=e.target.closest('[data-j]'); if(!b) return;
-  form.jo=b.dataset.j; drawJo(); updateDock();
-};
-$('#fCrossBtn').onclick = e=>{
-  const b=e.target.closest('[data-x]'); if(!b) return;
-  form.cross = b.dataset.x==='1'; drawJo();
+  form.jo=b.dataset.j; drawJo(); drawSlips();
 };
 
 $('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
@@ -524,10 +501,6 @@ $('#fSlips').addEventListener('input', e=>{
   if(e.target.classList.contains('t1')){ r.t1=e.target.value; e.target.classList.toggle('bad',timeBad(r.t1)); }
   if(e.target.classList.contains('t2')){ r.t2=e.target.value; e.target.classList.toggle('bad',timeBad(r.t2)); }
   const c=box.querySelector('.calc'); if(c){ c.textContent=calcTxt(r); c.className='calc '+calcCls(r); }
-  if(e.target.classList.contains('t1')){
-    const wd=box.querySelector('.more input[readonly]');
-    if(wd) wd.value = label(rowWorkDay(r));
-  }
   updateDock();
 });
 $('#fSlips').addEventListener('change', e=>{
@@ -571,7 +544,7 @@ $('#bSave').onclick = ()=>{
     });
   });
   saveAll();
-  const keep={date:form.date, jo:form.jo, cross:form.cross};
+  const keep={date:form.date, jo:form.jo};
   toast(`전표 ${rows.length}장 저장`, 'good');
   initForm();
   Object.assign(form, keep); drawDay(); drawJo();

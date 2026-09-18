@@ -107,7 +107,14 @@ input[type=number]{font-variant-numeric:tabular-nums}
 }
 .slip .site{flex:1;font-size:14px;color:var(--dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slip .tog{background:none;border:none;color:var(--dim);font-size:13px;padding:4px 6px;cursor:pointer;flex-shrink:0}
-.wt{position:relative}
+.wtrow{display:flex;gap:9px}
+.wt{position:relative;flex:1 1 60%}
+.tm{position:relative;flex:1 1 40%}
+.tm input{font-size:24px;font-weight:800;padding:12px 44px 12px 14px;text-align:right;
+  letter-spacing:1px;font-variant-numeric:tabular-nums}
+.tm .hm{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--dim);
+  font-size:13px;font-weight:700;pointer-events:none}
+.tm input.bad{border-color:var(--bad);color:var(--bad)}
 .wt input{font-size:30px;font-weight:800;padding:12px 52px 12px 14px;text-align:right;letter-spacing:-.5px}
 .wt .kg{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:15px;font-weight:700;pointer-events:none}
 .more{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);display:none}
@@ -198,7 +205,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="lbl">전표 몇 장</div>
   <div class="chips" id="fCnt"></div>
 
-  <div class="lbl">실중량</div>
+  <div class="lbl">실중량 · 1차 시간 <span style="font-weight:400">— 시각은 2340 처럼 네 자리</span></div>
   <div id="fSlips"></div>
 
   <div style="height:8px"></div>
@@ -351,7 +358,7 @@ function initForm(){
   const d0 = defaultDay();
   form = { date:d0, jo:c.j||'', cross:(c.j==='야간' && d0===today() && new Date().getHours()<12),
            seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null,
-           rows:[{w:'',g:'',t:'',site:'',open:false}] };
+           rows:[{w:'',g:'',t:'',t1:'',t2:'',site:'',open:false}] };
   $('#fSiteEtc').value='';
   drawJo(); drawDay(); drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
 }
@@ -392,9 +399,15 @@ function drawSlips(){
         <div class="site">${s}</div>
         <button class="tog">${r.open?'접기':'다르면 수정'}</button>
       </div>
-      <div class="wt">
-        <input type="number" inputmode="numeric" class="w" placeholder="0" value="${r.w}">
-        <span class="kg">kg</span>
+      <div class="wtrow">
+        <div class="wt">
+          <input type="number" inputmode="numeric" class="w" placeholder="0" value="${r.w}">
+          <span class="kg">kg</span>
+        </div>
+        <div class="tm">
+          <input type="number" inputmode="numeric" class="t1${timeBad(r.t1)?' bad':''}" placeholder="2340" value="${r.t1||''}">
+          <span class="hm">1차</span>
+        </div>
       </div>
       <div class="more${r.open?' open':''}">
         <span class="mini">이 전표만 반입처가 다를 때</span>
@@ -406,11 +419,33 @@ function drawSlips(){
           <div><span class="mini">1차 중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
           <div><span class="mini">2차 중량</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
         </div>
+        <div class="two" style="margin-top:10px">
+          <div><span class="mini">2차 시간</span><input type="number" inputmode="numeric" class="t2${timeBad(r.t2)?' bad':''}" placeholder="0004" value="${r.t2||''}"></div>
+          <div><span class="mini">근무일</span><input type="text" value="${label(rowWorkDay(r))}" readonly style="background:#FFF5E4;border-color:rgba(160,99,26,.3);color:var(--amber);font-weight:700"></div>
+        </div>
         <div class="calc ${calcCls(r)}">${calcTxt(r)}</div>
       </div>
     </div>`;
   }).join('');
   updateDock();
+}
+// "2340" "23:40" "934" 를 "23:40" 꼴로. 잘못된 값은 빈 문자열.
+function hhmm(v){
+  let d=String(v||'').replace(/[^0-9]/g,'');
+  if(d.length===5 || d.length===6) d=d.slice(0,d.length-2);   // 초까지 넣은 경우
+  if(d.length<3 || d.length>4) return '';
+  const h=+d.slice(0,d.length-2), m=+d.slice(-2);
+  if(h>23 || m>59) return '';
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function timeBad(v){ return String(v||'').trim()!=='' && !hhmm(v); }
+// 야간조가 자정을 넘겨 계근한 전표는 근무일이 하루 앞입니다.
+// 시각을 넣으면 시각으로 판정하고, 없으면 위 버튼을 따릅니다.
+function rowWorkDay(r){
+  if(form.jo!=='야간') return form.date;
+  const t=hhmm(r.t1);
+  if(t) return (+t.slice(0,2) < 8) ? addDays(form.date,-1) : form.date;
+  return form.cross ? addDays(form.date,-1) : form.date;
 }
 function calcCls(r){
   const g=+r.g,t=+r.t,w=+r.w;
@@ -457,7 +492,7 @@ $('#fSiteEtc').onchange = e=>{ rememberSite(e.target.value); };
 $('#fCnt').onclick = e=>{
   const b=e.target.closest('[data-c]'); if(!b)return;
   const n=+b.dataset.c; form.cnt=n;
-  while(form.rows.length<n) form.rows.push({w:'',g:'',t:'',site:'',open:false});
+  while(form.rows.length<n) form.rows.push({w:'',g:'',t:'',t1:'',t2:'',site:'',open:false});
   form.rows.length=n;
   drawCnt(); drawSlips();
 };
@@ -486,7 +521,13 @@ $('#fSlips').addEventListener('input', e=>{
   if(e.target.classList.contains('w')) r.w=e.target.value;
   if(e.target.classList.contains('g')) r.g=e.target.value;
   if(e.target.classList.contains('t')) r.t=e.target.value;
+  if(e.target.classList.contains('t1')){ r.t1=e.target.value; e.target.classList.toggle('bad',timeBad(r.t1)); }
+  if(e.target.classList.contains('t2')){ r.t2=e.target.value; e.target.classList.toggle('bad',timeBad(r.t2)); }
   const c=box.querySelector('.calc'); if(c){ c.textContent=calcTxt(r); c.className='calc '+calcCls(r); }
+  if(e.target.classList.contains('t1')){
+    const wd=box.querySelector('.more input[readonly]');
+    if(wd) wd.value = label(rowWorkDay(r));
+  }
   updateDock();
 });
 $('#fSlips').addEventListener('change', e=>{
@@ -512,6 +553,8 @@ $('#bSave').onclick = ()=>{
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
 
+  const badT = rows.find(r=> timeBad(r.t1) || timeBad(r.t2));
+  if(badT){ toast('시각은 2340 처럼 네 자리로 넣으세요','err'); return; }
   const bad = rows.find(r=> +r.g && +r.t && Math.abs(+r.g - +r.t)!== +r.w);
   if(bad && !confirm('검산이 맞지 않는 전표가 있습니다. 그대로 저장할까요?')) return;
 
@@ -519,7 +562,8 @@ $('#bSave').onclick = ()=>{
   if(form.photo){ pics[batch]=form.photo; }
   rows.forEach(r=>{
     recs.push({
-      id:uid(), date:form.date, wdate:workDay(), jo:form.jo,
+      id:uid(), date:form.date, wdate:rowWorkDay(r), jo:form.jo,
+      t1:hhmm(r.t1)||null, t2:hhmm(r.t2)||null,
       veh:cfg.veh, seong:form.seong,
       site: r.site || siteName(),
       weight:+r.w, gross:+r.g||null, tare:+r.t||null,
@@ -560,6 +604,7 @@ async function push(){
         method:'PUT', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           date:r.date, wdate:r.wdate||r.date, jo:r.jo||'',
+          t1:r.t1||null, t2:r.t2||null,
           veh:r.veh, seong:r.seong, site:r.site,
           weight:r.weight, gross:r.gross, tare:r.tare, batch:r.batch, at:r.at
         })
@@ -634,8 +679,8 @@ $('#viewer').onclick = ()=> $('#viewer').classList.remove('on');
 $('#bCsv').onclick = ()=>{
   const list = recs.filter(r=>inRange(r.date)).sort((a,b)=> a.date.localeCompare(b.date)||a.at-b.at);
   if(!list.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,근무일,조,차량번호,성상,반입처,실중량,1차중량,2차중량';
-  const body=list.map(r=>[r.date,r.wdate||r.date,r.jo||'',r.veh,r.seong,r.site,r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
+  const head='날짜,근무일,조,1차시간,2차시간,차량번호,성상,반입처,실중량,1차중량,2차중량';
+  const body=list.map(r=>[r.date,r.wdate||r.date,r.jo||'',r.t1||'',r.t2||'',r.veh,r.seong,r.site,r.weight,r.gross||'',r.tare||''].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);

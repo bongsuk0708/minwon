@@ -104,7 +104,6 @@ input[type=number]{font-variant-numeric:tabular-nums}
   display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--amber);flex-shrink:0
 }
 .slip .site{flex:1;font-size:14px;color:var(--dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.slip .tog{background:none;border:none;color:var(--dim);font-size:13px;padding:4px 6px;cursor:pointer;flex-shrink:0}
 .wtrow{display:flex;gap:9px}
 .wt{position:relative;flex:1 1 60%}
 .tm{position:relative;flex:1 1 40%}
@@ -115,12 +114,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .tm input.bad{border-color:var(--bad);color:var(--bad)}
 .wt input{font-size:30px;font-weight:800;padding:12px 52px 12px 14px;text-align:right;letter-spacing:-.5px}
 .wt .kg{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:15px;font-weight:700;pointer-events:none}
-.more{margin-top:11px;padding-top:11px;border-top:1px dashed var(--line);display:none}
-.more.open{display:block}
 .two{display:flex;gap:9px}.two>div{flex:1}
 .mini{font-size:12px;color:var(--dim);margin-bottom:5px;display:block}
-.calc{margin-top:9px;font-size:13px;font-weight:700}
-.calc.ok{color:var(--ok)}.calc.bad{color:var(--bad)}
 
 /* ---------- 하단 고정 ---------- */
 .dock{
@@ -197,7 +192,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="lbl">전표 몇 장</div>
   <div class="chips" id="fCnt"></div>
 
-  <div class="lbl">실중량 · 1차 시간 <span style="font-weight:400">— 시각은 2340 처럼 네 자리</span></div>
+  <div class="lbl">실중량 · 시각 <span style="font-weight:400">— 전표의 1차 시간, 2340 처럼 네 자리</span></div>
   <div id="fSlips"></div>
 
   <div style="height:8px"></div>
@@ -380,7 +375,6 @@ function drawSlips(){
       <div class="top">
         <div class="no num">${i+1}</div>
         <div class="site">${s}</div>
-        <button class="tog">${r.open?'접기':'다르면 수정'}</button>
       </div>
       <div class="wtrow">
         <div class="wt">
@@ -389,24 +383,8 @@ function drawSlips(){
         </div>
         <div class="tm">
           <input type="number" inputmode="numeric" class="t1${timeBad(r.t1)?' bad':''}" placeholder="2340" value="${r.t1||''}">
-          <span class="hm">1차</span>
+          <span class="hm">시각</span>
         </div>
-      </div>
-      <div class="more${r.open?' open':''}">
-        <span class="mini">이 전표만 반입처가 다를 때</span>
-        <select class="ss">
-          <option value="">${siteName()||'위에서 고른 곳'} (기본)</option>
-          ${allSites().map(x=>`<option value="${x}"${r.site===x?' selected':''}>${x}</option>`).join('')}
-        </select>
-        <div class="two" style="margin-top:10px">
-          <div><span class="mini">1차 중량</span><input type="number" inputmode="numeric" class="g" placeholder="0" value="${r.g}"></div>
-          <div><span class="mini">2차 중량</span><input type="number" inputmode="numeric" class="t" placeholder="0" value="${r.t}"></div>
-        </div>
-        <div style="margin-top:10px">
-          <span class="mini">2차 시간</span>
-          <input type="number" inputmode="numeric" class="t2${timeBad(r.t2)?' bad':''}" placeholder="0004" value="${r.t2||''}">
-        </div>
-        <div class="calc ${calcCls(r)}">${calcTxt(r)}</div>
       </div>
     </div>`;
   }).join('');
@@ -427,19 +405,6 @@ function rowWorkDay(r){
   if(form.jo!=='야간') return form.date;
   const t=hhmm(r.t1);
   return (t && +t.slice(0,2) < 8) ? addDays(form.date,-1) : form.date;
-}
-function calcCls(r){
-  const g=+r.g,t=+r.t,w=+r.w;
-  if(!g||!t) return '';
-  return Math.abs(g-t)===w ? 'ok':'bad';
-}
-function calcTxt(r){
-  const g=+r.g,t=+r.t,w=+r.w;
-  if(!g||!t) return '1차·2차 중량을 넣으면 실중량을 검산합니다';
-  const hi=Math.max(g,t), lo=Math.min(g,t), d=hi-lo;
-  if(!w) return `실중량 ${comma(d)} kg — 위 칸에 넣으세요`;
-  return d===w ? `검산 맞음 · ${comma(hi)} − ${comma(lo)} = ${comma(d)}`
-               : `안 맞음 · ${comma(hi)} − ${comma(lo)} = ${comma(d)} (입력값 ${comma(w)})`;
 }
 function updateDock(){
   const n = form.rows.filter(r=>+r.w>0).length;
@@ -496,24 +461,8 @@ $('#fSlips').addEventListener('input', e=>{
   const box=e.target.closest('.slip'); if(!box) return;
   const r=form.rows[+box.dataset.i];
   if(e.target.classList.contains('w')) r.w=e.target.value;
-  if(e.target.classList.contains('g')) r.g=e.target.value;
-  if(e.target.classList.contains('t')) r.t=e.target.value;
   if(e.target.classList.contains('t1')){ r.t1=e.target.value; e.target.classList.toggle('bad',timeBad(r.t1)); }
-  if(e.target.classList.contains('t2')){ r.t2=e.target.value; e.target.classList.toggle('bad',timeBad(r.t2)); }
-  const c=box.querySelector('.calc'); if(c){ c.textContent=calcTxt(r); c.className='calc '+calcCls(r); }
   updateDock();
-});
-$('#fSlips').addEventListener('change', e=>{
-  const box=e.target.closest('.slip'); if(!box) return;
-  if(e.target.classList.contains('ss')){
-    form.rows[+box.dataset.i].site=e.target.value;
-    box.querySelector('.site').textContent = e.target.value || siteName();
-  }
-});
-$('#fSlips').addEventListener('click', e=>{
-  if(!e.target.classList.contains('tog')) return;
-  const box=e.target.closest('.slip'), r=form.rows[+box.dataset.i];
-  r.open=!r.open; drawSlips();
 });
 
 /* ================= 저장 ================= */
@@ -528,8 +477,6 @@ $('#bSave').onclick = ()=>{
 
   const badT = rows.find(r=> timeBad(r.t1) || timeBad(r.t2));
   if(badT){ toast('시각은 2340 처럼 네 자리로 넣으세요','err'); return; }
-  const bad = rows.find(r=> +r.g && +r.t && Math.abs(+r.g - +r.t)!== +r.w);
-  if(bad && !confirm('검산이 맞지 않는 전표가 있습니다. 그대로 저장할까요?')) return;
 
   const batch=uid();
   if(form.photo){ pics[batch]=form.photo; }

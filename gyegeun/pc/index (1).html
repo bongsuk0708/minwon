@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>계근 대장 · 본에코</title>
+<style>
+:root{
+  --bg:#EEF1F5; --card:#FFFFFF; --card2:#F5F7FA; --line:#D8DEE7; --line2:#E8EDF2;
+  --tx:#1B222C; --dim:#6B7683; --acc:#A0631A; --accbg:#FFF5E4;
+  --ok:#2E8B57; --bad:#C8402F;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx)}
+body{font-family:'Pretendard','Malgun Gothic',-apple-system,sans-serif;font-size:15px;line-height:1.5}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+header{
+  border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;gap:18px;
+  position:sticky;top:0;background:rgba(255,255,255,.94);backdrop-filter:blur(8px);z-index:10;flex-wrap:wrap
+}
+header h1{font-size:19px;margin:0;font-weight:800;letter-spacing:-.3px}
+header h1 span{color:var(--acc)}
+.sp{flex:1}
+.st{font-size:13px;color:var(--dim)}
+
+.wrap{max-width:1680px;margin:0 auto;padding:22px 24px 40px}
+.cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:22px;align-items:start}
+@media (max-width:1180px){ .cols{grid-template-columns:minmax(0,1fr)} }
+.colR{position:sticky;top:70px}
+.listbox{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.scrollbox{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:auto}
+.scrollbox table{border:none;border-radius:0}
+.scrollbox th{position:sticky;top:0;z-index:2}
+.scrollbox tfoot td{position:sticky;bottom:0;z-index:2;box-shadow:0 -1px 0 var(--line)}
+.scrollbox .empty{padding:30px 20px}
+#vehBox{max-height:calc(46vh - 60px)}
+#dateBox{max-height:calc(46vh - 60px)}
+.colL{position:sticky;top:70px}
+.listwrap{max-height:calc(100vh - 200px);overflow:auto}
+.listwrap table{border:none;border-radius:0}
+.listwrap th{position:sticky;top:0;z-index:2}
+.colhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--card2)}
+.colhead h2{margin:0;font-size:14px}
+.colhead .n{font-size:12.5px;color:var(--dim);margin-left:auto}
+.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
+button,input,select{font-family:inherit;font-size:14px}
+.chip{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 15px;border-radius:9px;font-weight:600;cursor:pointer}
+.chip.sel{background:var(--tx);border-color:var(--tx);color:#fff}
+.chip.sm{padding:5px 11px;font-size:12.5px;font-weight:600}
+.chip:not(.sel):hover{border-color:var(--acc);color:var(--acc)}
+input[type=month],input[type=date],select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none}
+input[type=month]:focus,select:focus{border-color:var(--acc)}
+.go{background:var(--acc);border:1px solid var(--acc);color:#fff;padding:9px 17px;border-radius:9px;font-weight:700;cursor:pointer}
+.srch{position:relative}
+.srch input{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px 9px 32px;
+  border-radius:9px;outline:none;width:180px;font-size:14px}
+.srch input:focus{border-color:var(--acc);width:220px}
+.srch::before{content:"⌕";position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:17px}
+.go:hover{background:#8A5415}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:15px 16px}
+.c .k{font-size:13px;color:var(--dim);font-weight:600}
+.c .v{font-size:25px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.c .s{font-size:12px;color:var(--dim);margin-top:2px}
+.c.tot{background:var(--accbg);border-color:rgba(160,99,26,.3)}
+.c.tot .v{color:var(--acc)}
+
+h2{font-size:14px;color:var(--dim);font-weight:700;margin:26px 0 10px}
+
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th{font-size:12.5px;color:var(--dim);font-weight:700;text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--card2);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--line2);font-size:14px}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--card2)}
+.r{text-align:right}
+.r.b{font-weight:700}
+tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line)}
+.veh{color:var(--acc);font-weight:700}
+
+.mini{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:7px;padding:5px 11px;font-size:12.5px;cursor:pointer;margin-right:5px}
+.mini:hover{color:var(--tx);border-color:var(--acc)}
+.mini.x:hover{color:var(--bad);border-color:var(--bad)}
+.mini.pic{color:var(--acc);border-color:rgba(160,99,26,.35);background:var(--accbg);font-weight:600}
+
+/* ---------- 일괄 입력 ---------- */
+.entry{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px;display:none}
+.entry.on{display:block}
+.erow{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+.ef{display:flex;flex-direction:column;gap:5px}
+.ef label{font-size:12px;color:var(--dim);font-weight:700}
+.ef input[type=date],.ef select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:9px 12px;border-radius:9px;outline:none;min-width:130px}
+.ef input:focus,.ef select:focus{border-color:var(--acc)}
+.etext{width:100%;min-height:150px;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px;font-family:'Consolas','D2Coding',monospace;font-size:17px;line-height:1.7;
+  color:var(--tx);outline:none;resize:vertical;font-variant-numeric:tabular-nums}
+.etext:focus{border-color:var(--acc)}
+.efoot{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+.epv{font-size:14px;color:var(--dim)}
+.epv b{color:var(--tx);font-size:16px}
+.ehint{font-size:12.5px;color:var(--dim);margin-top:6px;line-height:1.7}
+/* ---------- 수정 창 ---------- */
+.modal{position:fixed;inset:0;background:rgba(24,28,34,.55);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(520px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);max-height:92vh;overflow:auto}
+.mbox h3{margin:0 0 4px;font-size:17px;font-weight:800}
+.mbox .sub{font-size:12.5px;color:var(--dim);margin-bottom:18px}
+.mf{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.mf label{font-size:12px;color:var(--dim);font-weight:700}
+.mf input,.mf select{background:var(--card);border:1px solid var(--line);color:var(--tx);padding:10px 12px;border-radius:9px;outline:none;font-size:15px;width:100%}
+.mf input:focus,.mf select:focus{border-color:var(--acc)}
+.mf input.w{font-size:22px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.mfoot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
+.empty{text-align:center;color:var(--dim);padding:60px 20px}
+.msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
+.msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
+
+/* ---------- 수정 창 - 사진 ---------- */
+.mpic{border:1px dashed var(--line);border-radius:10px;padding:8px;margin-bottom:8px;min-height:64px;
+  display:flex;align-items:center;justify-content:center;background:var(--card2)}
+.mpic img{max-width:100%;max-height:260px;border-radius:8px;display:block}
+.mpic .ph{font-size:12.5px;color:var(--dim)}
+.mpicrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mpicrow input[type=file]{flex:1;min-width:0;font-size:12.5px;color:var(--dim)}
+
+/* ---------- 사진 뷰어 ---------- */
+.viewer{position:fixed;inset:0;background:rgba(24,28,34,.92);z-index:60;display:none;flex-direction:column}
+.viewer.on{display:flex}
+.vtop{
+  display:flex;align-items:center;gap:8px;padding:12px 18px;flex-wrap:wrap;
+  background:rgba(255,255,255,.97);border-bottom:1px solid var(--line)
+}
+.vtop .cap{font-size:13.5px;color:var(--dim);margin-right:auto}
+.vb{background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:8px;padding:7px 13px;font-size:13.5px;font-weight:600;cursor:pointer}
+.vb:hover{border-color:var(--acc);color:var(--acc)}
+.vb.close{background:var(--tx);border-color:var(--tx);color:#fff}
+.vstage{flex:1;overflow:hidden;position:relative;cursor:grab;display:flex;align-items:center;justify-content:center}
+.vstage.drag{cursor:grabbing}
+.vstage img{
+  max-width:none;transform-origin:center center;user-select:none;-webkit-user-drag:none;
+  transition:transform .12s ease-out;box-shadow:0 6px 30px rgba(0,0,0,.4);background:#fff
+}
+.vhint{position:absolute;left:0;right:0;bottom:14px;text-align:center;color:rgba(255,255,255,.6);font-size:12.5px;pointer-events:none}
+
+.toast{position:fixed;right:24px;bottom:24px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:13px 18px;font-weight:600;opacity:0;transform:translateY(8px);transition:.2s;z-index:70;box-shadow:0 4px 18px rgba(0,0,0,.12)}
+.toast.on{opacity:1;transform:none}
+.toast.good{border-color:rgba(46,139,87,.5);color:var(--ok)}
+.toast.err{border-color:rgba(200,64,47,.5);color:var(--bad)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>계근 대장 <span>·</span> 본에코</h1>
+  <div class="sp"></div>
+  <div class="st" id="st">불러오는 중</div>
+  <button class="chip" id="bReload">새로고침</button>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <button class="chip" data-q="today">오늘</button>
+    <button class="chip" data-q="7">최근 7일</button>
+    <button class="chip sel" data-q="month">이번 달</button>
+    <input type="month" id="fMonth">
+    <input type="date" id="fDay" title="특정 날짜만 보기">
+    <button class="chip" id="bDayClear" style="display:none">날짜 해제</button>
+    <select id="fVeh"><option value="">전체 차량</option></select>
+    <select id="fSeong"><option value="">전체 성상</option></select>
+    <select id="fJo"><option value="">전체 조</option><option>주간</option><option>야간</option></select>
+    <div class="sp"></div>
+    <span class="srch"><input type="search" id="fQ" placeholder="차량번호 검색" autocomplete="off"></span>
+    <button class="chip" id="bToggle">전표 직접 입력</button>
+    <button class="go" id="bCsv">대장 CSV 내려받기</button>
+  </div>
+
+  <div class="entry" id="entry">
+    <div class="erow">
+      <div class="ef"><label>계근일</label><input type="date" id="eDate"></div>
+      <div class="ef"><label>차량</label><select id="eVeh"></select></div>
+      <div class="ef"><label>성상</label><select id="eSeong"></select></div>
+      <div class="ef"><label>반입처</label><select id="eSite"></select></div>
+    </div>
+    <label style="font-size:12px;color:var(--dim);font-weight:700">실중량 — 한 줄에 한 장씩</label>
+    <textarea class="etext" id="eText" placeholder="5530&#10;5390&#10;5600" spellcheck="false"></textarea>
+    <div class="ehint">전표 보면서 숫자만 치고 Enter. 쉼표는 있어도 되고 없어도 됩니다. 빈 줄은 무시합니다.</div>
+    <div class="efoot">
+      <span class="epv" id="ePv">전표 <b>0</b>장 · 합계 <b>0</b> kg</span>
+      <div class="sp" style="flex:1"></div>
+      <button class="chip" id="eClear">지우기</button>
+      <button class="go" id="eSave">저장</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+
+  <div class="cols">
+    <div class="colL">
+      <div class="cards" id="cards"></div>
+      <h2 style="margin-top:4px">근무조별</h2>
+      <div id="byJo"></div>
+      <h2>차량별</h2>
+      <div class="scrollbox" id="vehBox"><div id="byVeh"></div></div>
+      <h2>일자별</h2>
+      <div class="scrollbox" id="dateBox"><div id="byDate"></div></div>
+    </div>
+
+    <div class="colR">
+      <div class="listbox">
+        <div class="colhead"><h2>전표 목록</h2><span class="n" id="lCnt"></span></div>
+        <div class="listwrap" id="list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <div class="vtop" id="vTop">
+    <span class="cap" id="vCap"></span>
+    <button class="vb" data-v="rl">왼쪽으로 회전</button>
+    <button class="vb" data-v="rr">오른쪽으로 회전</button>
+    <button class="vb" data-v="out">축소</button>
+    <button class="vb" data-v="in">확대</button>
+    <button class="vb" data-v="fit">원래대로</button>
+    <button class="vb close" data-v="x">닫기</button>
+  </div>
+  <div class="vstage" id="vStage">
+    <img id="vImg" alt="전표 사진">
+    <div class="vhint">휠로 확대 · 끌어서 이동 · 두 번 누르면 원래대로 · Esc 닫기</div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h3>전표 수정</h3>
+    <div class="sub" id="mSub"></div>
+    <div class="mf"><label>계근일</label><input type="date" id="mDate"></div>
+    <div class="mf"><label>차량</label><select id="mVeh"></select></div>
+    <div class="mf"><label>성상</label><select id="mSeong"></select></div>
+    <div class="mf"><label>반입처</label><select id="mSite"></select></div>
+    <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
+    <div class="mf">
+      <label>사진</label>
+      <div class="mpic" id="mPicPreview"><span class="ph">등록된 사진이 없습니다</span></div>
+      <div class="mpicrow">
+        <input type="file" accept="image/*" capture="environment" id="mPicFile">
+        <button class="mini x" id="mPicClear" style="display:none">사진 제거</button>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="chip" id="mCancel">취소</button>
+      <button class="go" id="mSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
+const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
+const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
+// 기본 목록 + 지금까지 실제로 쓰인 시설명 + 사무실에서 추가한 시설명
+function allSites(){
+  let extra=[];
+  try{ extra = JSON.parse(localStorage.getItem('gg_sites')||'[]'); }catch(e){}
+  const used = all.map(r=>r.site).filter(Boolean);
+  return [...new Set([...SITES, ...extra, ...used])];
+}
+function addSite(name){
+  name=(name||'').trim(); if(!name) return '';
+  if(!allSites().includes(name)){
+    try{
+      const cur=JSON.parse(localStorage.getItem('gg_sites')||'[]');
+      cur.push(name); localStorage.setItem('gg_sites',JSON.stringify(cur));
+    }catch(e){}
+  }
+  return name;
+}
+function siteOptions(sel){
+  return allSites().map(x=>`<option${x===sel?' selected':''}>${x}</option>`).join('')
+       + `<option value="__new">＋ 직접 입력…</option>`;
+}
+function siteChange(el){
+  if(el.value!=='__new') return;
+  const name=addSite(prompt('추가할 반입처 이름을 넣으세요'));
+  if(name){ el.innerHTML=siteOptions(name); el.value=name; }
+  else el.innerHTML=siteOptions(allSites()[0]);
+}
+const JO = ['주간','야간'];
+const CARS = {
+  '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201',  j:'야간'},
+  '2759':{s:'생활',  d:'자원순환공원',      f:'84루2759',  j:'야간'},
+  '3587':{s:'생활',  d:'강남자원회수시설',  f:'84루3587',  j:'야간'},
+  '4359':{s:'생활',  d:'강남자원회수시설',  f:'89머4359',  j:'야간'},
+  '9033':{s:'음식물',d:'자원순환공원',      f:'90오9033',  j:'야간'},
+  '8078':{s:'음식물',d:'자원순환공원',      f:'90오8078',  j:'야간'},
+  '1351':{s:'재활용',d:'자원순환공원',      f:'804조1351', j:'야간'},
+  '7538':{s:'재활용',d:'자원순환공원',      f:'82마7538',  j:'야간'},
+  '8326':{s:'재활용',d:'자원순환공원',      f:'90오8326',  j:'야간'},
+  '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657',  j:'야간'},
+  '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686', j:'주간'},
+  '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666', j:'주간'},
+  // 성상을 매번 고르는 차량
+  '1286':{s:'',      d:'자원순환공원', f:'83도1286',  j:'주간'},
+  '5635':{s:'',      d:'자원순환공원', f:'84도5635',  j:'주간'},
+  '4830':{s:'',      d:'자원순환공원', f:'86마4830',  j:'주간'},
+  '4968':{s:'',      d:'자원순환공원', f:'86마4968',  j:'주간'},
+  '6110':{s:'',      d:'자원순환공원', f:'86모6110',  j:'야간'},
+  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'야간'}
+};
+// 조가 저장되지 않은 옛 전표는 차량 기본값으로 봅니다
+const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
+
+let all = [], picCache = {}, rots = {}, mode = 'month';
+const $ = s=>document.querySelector(s);
+const comma = n=> (n||0).toLocaleString('ko-KR');
+const ton = n=> (n/1000).toFixed(2);
+const today = ()=> new Date().toISOString().slice(0,10);
+function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on '+(k||''); clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400); }
+
+/* ---------- 불러오기 ---------- */
+async function load(){
+  $('#st').textContent='불러오는 중';
+  try{
+    const [rRes,mRes] = await Promise.all([
+      fetch(`${DB}/gyegeun/records.json`),
+      fetch(`${DB}/gyegeun/rot.json`)
+    ]);
+    if(!rRes.ok) throw new Error(rRes.status);
+    const data = await rRes.json();
+    rots = (mRes.ok ? await mRes.json() : null) || {};
+    all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
+    all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
+    $('#msg').innerHTML='';
+    $('#st').textContent = `전표 ${comma(all.length)}건 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 기준`;
+    fillSelects(); render();
+  }catch(e){
+    $('#msg').innerHTML='<div class="msg err">데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침하세요.</div>';
+    $('#st').textContent='연결 실패';
+  }
+}
+function fillSelects(){
+  const vs=[...new Set(all.map(r=>r.veh))].sort(), cur=$('#fVeh').value;
+  $('#fVeh').innerHTML='<option value="">전체 차량</option>'+vs.map(v=>`<option${v===cur?' selected':''}>${v}</option>`).join('');
+  const ss=[...new Set(all.map(r=>r.seong))], cs=$('#fSeong').value;
+  $('#fSeong').innerHTML='<option value="">전체 성상</option>'+SEONG.filter(s=>ss.includes(s)).map(s=>`<option${s===cs?' selected':''}>${s}</option>`).join('');
+}
+
+/* ---------- 기간 ---------- */
+function inRange(d){
+  if(mode==='day')   return d===$('#fDay').value;
+  if(mode==='today') return d===today();
+  if(mode==='7'){ const l=new Date(); l.setDate(l.getDate()-6); return d>=l.toISOString().slice(0,10); }
+  return d.slice(0,7)===($('#fMonth').value || today().slice(0,7));
+}
+function picked(){
+  const v=$('#fVeh').value, s=$('#fSeong').value, j=$('#fJo').value;
+  return all.filter(r=> inRange(r.date) && (!v||r.veh===v) && (!s||r.seong===s) && (!j||joOf(r)===j));
+}
+
+/* ---------- 그리기 ---------- */
+function render(){
+  const rows = picked();
+  const sum={}; SEONG.forEach(s=>sum[s]=0);
+  rows.forEach(r=> sum[r.seong]=(sum[r.seong]||0)+r.weight );
+  const total = rows.reduce((a,r)=>a+r.weight,0);
+
+  $('#cards').innerHTML =
+    SEONG.filter(s=>sum[s]>0).map(s=>
+      `<div class="c"><div class="k">${s}</div><div class="v num">${ton(sum[s])}<span style="font-size:14px;color:var(--dim)"> t</span></div><div class="s num">${comma(sum[s])} kg</div></div>`
+    ).join('') +
+    `<div class="c tot"><div class="k">합계</div><div class="v num">${ton(total)}<span style="font-size:14px"> t</span></div><div class="s num">전표 ${comma(rows.length)}장 · ${comma(total)} kg</div></div>`;
+
+  const jm={};
+  rows.forEach(r=>{ const j=joOf(r)||'(미지정)';
+    jm[j]=jm[j]||{n:0,w:0,v:new Set()}; jm[j].n++; jm[j].w+=r.weight; jm[j].v.add(r.veh); });
+  const jk=Object.keys(jm).sort();
+  $('#byJo').innerHTML = jk.length ? `<table>
+    <thead><tr><th>조</th><th class="r">차량</th><th class="r">전표</th><th class="r">중량(kg)</th><th class="r">톤</th></tr></thead>
+    <tbody>${jk.map(j=>`<tr><td class="veh">${j}</td><td class="r num">${jm[j].v.size}</td><td class="r num">${jm[j].n}</td><td class="r b num">${comma(jm[j].w)}</td><td class="r num">${ton(jm[j].w)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td>합계</td><td class="r num">${new Set(rows.map(r=>r.veh)).size}</td><td class="r num">${rows.length}</td><td class="r num">${comma(total)}</td><td class="r num">${ton(total)}</td></tr></tfoot>
+  </table>` : '';
+
+  const vm={};
+  rows.forEach(r=>{ vm[r.veh]=vm[r.veh]||{n:0,w:0,s:new Set()}; vm[r.veh].n++; vm[r.veh].w+=r.weight; vm[r.veh].s.add(r.seong); });
+  const vk=Object.keys(vm).sort();
+  $('#byVeh').innerHTML = vk.length ? `<table>
+    <thead><tr><th>차량</th><th>성상</th><th class="r">전표</th><th class="r">중량(kg)</th><th class="r">톤</th></tr></thead>
+    <tbody>${vk.map(v=>`<tr><td class="veh num">${v}</td><td>${[...vm[v].s].join(', ')}</td><td class="r num">${vm[v].n}</td><td class="r b num">${comma(vm[v].w)}</td><td class="r num">${ton(vm[v].w)}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td colspan="2">합계</td><td class="r num">${rows.length}</td><td class="r num">${comma(total)}</td><td class="r num">${ton(total)}</td></tr></tfoot>
+  </table>` : '<div class="empty">해당 기간에 기록이 없습니다.</div>';
+
+  const use = SEONG.filter(s=>sum[s]>0), dm={};
+  rows.forEach(r=>{ dm[r.date]=dm[r.date]||{}; dm[r.date][r.seong]=(dm[r.date][r.seong]||0)+r.weight; });
+  const dk=Object.keys(dm).sort();
+  $('#byDate').innerHTML = dk.length ? `<table>
+    <thead><tr><th>날짜</th>${use.map(s=>`<th class="r">${s}</th>`).join('')}<th class="r">합계</th></tr></thead>
+    <tbody>${dk.map(d=>{
+      const t=use.reduce((a,s)=>a+(dm[d][s]||0),0);
+      return `<tr><td class="num">${d.slice(5).replace('-','/')}</td>${use.map(s=>`<td class="r num">${dm[d][s]?comma(dm[d][s]):'<span style="color:var(--dim)">-</span>'}</td>`).join('')}<td class="r b num">${comma(t)}</td></tr>`;
+    }).join('')}</tbody>
+    <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
+  </table>` : '';
+
+  const q=($('#fQ').value||'').trim();
+  const shown = q ? rows.filter(r=>
+      String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
+      (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
+    ) : rows;
+  const shownSum = shown.reduce((a,r)=>a+r.weight,0);
+  $('#lCnt').textContent = shown.length
+      ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg` : '';
+  $('#list').innerHTML = shown.length ? `<table>
+    <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <tbody>${[...shown].reverse().map(r=>`<tr>
+      <td class="num">${r.date.slice(5).replace('-','/')}</td>
+      <td style="color:var(--dim)">${joOf(r)}</td>
+      <td class="veh num">${r.veh}</td>
+      <td>${r.seong}</td>
+      <td>${r.site||''}</td>
+      <td class="r b num">${comma(r.weight)}</td>
+      <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="mini" data-ed="${r.id}">수정</button>
+        <button class="mini x" data-del="${r.id}">삭제</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table>` : `<div class="empty">${q?`'${q}' 에 해당하는 전표가 없습니다.`:'해당 기간에 전표가 없습니다.'}</div>`;
+}
+
+/* ---------- 사진 뷰어 ---------- */
+let vw = { batch:null, rot:0, zoom:1, x:0, y:0, base:1 };
+
+function apply(){
+  $('#vImg').style.transform = `translate(${vw.x}px,${vw.y}px) scale(${vw.base*vw.zoom}) rotate(${vw.rot}deg)`;
+}
+function fit(){
+  const img=$('#vImg'), st=$('#vStage');
+  if(!img.naturalWidth) return;
+  const turned = vw.rot%180!==0;
+  const w = turned?img.naturalHeight:img.naturalWidth;
+  const h = turned?img.naturalWidth:img.naturalHeight;
+  vw.base = Math.min((st.clientWidth-60)/w, (st.clientHeight-60)/h, 1);
+  vw.zoom=1; vw.x=0; vw.y=0; apply();
+}
+async function showPic(batch){
+  vw={batch, rot:rots[batch]||0, zoom:1, x:0, y:0, base:1};
+  $('#vCap').textContent='사진 불러오는 중';
+  $('#vImg').src=''; $('#viewer').classList.add('on');
+  try{
+    if(!picCache[batch]){
+      const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
+      picCache[batch]=await res.json();
+    }
+    if(!picCache[batch]) throw new Error();
+    const img=$('#vImg');
+    img.onload=fit;
+    img.src=picCache[batch];
+    const n=all.filter(r=>r.batch===batch);
+    $('#vCap').textContent=`${n[0].date} · ${n[0].veh} · 전표 ${n.length}장 · ${n.map(r=>comma(r.weight)).join(' / ')} kg`;
+  }catch(e){ $('#vCap').textContent='사진을 불러오지 못했습니다.'; }
+}
+async function saveRot(){
+  if(!vw.batch) return;
+  rots[vw.batch]=vw.rot;
+  try{
+    await fetch(`${DB}/gyegeun/rot/${vw.batch}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(vw.rot)});
+  }catch(e){}
+}
+$('#vTop').onclick = e=>{
+  const b=e.target.closest('[data-v]'); if(!b) return;
+  const a=b.dataset.v;
+  if(a==='x'){ $('#viewer').classList.remove('on'); return; }
+  if(a==='rl'){ vw.rot=(vw.rot+270)%360; fit(); saveRot(); return; }
+  if(a==='rr'){ vw.rot=(vw.rot+90)%360;  fit(); saveRot(); return; }
+  if(a==='in'){ vw.zoom=Math.min(vw.zoom*1.3,12); apply(); return; }
+  if(a==='out'){ vw.zoom=Math.max(vw.zoom/1.3,.3); apply(); return; }
+  if(a==='fit'){ fit(); }
+};
+const stage=$('#vStage');
+stage.addEventListener('wheel', e=>{
+  e.preventDefault();
+  vw.zoom = Math.min(Math.max(vw.zoom * (e.deltaY<0?1.15:1/1.15), .3), 12);
+  apply();
+},{passive:false});
+let drag=null;
+stage.addEventListener('mousedown', e=>{ drag={sx:e.clientX-vw.x, sy:e.clientY-vw.y}; stage.classList.add('drag'); });
+window.addEventListener('mousemove', e=>{ if(!drag)return; vw.x=e.clientX-drag.sx; vw.y=e.clientY-drag.sy; apply(); });
+window.addEventListener('mouseup', ()=>{ drag=null; stage.classList.remove('drag'); });
+stage.addEventListener('dblclick', fit);
+window.addEventListener('keydown', e=>{
+  if(!$('#viewer').classList.contains('on')) return;
+  if(e.key==='Escape') $('#viewer').classList.remove('on');
+  if(e.key==='+'||e.key==='=') { vw.zoom=Math.min(vw.zoom*1.3,12); apply(); }
+  if(e.key==='-') { vw.zoom=Math.max(vw.zoom/1.3,.3); apply(); }
+});
+window.addEventListener('resize', ()=>{ if($('#viewer').classList.contains('on')) fit(); });
+
+/* ---------- 사진 크기 줄이기 (업로드용) ---------- */
+function resizeImage(file, maxDim, quality){
+  maxDim = maxDim || 1600; quality = quality || 0.82;
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let w=img.naturalWidth, h=img.naturalHeight;
+      if(w>maxDim || h>maxDim){
+        if(w>h){ h=Math.round(h*maxDim/w); w=maxDim; }
+        else{ w=Math.round(w*maxDim/h); h=maxDim; }
+      }
+      const c=document.createElement('canvas');
+      c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('load fail')); };
+    img.src=url;
+  });
+}
+
+/* ---------- 수정 / 삭제 ---------- */
+let mId=null, mBatch=null, mNewPic=null;
+
+function renderMPic(loading){
+  const box=$('#mPicPreview');
+  if(mNewPic){
+    box.innerHTML=`<img src="${mNewPic}" alt="새 사진">`;
+    $('#mPicClear').style.display='inline-block';
+    return;
+  }
+  if(loading){ box.innerHTML='<span class="ph">사진 불러오는 중…</span>'; return; }
+  if(!mBatch){
+    box.innerHTML='<span class="ph">등록된 사진이 없습니다</span>';
+    $('#mPicClear').style.display='none';
+    return;
+  }
+  const cached=picCache[mBatch];
+  if(cached){ box.innerHTML=`<img src="${cached}" alt="등록된 사진">`; $('#mPicClear').style.display='inline-block'; }
+  else{ box.innerHTML='<span class="ph">사진 불러오는 중…</span>'; loadMPic(); }
+}
+async function loadMPic(){
+  const batch=mBatch; if(!batch) return;
+  try{
+    if(!picCache[batch]){
+      const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
+      picCache[batch]=await res.json();
+    }
+    if(mBatch!==batch) return; // 그 사이 다른 전표를 열었으면 무시
+    renderMPic();
+  }catch(e){
+    if(mBatch===batch) $('#mPicPreview').innerHTML='<span class="ph">사진을 불러오지 못했습니다</span>';
+  }
+}
+$('#mPicFile').onchange = async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  $('#mPicPreview').innerHTML='<span class="ph">사진 처리 중…</span>';
+  try{
+    mNewPic = await resizeImage(f);
+    renderMPic();
+  }catch(err){
+    toast('사진을 처리하지 못했습니다','err');
+    renderMPic();
+  }
+};
+$('#mPicClear').onclick = ()=>{
+  mNewPic=null; mBatch=null;
+  $('#mPicFile').value='';
+  renderMPic();
+};
+
+function edit(id){
+  const r=all.find(x=>x.id===id); if(!r) return;
+  mId=id; mBatch=r.batch||null; mNewPic=null;
+  $('#mPicFile').value='';
+  $('#mSub').textContent = `전표번호 없이 기록된 건 · 등록 ${new Date(r.at).toLocaleString('ko-KR')}`;
+  $('#mVeh').innerHTML   = Object.keys(CARS).map(v=>`<option>${v}</option>`).join('')
+                         + (CARS[r.veh]?'':`<option>${r.veh}</option>`);
+  $('#mSeong').innerHTML = SEONG.map(x=>`<option>${x}</option>`).join('');
+  $('#mSite').innerHTML  = siteOptions(r.site);
+  $('#mDate').value=r.date; $('#mVeh').value=r.veh;
+  $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
+  renderMPic();
+  $('#modal').classList.add('on');
+  setTimeout(()=>$('#mW').focus(),50);
+}
+$('#mSite').onchange = e=>siteChange(e.target);
+$('#mCancel').onclick = ()=>{ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; };
+$('#modal').onclick = e=>{ if(e.target.id==='modal'){ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; } };
+$('#mSave').onclick = async ()=>{
+  if(!mId) return;
+  const r=all.find(x=>x.id===mId); if(!r) return;
+  const w=parseInt(String($('#mW').value).replace(/[^0-9]/g,''),10);
+  if(!w){ toast('실중량을 확인하세요','err'); return; }
+  const body={ date:$('#mDate').value, veh:$('#mVeh').value, seong:$('#mSeong').value,
+               site:$('#mSite').value, weight:w,
+               jo:(CARS[$('#mVeh').value]||{}).j || '' };
+  if(!body.date){ toast('계근일을 확인하세요','err'); return; }
+  $('#mSave').disabled=true; $('#mSave').textContent='저장 중';
+  try{
+    let batchId = mBatch;
+    if(mNewPic){
+      batchId = mBatch || (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
+      const pRes=await fetch(`${DB}/gyegeun/photos/${batchId}.json`,{method:'PUT',
+        headers:{'Content-Type':'application/json'},body:JSON.stringify(mNewPic)});
+      if(!pRes.ok) throw new Error();
+      picCache[batchId]=mNewPic;
+    }
+    body.batch = batchId || null;
+    const res=await fetch(`${DB}/gyegeun/records/${mId}.json`,{method:'PATCH',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok) throw new Error();
+    Object.assign(r, body);
+    $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null;
+    render(); toast('고쳤습니다','good');
+  }catch(e){ toast('수정 실패','err'); }
+  $('#mSave').disabled=false; $('#mSave').textContent='저장';
+};
+window.addEventListener('keydown', e=>{
+  if(!$('#modal').classList.contains('on')) return;
+  if(e.key==='Escape'){ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; }
+  if(e.key==='Enter' && document.activeElement && document.activeElement.tagName!=='INPUT'){ $('#mSave').click(); }
+});
+
+async function del(id){
+  const r=all.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n이 전표를 지웁니다. 되돌릴 수 없습니다.`)) return;
+  try{
+    const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'DELETE'});
+    if(!res.ok) throw new Error();
+    all=all.filter(x=>x.id!==id); render(); toast('지웠습니다','good');
+    $('#st').textContent=`전표 ${comma(all.length)}건`;
+  }catch(e){ toast('삭제 실패','err'); }
+}
+
+/* ---------- 이벤트 ---------- */
+document.body.addEventListener('click', e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.pic) showPic(b.dataset.pic);
+  if(b.dataset.ed)  edit(b.dataset.ed);
+  if(b.dataset.del) del(b.dataset.del);
+  if(b.dataset.q){
+    mode=b.dataset.q;
+    $('#fDay').value=''; $('#bDayClear').style.display='none';
+    document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x===b));
+    render();
+  }
+  if(b.id==='bDayClear'){
+    $('#fDay').value=''; b.style.display='none'; mode='month';
+    document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
+    render();
+  }
+});
+$('#fDay').onchange = e=>{
+  if(!e.target.value){ $('#bDayClear').click(); return; }
+  mode='day'; $('#bDayClear').style.display='inline-block';
+  document.querySelectorAll('[data-q]').forEach(x=>x.classList.remove('sel'));
+  render();
+};
+$('#fMonth').onchange = ()=>{
+  mode='month'; $('#fDay').value=''; $('#bDayClear').style.display='none';
+  document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
+  render();
+};
+$('#fVeh').onchange = render;
+$('#fSeong').onchange = render;
+$('#fJo').onchange = render;
+$('#bReload').onclick = load;
+$('#fQ').oninput = render;
+$('#fQ').onkeydown = e=>{ if(e.key==='Escape'){ e.target.value=''; render(); } };
+
+/* ---------- CSV ---------- */
+$('#bCsv').onclick = ()=>{
+  const rows=picked().slice().sort((a,b)=>
+      a.date.localeCompare(b.date)
+   || String(a.veh).localeCompare(String(b.veh))
+   || String(a.seong).localeCompare(String(b.seong))
+   || String(a.site||'').localeCompare(String(b.site||''))
+   || a.weight-b.weight);
+  if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
+  const head='날짜,조,차량번호,성상,반입처,실중량';
+  const body=rows.map(r=>[r.date,joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
+  const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`계근대장_${$('#fMonth').value||today().slice(0,7)}.csv`;
+  a.click(); URL.revokeObjectURL(a.href);
+};
+
+/* ---------- 일괄 입력 ---------- */
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+// 한 줄에 실중량 하나. 4,280 처럼 천단위 쉼표는 지웁니다.
+function eNums(){
+  return $('#eText').value.split(/[\n,;\t]+/)
+    .map(x=>parseInt(String(x).replace(/[^0-9]/g,''),10))
+    .filter(n=>n>0).map(w=>({w, bad:w>60000}));
+}
+function ePreview(){
+  const n=eNums(), bn=n.filter(x=>x.bad).length;
+  $('#ePv').innerHTML=`전표 <b>${n.length}</b>장 · 합계 <b class="num">${comma(n.reduce((a,b)=>a+b.w,0))}</b> kg`
+    + (bn?` · <b style="color:var(--bad)">확인 필요 ${bn}줄</b>`:'');
+}
+function eInit(){
+  $('#eDate').value = today();
+  $('#eVeh').innerHTML = Object.keys(CARS).map(v=>`<option value="${v}">${v}</option>`).join('');
+  $('#eSeong').innerHTML = '<option value="">— 성상을 고르세요 —</option>'+SEONG.map(s=>`<option>${s}</option>`).join('');
+  $('#eSite').innerHTML = siteOptions();
+  eSync(); ePreview();
+}
+function eSync(){
+  const c=CARS[$('#eVeh').value];
+  if(!c) return;
+  $('#eSeong').value = c.s || '';
+  if(!allSites().includes(c.d)) addSite(c.d);
+  $('#eSite').innerHTML = siteOptions(c.d);
+  $('#eSite').value = c.d;
+  const sel=$('#eSeong');
+  sel.style.borderColor = c.s ? '' : 'var(--acc)';
+}
+$('#bToggle').onclick = ()=>{
+  const el=$('#entry'), on=el.classList.toggle('on');
+  $('#bToggle').classList.toggle('sel',on);
+  if(on) $('#eText').focus();
+};
+$('#eVeh').onchange = eSync;
+$('#eSite').onchange = e=>siteChange(e.target);
+$('#eText').oninput = ePreview;
+$('#eClear').onclick = ()=>{ $('#eText').value=''; ePreview(); $('#eText').focus(); };
+$('#eSave').onclick = async ()=>{
+  const nums=eNums();
+  if(!nums.length){ toast('실중량을 입력하세요','err'); return; }
+  const date=$('#eDate').value, veh=$('#eVeh').value, seong=$('#eSeong').value, site=$('#eSite').value;
+  const jo=(CARS[veh]||{}).j || '';
+  if(!date){ toast('계근일을 정하세요','err'); return; }
+  if(nums.some(x=>x.bad) && !confirm('중량이 이상한 줄이 있습니다. 그대로 저장할까요?')) return;
+  if(!seong){ toast('성상을 고르세요','err'); $('#eSeong').focus(); return; }
+  if(!confirm(`${date} · ${veh} · ${seong} · ${site}\n전표 ${nums.length}장 (${comma(nums.reduce((a,b)=>a+b.w,0))} kg)\n\n저장할까요?`)) return;
+  $('#eSave').disabled=true; $('#eSave').textContent='저장 중';
+  let ok=0;
+  for(const it of nums){
+    const w=it.w, id=uid();
+    try{
+      const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({date,jo,veh,seong,site,weight:w,gross:null,tare:null,batch:null,at:Date.now()})});
+      if(res.ok) ok++;
+    }catch(e){}
+  }
+  $('#eSave').disabled=false; $('#eSave').textContent='저장';
+  if(ok===nums.length){ $('#eText').value=''; ePreview(); toast(`${ok}장 저장했습니다`,'good'); $('#eText').focus(); }
+  else toast(`${ok}/${nums.length}장만 저장됐습니다`,'err');
+  load();
+};
+
+/* ---------- 시작 ---------- */
+eInit();
+$('#fMonth').value = today().slice(0,7);
+load();
+setInterval(()=>{ if(!$('#viewer').classList.contains('on') && !$('#modal').classList.contains('on')) load(); }, 120000);
+</script>
+</body>
+</html>

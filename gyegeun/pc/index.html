@@ -103,7 +103,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 /* ---------- 수정 창 ---------- */
 .modal{position:fixed;inset:0;background:rgba(24,28,34,.55);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.on{display:flex}
-.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(520px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);max-height:92vh;overflow:auto}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(460px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);max-height:92vh;overflow:auto}
 .mbox h3{margin:0 0 4px;font-size:17px;font-weight:800}
 .mbox .sub{font-size:12.5px;color:var(--dim);margin-bottom:18px}
 .mf{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
@@ -117,12 +117,11 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
 
 /* ---------- 수정 창 - 사진 ---------- */
-.mpic{border:1px dashed var(--line);border-radius:10px;padding:8px;margin-bottom:8px;min-height:64px;
-  display:flex;align-items:center;justify-content:center;background:var(--card2)}
-.mpic img{max-width:100%;max-height:260px;border-radius:8px;display:block}
-.mpic .ph{font-size:12.5px;color:var(--dim)}
-.mpicrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.mpicrow input[type=file]{flex:1;min-width:0;font-size:12.5px;color:var(--dim)}
+.mpic-empty{border:1px dashed var(--line);border-radius:10px;padding:16px;text-align:center;background:var(--card2)}
+.mpic-empty .ph{font-size:12.5px;color:var(--dim);display:block;margin-bottom:10px}
+.mpic-has{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card2)}
+.mpic-has img{max-width:100%;max-height:260px;border-radius:8px;display:block;margin:0 auto 8px}
+.mpic-has .mpicrow{display:flex;gap:8px;justify-content:center}
 
 /* ---------- 사진 뷰어 ---------- */
 .viewer{position:fixed;inset:0;background:rgba(24,28,34,.92);z-index:60;display:none;flex-direction:column}
@@ -242,11 +241,8 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
     <div class="mf">
       <label>사진</label>
-      <div class="mpic" id="mPicPreview"><span class="ph">등록된 사진이 없습니다</span></div>
-      <div class="mpicrow">
-        <input type="file" accept="image/*" capture="environment" id="mPicFile">
-        <button class="mini x" id="mPicClear" style="display:none">사진 제거</button>
-      </div>
+      <div id="mPicBox"></div>
+      <input type="file" accept="image/*" capture="environment" id="mPicFile" style="display:none">
     </div>
     <div class="mfoot">
       <button class="chip" id="mCancel">취소</button>
@@ -525,21 +521,45 @@ function resizeImage(file, maxDim, quality){
 let mId=null, mBatch=null, mNewPic=null;
 
 function renderMPic(loading){
-  const box=$('#mPicPreview');
+  const box=$('#mPicBox');
   if(mNewPic){
-    box.innerHTML=`<img src="${mNewPic}" alt="새 사진">`;
-    $('#mPicClear').style.display='inline-block';
+    box.innerHTML = `<div class="mpic-has"><img src="${mNewPic}" alt="새 사진">
+      <div class="mpicrow">
+        <button type="button" class="mini" id="mPicChange">다른 사진으로</button>
+        <button type="button" class="mini x" id="mPicClear">사진 제거</button>
+      </div></div>`;
+    bindMPicButtons();
     return;
   }
-  if(loading){ box.innerHTML='<span class="ph">사진 불러오는 중…</span>'; return; }
+  if(loading){ box.innerHTML='<div class="mpic-empty"><span class="ph">사진 불러오는 중…</span></div>'; return; }
   if(!mBatch){
-    box.innerHTML='<span class="ph">등록된 사진이 없습니다</span>';
-    $('#mPicClear').style.display='none';
+    box.innerHTML = `<div class="mpic-empty"><span class="ph">등록된 사진이 없습니다</span>
+      <button type="button" class="chip sm" id="mPicAdd">사진 첨부</button></div>`;
+    bindMPicButtons();
     return;
   }
   const cached=picCache[mBatch];
-  if(cached){ box.innerHTML=`<img src="${cached}" alt="등록된 사진">`; $('#mPicClear').style.display='inline-block'; }
-  else{ box.innerHTML='<span class="ph">사진 불러오는 중…</span>'; loadMPic(); }
+  if(cached){
+    box.innerHTML = `<div class="mpic-has"><img src="${cached}" alt="등록된 사진">
+      <div class="mpicrow">
+        <button type="button" class="mini" id="mPicChange">다른 사진으로</button>
+        <button type="button" class="mini x" id="mPicClear">사진 제거</button>
+      </div></div>`;
+    bindMPicButtons();
+  }else{
+    box.innerHTML='<div class="mpic-empty"><span class="ph">사진 불러오는 중…</span></div>';
+    loadMPic();
+  }
+}
+function bindMPicButtons(){
+  const add=$('#mPicAdd'), chg=$('#mPicChange'), clr=$('#mPicClear');
+  if(add) add.onclick = ()=> $('#mPicFile').click();
+  if(chg) chg.onclick = ()=> $('#mPicFile').click();
+  if(clr) clr.onclick = ()=>{
+    mNewPic=null; mBatch=null;
+    $('#mPicFile').value='';
+    renderMPic();
+  };
 }
 async function loadMPic(){
   const batch=mBatch; if(!batch) return;
@@ -551,12 +571,12 @@ async function loadMPic(){
     if(mBatch!==batch) return; // 그 사이 다른 전표를 열었으면 무시
     renderMPic();
   }catch(e){
-    if(mBatch===batch) $('#mPicPreview').innerHTML='<span class="ph">사진을 불러오지 못했습니다</span>';
+    if(mBatch===batch) $('#mPicBox').innerHTML='<div class="mpic-empty"><span class="ph">사진을 불러오지 못했습니다</span></div>';
   }
 }
 $('#mPicFile').onchange = async e=>{
   const f=e.target.files[0]; if(!f) return;
-  $('#mPicPreview').innerHTML='<span class="ph">사진 처리 중…</span>';
+  $('#mPicBox').innerHTML='<div class="mpic-empty"><span class="ph">사진 처리 중…</span></div>';
   try{
     mNewPic = await resizeImage(f);
     renderMPic();
@@ -564,11 +584,6 @@ $('#mPicFile').onchange = async e=>{
     toast('사진을 처리하지 못했습니다','err');
     renderMPic();
   }
-};
-$('#mPicClear').onclick = ()=>{
-  mNewPic=null; mBatch=null;
-  $('#mPicFile').value='';
-  renderMPic();
 };
 
 function edit(id){
@@ -682,7 +697,7 @@ $('#bCsv').onclick = ()=>{
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
   const head='날짜,조,차량번호,성상,반입처,실중량';
   const body=rows.map(r=>[r.date,joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
-  const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const blob=new Blob(['﻿'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`계근대장_${$('#fMonth').value||today().slice(0,7)}.csv`;

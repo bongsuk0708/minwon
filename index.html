@@ -217,6 +217,8 @@ textarea{resize:vertical;min-height:84px;line-height:1.55}
   line-height:1.95;box-shadow:0 2px 12px rgba(15,22,34,.14);font-weight:600;color:var(--ink-2);
 }
 .ldot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.qa-btn{flex:0 0 auto;padding:7px 12px;border:1.5px solid var(--line);border-radius:20px;background:#fff;color:var(--ink);font-size:13px;font-weight:800;font-family:inherit;cursor:pointer}
+.qa-btn.on{background:#0F1622;color:#fff;border-color:#0F1622}
 /* 지도 위 구분 고르기 줄 */
 .mfil{
   position:absolute;top:10px;left:10px;right:10px;z-index:22;
@@ -325,7 +327,7 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
 <div id="new-bar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:700;max-width:680px;margin:0 auto;background:#E8590C;color:#fff;padding:13px 14px;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.28)"></div>
 <div class="wrap">
 <div class="hd" style="justify-content:space-between">
-  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v111</span></span>
+  <span style="display:flex;align-items:baseline;gap:10px"><span class="hd-t">잠실·삼전 수거관리</span><span class="hd-s">사무실 v113</span></span>
   <button id="wake-btn" onclick="toggleWake()" style="border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#8A97A8;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;margin-right:6px">화면 켜두기</button><button id="alert-btn" onclick="toggleAlert()" style="border:1.5px solid #E3E7ED;background:#EEF1F5;color:#6B7785;border-radius:20px;padding:6px 13px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap">알림 꺼짐</button>
 </div>
 <div class="tabs">
@@ -431,6 +433,16 @@ table.rep tfoot td{background:#F5F8FC;font-weight:800;color:var(--ink)}
   </div>
   <div class="sec">
     <div class="lbl">주소 <span class="req">*</span></div>
+    <select id="addr-quick" onchange="qAddr(this.value)" style="width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font-size:15px;font-weight:700;font-family:inherit;margin-bottom:8px;appearance:auto;cursor:pointer">
+      <option value="">— 동 선택 —</option>
+      <option value="본">잠실동</option>
+      <option value="삼">삼전동</option>
+      <option value="삼전현대">삼전현대</option>
+      <option value="우성4차">우성4차</option>
+      <option value="잠실현대">잠실현대</option>
+      <option value="레이크">레이크</option>
+      <option value="트리지움">트리지움</option>
+    </select>
     <div class="addr-wrap">
       <input type="text" id="f-addr" placeholder="주공 514동 1302호 · 잠실현대 102동 · 삼전현대" oninput="onAddr()" onkeydown="onAddrKey(event)" autocomplete="off">
       <div class="ac" id="ac"></div>
@@ -1121,6 +1133,28 @@ async function findCoord(r){
   return null;
 }
 
+let qAddrPfx='';  // 선택한 단지 접두어
+function qAddr(pfx){
+  qAddrPfx=pfx;
+  const inp=$('f-addr');
+  if(!inp)return;
+
+  // 삼전현대·잠실현대는 동호수가 없거나 동번호만
+  if(pfx==='삼전현대'){
+    inp.value='삼전현대';
+    inp.type='text';
+  } else {
+    inp.value=pfx+' ';
+    inp.type='text';
+    // 아파트면 숫자 키보드
+    const isApt=!['본','삼'].includes(pfx);
+    inp.inputMode=isApt?'numeric':'text';
+    inp.placeholder=isApt?'동호수 입력 (예: 301동 1002호)':'번지 입력 (예: 199)';
+  }
+  inp.focus();
+  // 자동완성 트리거
+  onAddr();
+}
 function onAddr(){
   const v=gv('f-addr'),hint=$('addr-hint'),ac=$('ac');
   clearTimeout(acTimer);acIdx=-1;ac.style.display='none';
@@ -1369,6 +1403,8 @@ function clrForm(){
   photos={before:[],after:[]};
   $('before-grid').innerHTML='';$('after-grid').innerHTML='';
   $('addr-hint').className='hint hide';$('ac').style.display='none';
+  qAddrPfx='';
+  const aq=$('addr-quick'); if(aq)aq.value='';
   const d=$('diag');                       // '주소 확인' 결과도 함께 지움
   if(d){ d.style.display='none'; d.textContent=''; }
 }

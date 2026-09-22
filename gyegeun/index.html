@@ -369,20 +369,23 @@ function parseTicket(text){
   const t = text.replace(/\s+/g,' ');
   const res = { veh:'', date:'', seong:'', weight:0, site:'', raw:text };
 
-  // 차량번호 (끝 4자리)
-  const vehMatch = t.match(/(?:차량번호|차량)[^\d]*(\d{4})/i) || t.match(/(\d{2}[가-힣]{1,2}\d{4})/);
+  // 차량번호 (끝 4자리) - 여러 패턴 지원
+  let vehMatch = t.match(/(?:차\s*량?\s*번\s*호|차번호|차량)[^\d]*(\d{2,4})/i);
+  if(!vehMatch) vehMatch = t.match(/(\d{2}\s*[가-힣]{1,2}\s*\d{4})/);
+  if(!vehMatch) vehMatch = t.match(/(\d{4})/);
   if(vehMatch){
-    const full = vehMatch[1];
+    const full = vehMatch[1].replace(/\s/g,'');
     res.veh = full.slice(-4);
   }
 
-  // 날짜
-  const dateMatch = t.match(/(?:계량일시|계근일|일자)[^\d]*(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+  // 날짜 - 여러 형식 지원 (2026-09-18, 2026/09/18, 2026.09.18, 2026-09-18-00100 등)
+  let dateMatch = t.match(/(?:날\s*짜|계량일시|계근일|일자)[^\d]*(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
+  if(!dateMatch) dateMatch = t.match(/(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
   if(dateMatch){
     res.date = `${dateMatch[1]}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}`;
   }
 
-  // 성상 (제품명)
+  // 성상 (제품명) - 더 강력하게
   if(/생활/.test(t)) res.seong = '생활';
   else if(/음식물.*다량|다량.*음식물/.test(t)) res.seong = '음식물(다량)';
   else if(/음식물/.test(t)) res.seong = '음식물';
@@ -391,16 +394,38 @@ function parseTicket(text){
   else if(/대형/.test(t)) res.seong = '대형';
   else res.seong = '기타';
 
-  // 실중량
-  const wMatch = t.match(/(?:실\s*중\s*량|실중량)[^\d]*([\d,]+)\s*kg/i) ||
-                 t.match(/([\d,]+)\s*kg/);
+  // 실중량 - 가장 중요한 부분 (여러 패턴 + 숫자 보정)
+  let weight = 0;
+
+  // 1순위: "실중량" 근처의 숫자
+  let wMatch = t.match(/(?:실\s*중\s*량|실중량|실\s*중)[^\d]*([\d,\.]+)\s*(?:kg|㎏)?/i);
   if(wMatch){
-    res.weight = parseInt(wMatch[1].replace(/,/g,''),10) || 0;
+    weight = parseInt(wMatch[1].replace(/[,\.]/g,''),10) || 0;
   }
+
+  // 2순위: 14,630 같은 형태 (콤마 있는 큰 숫자)
+  if(!weight || weight < 100){
+    const nums = [...t.matchAll(/(\d{1,3}(?:,\d{3})+)/g)].map(m => parseInt(m[1].replace(/,/g,''),10));
+    const candidates = nums.filter(n => n >= 1000 && n <= 50000);
+    if(candidates.length){
+      // 보통 실중량이 가장 작거나, 마지막에 나옴
+      weight = candidates[candidates.length-1];
+    }
+  }
+
+  // 3순위: kg 앞의 숫자
+  if(!weight || weight < 100){
+    wMatch = t.match(/([\d,]+)\s*(?:kg|㎏)/i);
+    if(wMatch){
+      weight = parseInt(wMatch[1].replace(/,/g,''),10) || 0;
+    }
+  }
+
+  res.weight = weight;
 
   // 반입처
   if(/자원순환공원|송파/.test(t)) res.site = '자원순환공원';
-  else if(/강남.*자원|자원회수/.test(t)) res.site = '강남자원회수시설';
+  else if(/강남.*자원|자원회수|강남/.test(t)) res.site = '강남자원회수시설';
   else if(/뉴그린/.test(t)) res.site = '뉴그린';
   else if(/대일/.test(t)) res.site = '대일개발';
   else if(/리누/.test(t)) res.site = '리누';

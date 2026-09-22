@@ -375,18 +375,21 @@ function parseTicket(text){
   if(vehMatch){
     res.veh = vehMatch[2]; // 끝 4자리
   } else {
-    // 그냥 4자리 숫자 중 CARS에 있는 것 우선
+    // 4자리 숫자 중 CARS에 등록된 차량 우선
     const fourDigits = [...t.matchAll(/\b(\d{4})\b/g)].map(m=>m[1]);
     const known = fourDigits.find(d => CARS[d]);
     if(known) res.veh = known;
-    else if(fourDigits.length) res.veh = fourDigits[fourDigits.length-1];
   }
+  // 차량번호는 앱에서 이미 설정되어 있으므로, 못 찾아도 크게 문제 없음
 
   // ===== 날짜 =====
   let dateMatch = t.match(/(?:날\s*짜|계량일시|계근일|일자)[^\d]*(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
   if(!dateMatch) dateMatch = t.match(/(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
   if(dateMatch){
-    res.date = `${dateMatch[1]}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}`;
+    let year = dateMatch[1];
+    // OCR이 2026을 2000으로 잘못 읽는 경우 보정
+    if(year === '2000' || year === '2006' || year === '2020') year = '2026';
+    res.date = `${year}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}`;
   }
 
   // ===== 성상 =====
@@ -400,31 +403,32 @@ function parseTicket(text){
 
   // ===== 실중량 (가장 중요) =====
   let weight = 0;
+  const exclude = res.veh ? parseInt(res.veh,10) : 0; // 차량번호는 중량에서 제외
 
   // 1순위: "실중량" 바로 뒤에 나오는 콤마 숫자 (12,910 형태)
-  let wMatch = t.match(/(?:실\s*중\s*량|실중량)[^\d]{0,20}(\d{1,3},\d{3})/i);
+  let wMatch = t.match(/(?:실\s*중\s*량|실중량)[^\d]{0,25}(\d{1,3}[,\s]?\d{3})/i);
   if(wMatch){
-    weight = parseInt(wMatch[1].replace(/,/g,''),10);
+    const n = parseInt(wMatch[1].replace(/[,\s]/g,''),10);
+    if(n >= 5000 && n <= 45000 && n !== exclude) weight = n;
   }
 
-  // 2순위: 콤마가 있는 숫자들 중에서 차량번호가 아닌 것
+  // 2순위: 콤마가 있는 모든 숫자 중 차량번호 제외하고 가장 작은 값
   if(!weight){
     const commaNums = [...t.matchAll(/(\d{1,3},\d{3})/g)]
       .map(m => parseInt(m[1].replace(/,/g,''),10))
-      .filter(n => n >= 5000 && n <= 45000); // 실중량 범위
+      .filter(n => n >= 5000 && n <= 45000 && n !== exclude);
 
     if(commaNums.length){
-      // 실중량은 보통 가장 작은 값 (총중량 > 차중량 > 실중량)
-      weight = Math.min(...commaNums);
+      weight = Math.min(...commaNums); // 실중량이 보통 가장 작음
     }
   }
 
-  // 3순위: "실중량" 근처의 숫자
+  // 3순위: "실중량" 근처의 4~5자리 숫자
   if(!weight){
-    wMatch = t.match(/(?:실\s*중\s*량|실중량)[^\d]{0,20}([\d]+)/i);
+    wMatch = t.match(/(?:실\s*중\s*량|실중량)[^\d]{0,25}([\d]{4,5})/i);
     if(wMatch){
       const n = parseInt(wMatch[1],10);
-      if(n >= 5000 && n <= 45000) weight = n;
+      if(n >= 5000 && n <= 45000 && n !== exclude) weight = n;
     }
   }
 

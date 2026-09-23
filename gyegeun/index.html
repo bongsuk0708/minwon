@@ -146,6 +146,9 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .tot{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
 .tot b{font-size:23px;font-weight:800;color:var(--amber)}
 .rec,.tot,.card,.slip,.shot.has{box-shadow:0 1px 2px rgba(27,34,44,.06)}
+/* 아직 못 고른 칸을 짚어 줍니다 */
+.need{outline:2px solid #C0392B;outline-offset:5px;border-radius:12px}
+#bSave.half{opacity:.55}
 .empty{text-align:center;color:var(--dim);padding:52px 20px;font-size:15px}
 
 .toast{
@@ -326,7 +329,7 @@ function toast(msg,kind){
 }
 
 /* ================= 입력 폼 상태 ================= */
-let form = { date:'', seong:'', site:'', etc:'', cnt:1, shots:[], rows:[] };
+let form = { date:'', seong:'', site:'', etc:'', cnt:1, shots:[], dateFrom:null, rows:[] };
 
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function today(){ return ymd(new Date()); }
@@ -351,7 +354,7 @@ function drawDay(){
 function initForm(){
   const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
   const d0 = defaultDay();
-  form = { date:d0, seong:c.s||'', site:c.d, etc:'', cnt:1, shots:[],
+  form = { date:d0, seong:c.s||'', site:c.d, etc:'', cnt:1, shots:[], dateFrom:null,
            rows:[{w:'',site:''}] };
   $('#fSiteEtc').value='';
   ocrMsg('');
@@ -413,14 +416,18 @@ function updateDock(){
   const s = form.rows.reduce((a,r)=>a+(+r.w||0),0);
   $('#dCnt').textContent = form.seong ? `전표 ${n}장` : '성상을 고르세요';
   $('#dSum').textContent = comma(s)+' kg';
-  $('#bSave').disabled = n===0 || !cfg.veh || !form.seong;
+  const miss = !cfg.veh ? 'veh' : !form.seong ? 'seong' : !siteName() ? 'site' : n===0 ? 'wt' : '';
+  $('#bSave').disabled = false;                 // 눌러도 아무 반응 없는 상태를 없앱니다
+  $('#bSave').classList.toggle('half', !!miss);
+  $('#bSave').dataset.miss = miss;
+  $('#fSeong').classList.toggle('need', miss==='seong');
 }
 
 /* ================= 입력 이벤트 ================= */
-$('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); } };
+$('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; form.dateFrom='손'; drawDay(); } };
 $('#fDay').onclick = e=>{
   const b=e.target.closest('[data-d]'); if(!b) return;
-  form.date=b.dataset.d; drawDay();
+  form.date=b.dataset.d; form.dateFrom='손'; drawDay();
 };
 
 $('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
@@ -452,7 +459,7 @@ $('#fFile').onchange = e=>{
       const s=form.shots.find(x=>x.id===sid);
       if(s){ s.url=url; drawShot(); }
     });
-    runOcr(raw, sid);
+    queueOcr(raw, sid);
   };
   rd.readAsDataURL(f);
   e.target.value='';
@@ -601,20 +608,27 @@ function pickWeights(text){
 function pickDate(text){
   const norm = t => String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
                     .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  // 구분기호가 또렷할 때만 날짜로 봅니다. 중량·시각 숫자를 날짜로 잘못 읽는 걸 막습니다.
+  //   2026/09/18 · 2026-09-18-00100 · 20260918
+  const pats = [
+    /(20\d{2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/g,
+    /(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/g
+  ];
   for(const src of [String(text||''), norm(text)]){
-    const t = src.replace(/[ \t]+/g,'');
     const cands=[];
-    // 구분기호가 있든(2026-09-18) 없든(20260918) 잡습니다
-    const re=/(20\d{2})\D{0,2}(\d{1,2})\D{0,2}(\d{1,2})/g;
-    let m;
-    while((m=re.exec(t))){
-      const y=+m[1], mo=+m[2], d=+m[3];
-      if(mo<1||mo>12||d<1||d>31) continue;
-      const dt=new Date(y,mo-1,d);
-      if(dt.getMonth()!==mo-1 || dt.getDate()!==d) continue;   // 2월 31일 같은 것 거르기
-      const diff=Math.abs(Date.now()-dt.getTime())/86400000;
-      if(diff>120) continue;                                    // 넉 달 넘게 벗어나면 잘못 읽은 것
-      cands.push({iso:ymd(dt), diff});
+    for(const re of pats){
+      re.lastIndex=0;
+      let m;
+      while((m=re.exec(src))){
+        const y=+m[1], mo=+m[2], d=+m[3];
+        if(mo<1||mo>12||d<1||d>31) continue;
+        const dt=new Date(y,mo-1,d);
+        if(dt.getMonth()!==mo-1 || dt.getDate()!==d) continue;   // 2월 31일 같은 것 거르기
+        const diff=Math.abs(Date.now()-dt.getTime())/86400000;
+        if(diff>120) continue;                                    // 넉 달 넘게 벗어나면 잘못 읽은 것
+        cands.push({iso:ymd(dt), diff});
+      }
+      if(cands.length) break;
     }
     if(cands.length){
       cands.sort((a,b)=>a.diff-b.diff);   // 오늘에 가까운 쪽
@@ -641,6 +655,12 @@ function pickSite(text){
   if(jw>=gn+2) return '자원순환공원';
   if(gn>=jw+2) return '강남자원회수시설';
   return '';
+}
+
+// 사진을 잇따라 찍어도 한 장씩 차례로 읽습니다 (겹치면 판독이 깨집니다)
+let ocrQ = Promise.resolve();
+function queueOcr(dataUrl, sid){
+  ocrQ = ocrQ.then(()=>runOcr(dataUrl, sid)).catch(()=>{});
 }
 
 async function runOcr(dataUrl, sid){
@@ -687,9 +707,18 @@ async function runOcr(dataUrl, sid){
   form.cnt = form.rows.length;
   const d=pickDate(text);
   let dmsg='';
-  if(d && d!==form.date){ form.date=d; drawDay(); dmsg = ` 계근일은 ${label(d)}로 맞췄습니다.`; }
-  else if(d){ dmsg = ` 계근일 ${label(d)} 확인.`; }
-  else { dmsg = ' 날짜는 못 읽었으니 위에서 확인하세요.'; }
+  if(!d){
+    dmsg = ' 이 전표엔 날짜가 안 보입니다 — 위에서 계근일을 확인하세요.';
+  }else if(form.dateFrom && d!==form.date){
+    // 앞 사진이 이미 날짜를 잡았는데 다르면, 함부로 바꾸지 않고 알려만 줍니다
+    dmsg = ` ⚠ 이 전표는 ${label(d)}입니다. 지금 계근일은 ${label(form.date)} — 다른 날 전표면 따로 저장하세요.`;
+  }else if(d!==form.date){
+    form.date=d; form.dateFrom=sid||true; drawDay();
+    dmsg = ` 계근일은 ${label(d)}로 맞췄습니다.`;
+  }else{
+    form.dateFrom=form.dateFrom||sid||true;
+    dmsg = ` 계근일 ${label(d)} 확인.`;
+  }
 
   const site=pickSite(text);
   let smsg='';
@@ -714,10 +743,20 @@ $('#fSlips').addEventListener('input', e=>{
 });
 
 /* ================= 저장 ================= */
+function nudge(sel,msg){
+  toast(msg,'err');
+  const el=$(sel);
+  if(el){
+    el.scrollIntoView({behavior:'smooth',block:'center'});
+    el.classList.add('need');
+    setTimeout(()=>el.classList.remove('need'),2600);
+  }
+}
 $('#bSave').onclick = ()=>{
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
-  if(!form.seong){ toast('성상을 고르세요','err'); return; }
-  if(!siteName()){ toast('반입처를 고르세요','err'); return; }
+  if(!form.seong){ nudge('#fSeong','성상을 고르세요 — 여기를 먼저 누르세요'); return; }
+  if(!siteName()){ nudge('#fSite','반입처를 고르세요'); return; }
+  if(!form.rows.some(r=>+r.w>0)){ nudge('#fSlips','실중량을 넣으세요'); return; }
   rememberSite(siteName());
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }

@@ -103,7 +103,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 /* ---------- 수정 창 ---------- */
 .modal{position:fixed;inset:0;background:rgba(24,28,34,.55);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.on{display:flex}
-.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(460px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22);max-height:92vh;overflow:auto}
+.mbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(460px,100%);box-shadow:0 12px 40px rgba(0,0,0,.22)}
 .mbox h3{margin:0 0 4px;font-size:17px;font-weight:800}
 .mbox .sub{font-size:12.5px;color:var(--dim);margin-bottom:18px}
 .mf{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
@@ -113,15 +113,15 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .mf input.w{font-size:22px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
 .mfoot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 .empty{text-align:center;color:var(--dim);padding:60px 20px}
+/* 엑셀 양식에 자리가 없는 전표 경고 */
+.xw{background:#FBEAE8;border:1px solid #E4B4AE;border-radius:12px;padding:16px 18px;margin-bottom:20px}
+.xw h3{margin:0 0 6px;font-size:16px;color:#A32E22}
+.xw p{margin:0 0 12px;font-size:13.5px;color:#8A4238;line-height:1.6}
+.xw table{background:#fff;border-color:#E4B4AE}
+.xw th{background:#F8DDD9;color:#8A4238;border-color:#E4B4AE}
+.xw td{border-color:#F0D2CD}
 .msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
 .msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
-
-/* ---------- 수정 창 - 사진 ---------- */
-.mpic-empty{border:1px dashed var(--line);border-radius:10px;padding:16px;text-align:center;background:var(--card2)}
-.mpic-empty .ph{font-size:12.5px;color:var(--dim);display:block;margin-bottom:10px}
-.mpic-has{border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card2)}
-.mpic-has img{max-width:100%;max-height:260px;border-radius:8px;display:block;margin:0 auto 8px}
-.mpic-has .mpicrow{display:flex;gap:8px;justify-content:center}
 
 /* ---------- 사진 뷰어 ---------- */
 .viewer{position:fixed;inset:0;background:rgba(24,28,34,.92);z-index:60;display:none;flex-direction:column}
@@ -193,6 +193,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
   </div>
 
   <div id="msg"></div>
+  <div id="xlwarn"></div>
 
   <div class="cols">
     <div class="colL">
@@ -239,11 +240,6 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <div class="mf"><label>성상</label><select id="mSeong"></select></div>
     <div class="mf"><label>반입처</label><select id="mSite"></select></div>
     <div class="mf"><label>실중량 (kg)</label><input type="number" inputmode="numeric" class="w" id="mW"></div>
-    <div class="mf">
-      <label>사진</label>
-      <div id="mPicBox"></div>
-      <input type="file" accept="image/*" capture="environment" id="mPicFile" style="display:none">
-    </div>
     <div class="mfoot">
       <button class="chip" id="mCancel">취소</button>
       <button class="go" id="mSave">저장</button>
@@ -256,6 +252,50 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 <script>
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
+
+/* 월별 계근량 엑셀이 받아 주는 자리 — 차량|성상|반입처.
+   여기에 없는 조합으로 저장하면 엑셀 어느 칸에도 안 들어가고 조용히 빠집니다. */
+const XL_SLOTS = new Set([
+  '7201|생활|자원순환공원',      '2759|생활|자원순환공원',      '5635|생활|자원순환공원',
+  '3587|생활|자원순환공원',      '4359|생활|자원순환공원',
+  '3587|생활|강남자원회수시설',  '4359|생활|강남자원회수시설',
+  '3587|생활|리누',             '4359|생활|리누',
+  '3587|생활|뉴그린',           '3587|생활|대일개발',
+  '9033|음식물|자원순환공원',    '8078|음식물|자원순환공원',
+  '9033|음식물(다량)|자원순환공원','8078|음식물(다량)|자원순환공원','6110|음식물(다량)|자원순환공원',
+  '8326|재활용|자원순환공원',    '7657|재활용|자원순환공원',    '1351|재활용|자원순환공원',
+  '7538|재활용|자원순환공원',    '5635|재활용|자원순환공원',
+  '1286|재활용(다량)|자원순환공원','5635|재활용(다량)|자원순환공원',
+  '5635|기타|자원순환공원',      '1286|기타|자원순환공원',
+  '8666|대형|자원순환공원',      '8686|대형|자원순환공원',
+  '4968|대형|자원순환공원',      '4830|대형|자원순환공원',      '5635|대형|자원순환공원'
+]);
+const slotKey = r => `${r.veh}|${r.seong}|${r.site||''}`;
+function drawXlWarn(){
+  // 화면 필터와 상관없이 이번 달 전체를 봅니다 — 걸러서 보다가 놓치면 안 되니까
+  const bad = all.filter(r=> inRange(r.date) && !XL_SLOTS.has(slotKey(r)))
+                 .sort((a,b)=> a.date.localeCompare(b.date) || a.veh.localeCompare(b.veh));
+  if(!bad.length){ $('#xlwarn').innerHTML=''; return; }
+  const kinds=[...new Set(bad.map(slotKey))];
+  $('#xlwarn').innerHTML = `<div class="xw">
+    <h3>⚠ 엑셀에 안 들어가는 전표 ${bad.length}건</h3>
+    <p>이 조합은 월별 계근량 엑셀에 받아 줄 칸이 없습니다. 새로고침해도 표에 안 나타나고 합계에서도 빠집니다.<br>
+       대부분 <b>성상을 잘못 고른 것</b>입니다 — 전표의 제품명을 보고 아래에서 고친 뒤 엑셀을 새로고침하세요.
+       (${kinds.map(k=>k.split('|').join(' · ')).join('  /  ')})</p>
+    <table>
+      <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+      <tbody>${bad.map(r=>`<tr>
+        <td class="num">${r.date.slice(5).replace('-','/')}</td>
+        <td class="veh num">${r.veh}</td>
+        <td><b>${r.seong}</b></td>
+        <td>${r.site||''}</td>
+        <td class="r b num">${comma(r.weight)}</td>
+        <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+        <td style="text-align:right"><button class="mini" data-ed="${r.id}">수정</button></td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
 const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
 // 기본 목록 + 지금까지 실제로 쓰인 시설명 + 사무실에서 추가한 시설명
 function allSites(){
@@ -358,6 +398,7 @@ function picked(){
 
 /* ---------- 그리기 ---------- */
 function render(){
+  drawXlWarn();
   const rows = picked();
   const sum={}; SEONG.forEach(s=>sum[s]=0);
   rows.forEach(r=> sum[r.seong]=(sum[r.seong]||0)+r.weight );
@@ -494,102 +535,11 @@ window.addEventListener('keydown', e=>{
 });
 window.addEventListener('resize', ()=>{ if($('#viewer').classList.contains('on')) fit(); });
 
-/* ---------- 사진 크기 줄이기 (업로드용) ---------- */
-function resizeImage(file, maxDim, quality){
-  maxDim = maxDim || 1600; quality = quality || 0.82;
-  return new Promise((resolve,reject)=>{
-    const img=new Image();
-    const url=URL.createObjectURL(file);
-    img.onload=()=>{
-      let w=img.naturalWidth, h=img.naturalHeight;
-      if(w>maxDim || h>maxDim){
-        if(w>h){ h=Math.round(h*maxDim/w); w=maxDim; }
-        else{ w=Math.round(w*maxDim/h); h=maxDim; }
-      }
-      const c=document.createElement('canvas');
-      c.width=w; c.height=h;
-      c.getContext('2d').drawImage(img,0,0,w,h);
-      URL.revokeObjectURL(url);
-      resolve(c.toDataURL('image/jpeg',quality));
-    };
-    img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('load fail')); };
-    img.src=url;
-  });
-}
-
 /* ---------- 수정 / 삭제 ---------- */
-let mId=null, mBatch=null, mNewPic=null;
-
-function renderMPic(loading){
-  const box=$('#mPicBox');
-  if(mNewPic){
-    box.innerHTML = `<div class="mpic-has"><img src="${mNewPic}" alt="새 사진">
-      <div class="mpicrow">
-        <button type="button" class="mini" id="mPicChange">다른 사진으로</button>
-        <button type="button" class="mini x" id="mPicClear">사진 제거</button>
-      </div></div>`;
-    bindMPicButtons();
-    return;
-  }
-  if(loading){ box.innerHTML='<div class="mpic-empty"><span class="ph">사진 불러오는 중…</span></div>'; return; }
-  if(!mBatch){
-    box.innerHTML = `<div class="mpic-empty"><span class="ph">등록된 사진이 없습니다</span>
-      <button type="button" class="chip sm" id="mPicAdd">사진 첨부</button></div>`;
-    bindMPicButtons();
-    return;
-  }
-  const cached=picCache[mBatch];
-  if(cached){
-    box.innerHTML = `<div class="mpic-has"><img src="${cached}" alt="등록된 사진">
-      <div class="mpicrow">
-        <button type="button" class="mini" id="mPicChange">다른 사진으로</button>
-        <button type="button" class="mini x" id="mPicClear">사진 제거</button>
-      </div></div>`;
-    bindMPicButtons();
-  }else{
-    box.innerHTML='<div class="mpic-empty"><span class="ph">사진 불러오는 중…</span></div>';
-    loadMPic();
-  }
-}
-function bindMPicButtons(){
-  const add=$('#mPicAdd'), chg=$('#mPicChange'), clr=$('#mPicClear');
-  if(add) add.onclick = ()=> $('#mPicFile').click();
-  if(chg) chg.onclick = ()=> $('#mPicFile').click();
-  if(clr) clr.onclick = ()=>{
-    mNewPic=null; mBatch=null;
-    $('#mPicFile').value='';
-    renderMPic();
-  };
-}
-async function loadMPic(){
-  const batch=mBatch; if(!batch) return;
-  try{
-    if(!picCache[batch]){
-      const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
-      picCache[batch]=await res.json();
-    }
-    if(mBatch!==batch) return; // 그 사이 다른 전표를 열었으면 무시
-    renderMPic();
-  }catch(e){
-    if(mBatch===batch) $('#mPicBox').innerHTML='<div class="mpic-empty"><span class="ph">사진을 불러오지 못했습니다</span></div>';
-  }
-}
-$('#mPicFile').onchange = async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  $('#mPicBox').innerHTML='<div class="mpic-empty"><span class="ph">사진 처리 중…</span></div>';
-  try{
-    mNewPic = await resizeImage(f);
-    renderMPic();
-  }catch(err){
-    toast('사진을 처리하지 못했습니다','err');
-    renderMPic();
-  }
-};
-
+let mId=null;
 function edit(id){
   const r=all.find(x=>x.id===id); if(!r) return;
-  mId=id; mBatch=r.batch||null; mNewPic=null;
-  $('#mPicFile').value='';
+  mId=id;
   $('#mSub').textContent = `전표번호 없이 기록된 건 · 등록 ${new Date(r.at).toLocaleString('ko-KR')}`;
   $('#mVeh').innerHTML   = Object.keys(CARS).map(v=>`<option>${v}</option>`).join('')
                          + (CARS[r.veh]?'':`<option>${r.veh}</option>`);
@@ -597,13 +547,12 @@ function edit(id){
   $('#mSite').innerHTML  = siteOptions(r.site);
   $('#mDate').value=r.date; $('#mVeh').value=r.veh;
   $('#mSeong').value=r.seong; $('#mSite').value=r.site||''; $('#mW').value=r.weight;
-  renderMPic();
   $('#modal').classList.add('on');
   setTimeout(()=>$('#mW').focus(),50);
 }
 $('#mSite').onchange = e=>siteChange(e.target);
-$('#mCancel').onclick = ()=>{ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; };
-$('#modal').onclick = e=>{ if(e.target.id==='modal'){ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; } };
+$('#mCancel').onclick = ()=>{ $('#modal').classList.remove('on'); mId=null; };
+$('#modal').onclick = e=>{ if(e.target.id==='modal'){ $('#modal').classList.remove('on'); mId=null; } };
 $('#mSave').onclick = async ()=>{
   if(!mId) return;
   const r=all.find(x=>x.id===mId); if(!r) return;
@@ -613,30 +562,19 @@ $('#mSave').onclick = async ()=>{
                site:$('#mSite').value, weight:w,
                jo:(CARS[$('#mVeh').value]||{}).j || '' };
   if(!body.date){ toast('계근일을 확인하세요','err'); return; }
-  $('#mSave').disabled=true; $('#mSave').textContent='저장 중';
   try{
-    let batchId = mBatch;
-    if(mNewPic){
-      batchId = mBatch || (Date.now().toString(36)+Math.random().toString(36).slice(2,7));
-      const pRes=await fetch(`${DB}/gyegeun/photos/${batchId}.json`,{method:'PUT',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify(mNewPic)});
-      if(!pRes.ok) throw new Error();
-      picCache[batchId]=mNewPic;
-    }
-    body.batch = batchId || null;
     const res=await fetch(`${DB}/gyegeun/records/${mId}.json`,{method:'PATCH',
       headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok) throw new Error();
     Object.assign(r, body);
-    $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null;
+    $('#modal').classList.remove('on'); mId=null;
     render(); toast('고쳤습니다','good');
   }catch(e){ toast('수정 실패','err'); }
-  $('#mSave').disabled=false; $('#mSave').textContent='저장';
 };
 window.addEventListener('keydown', e=>{
   if(!$('#modal').classList.contains('on')) return;
-  if(e.key==='Escape'){ $('#modal').classList.remove('on'); mId=null; mBatch=null; mNewPic=null; }
-  if(e.key==='Enter' && document.activeElement && document.activeElement.tagName!=='INPUT'){ $('#mSave').click(); }
+  if(e.key==='Escape'){ $('#modal').classList.remove('on'); mId=null; }
+  if(e.key==='Enter'){ $('#mSave').click(); }
 });
 
 async function del(id){
@@ -697,7 +635,7 @@ $('#bCsv').onclick = ()=>{
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
   const head='날짜,조,차량번호,성상,반입처,실중량';
   const body=rows.map(r=>[r.date,joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
-  const blob=new Blob(['﻿'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
+  const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=`계근대장_${$('#fMonth').value||today().slice(0,7)}.csv`;
@@ -772,7 +710,7 @@ $('#eSave').onclick = async ()=>{
 eInit();
 $('#fMonth').value = today().slice(0,7);
 load();
-setInterval(()=>{ if(!$('#viewer').classList.contains('on') && !$('#modal').classList.contains('on')) load(); }, 120000);
+setInterval(()=>{ if(!$('#viewer').classList.contains('on')) load(); }, 120000);
 </script>
 </body>
 </html>

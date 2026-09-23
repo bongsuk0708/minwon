@@ -119,6 +119,9 @@ input[type=number]{font-variant-numeric:tabular-nums}
   display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--amber);flex-shrink:0
 }
 .slip .from{font-size:12px;color:var(--dim);font-weight:700;flex-shrink:0}
+.slip.odd{border-color:var(--amber);background:#FFFCF6}
+.slip .dtag{font-size:12px;font-weight:800;color:var(--amber);background:#FFF5E4;
+  border:1px solid rgba(160,99,26,.4);border-radius:7px;padding:3px 8px;flex-shrink:0;cursor:pointer}
 .slip .site{flex:1;font-size:14px;color:var(--dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt{position:relative}
 .wt input{font-size:30px;font-weight:800;padding:12px 52px 12px 14px;text-align:right;letter-spacing:-.5px}
@@ -397,10 +400,12 @@ function drawSlips(){
   $('#fSlips').innerHTML = form.rows.map((r,i)=>{
     const s = r.site || siteName();
     const si = r.shot ? form.shots.findIndex(x=>x.id===r.shot) : -1;
-    return `<div class="slip" data-i="${i}">
+    const odd = r.date && r.date!==form.date;
+    return `<div class="slip${odd?' odd':''}" data-i="${i}">
       <div class="top">
         <div class="no num">${i+1}</div>
         <div class="site">${s}</div>
+        ${odd?`<div class="dtag" data-clr="${i}">${label(r.date)} ✕</div>`:''}
         ${si>=0?`<div class="from">사진 ${si+1}</div>`:''}
       </div>
       <div class="wt">
@@ -703,15 +708,16 @@ async function runOcr(dataUrl, sid){
     return;
   }
   const n=Math.min(room, found.length);
-  found.slice(0,n).forEach(v=> form.rows.push({w:String(v), site:'', auto:true, shot:sid}));
+  const dRead=pickDate(text);
+  found.slice(0,n).forEach(v=> form.rows.push({w:String(v), site:'', auto:true, shot:sid, date:dRead||null}));
   form.cnt = form.rows.length;
-  const d=pickDate(text);
+  const d=dRead;
   let dmsg='';
   if(!d){
     dmsg = ' 이 전표엔 날짜가 안 보입니다 — 위에서 계근일을 확인하세요.';
   }else if(form.dateFrom && d!==form.date){
-    // 앞 사진이 이미 날짜를 잡았는데 다르면, 함부로 바꾸지 않고 알려만 줍니다
-    dmsg = ` ⚠ 이 전표는 ${label(d)}입니다. 지금 계근일은 ${label(form.date)} — 다른 날 전표면 따로 저장하세요.`;
+    // 날짜가 다른 전표도 같이 저장합니다. 그 줄만 제 날짜로 들어갑니다.
+    dmsg = ` 이 전표는 ${label(d)} — 이 줄만 ${label(d)}로 저장됩니다.`;
   }else if(d!==form.date){
     form.date=d; form.dateFrom=sid||true; drawDay();
     dmsg = ` 계근일은 ${label(d)}로 맞췄습니다.`;
@@ -735,6 +741,11 @@ async function runOcr(dataUrl, sid){
         + (found.length>n ? ` (${found.length}장 중 ${n}장까지만)` : ''), 'ok', d ? '' : text);
 }
 
+$('#fSlips').addEventListener('click', e=>{
+  const t=e.target.closest('[data-clr]'); if(!t) return;
+  form.rows[+t.dataset.clr].date=null;          // 이 줄은 위의 계근일을 따릅니다
+  drawSlips(); toast('계근일을 따릅니다','good');
+});
 $('#fSlips').addEventListener('input', e=>{
   const box=e.target.closest('.slip'); if(!box) return;
   const r=form.rows[+box.dataset.i];
@@ -772,7 +783,7 @@ $('#bSave').onclick = ()=>{
   rows.forEach(r=>{
     const sid = r.shot || last;
     recs.push({
-      id:uid(), date:form.date, jo:(CARS[cfg.veh]||{}).j || '',
+      id:uid(), date: r.date || form.date, jo:(CARS[cfg.veh]||{}).j || '',
       veh:cfg.veh, seong:form.seong,
       site: r.site || siteName(),
       weight:+r.w, gross:null, tare:null,
@@ -781,7 +792,10 @@ $('#bSave').onclick = ()=>{
   });
   saveAll();
   const keep={date:form.date};
-  toast(`전표 ${rows.length}장 저장`, 'good');
+  const days=[...new Set(rows.map(r=>r.date||form.date))].sort();
+  toast(days.length>1
+        ? `전표 ${rows.length}장 저장 — ${days.map(label).join(' · ')}`
+        : `전표 ${rows.length}장 저장`, 'good');
   initForm();
   Object.assign(form, keep); drawDay();
   push();

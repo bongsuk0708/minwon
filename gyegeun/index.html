@@ -11,7 +11,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="계근전표">
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 :root{
   --bg:#F2F5F8; --card:#FFFFFF; --card2:#F7F9FB; --line:#D8DEE7;
@@ -27,6 +26,8 @@ body{
 }
 input,select,textarea{font-family:inherit;-webkit-user-select:text;user-select:text}
 .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- 상단 ---------- */
 header{
   position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);
   backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
@@ -39,14 +40,19 @@ header{
 .net{font-size:12px;padding:4px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
 .net.on{color:var(--ok);border-color:rgba(46,139,87,.45);background:#EDF7F1}
 .net.off{color:var(--bad);border-color:rgba(200,64,47,.45);background:#FDF2F0}
+
+/* ---------- 탭 ---------- */
 nav{display:flex;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:19;background:var(--bg)}
 nav button{
   flex:1;background:none;border:none;color:var(--dim);font-size:15px;font-weight:600;
   padding:13px 0;cursor:pointer;border-bottom:2px solid transparent;
 }
 nav button.sel{color:var(--tx);border-bottom-color:var(--amber)}
+
 main{padding:16px}
 .pane{display:none}.pane.sel{display:block}
+
+/* ---------- 공통 ---------- */
 .lbl{font-size:13px;color:var(--dim);margin:20px 0 8px;font-weight:600}
 .lbl:first-child{margin-top:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -62,12 +68,14 @@ main{padding:16px}
 #fDate{font-size:17px;font-weight:600;padding:15px 14px}
 #fDate.pick{border-color:var(--amber);background:#FFF5E4;color:var(--amber);font-weight:800}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+
 input[type=text],input[type=number],input[type=date],input[type=url],select{
   width:100%;background:var(--card2);border:1px solid var(--line);border-radius:11px;
   color:var(--tx);padding:13px 14px;font-size:16px;outline:none;
 }
 input:focus,select:focus{border-color:var(--amber)}
 input[type=number]{font-variant-numeric:tabular-nums}
+
 .btn{
   width:100%;background:var(--card2);border:1px solid var(--line);color:var(--tx);
   padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;
@@ -75,6 +83,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .btn.go{background:var(--amber);border-color:var(--amber);color:#fff}
 .btn.gh{background:none;color:var(--dim)}
 .btn:disabled{opacity:.4}
+
+/* ---------- 사진 ---------- */
 .shot{
   border:2px dashed var(--line);border-radius:var(--r);padding:28px 16px;text-align:center;
   color:var(--dim);font-size:15px;font-weight:600;cursor:pointer;background:var(--card);
@@ -85,6 +95,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
   position:absolute;right:10px;bottom:10px;background:rgba(255,255,255,.92);
   border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--tx)
 }
+
+/* ---------- 전표 행 ---------- */
 .slip{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px}
 .slip .top{display:flex;align-items:center;gap:10px;margin-bottom:11px}
 .slip .no{
@@ -95,6 +107,10 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .wt{position:relative}
 .wt input{font-size:30px;font-weight:800;padding:12px 52px 12px 14px;text-align:right;letter-spacing:-.5px}
 .wt .kg{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:15px;font-weight:700;pointer-events:none}
+.two{display:flex;gap:9px}.two>div{flex:1}
+.mini{font-size:12px;color:var(--dim);margin-bottom:5px;display:block}
+
+/* ---------- 하단 고정 ---------- */
 .dock{
   position:fixed;left:0;right:0;bottom:0;z-index:25;background:rgba(255,255,255,.97);
   backdrop-filter:blur(8px);border-top:1px solid var(--line);
@@ -102,6 +118,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
 }
 .sum{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:9px}
 .sum b{color:var(--tx);font-size:15px}
+
+/* ---------- 목록 ---------- */
 .rec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;display:flex;gap:11px;align-items:center}
 .rec .m{flex:1;min-width:0}
 .rec .m .a{font-size:15px;font-weight:700}
@@ -113,6 +131,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .tot b{font-size:23px;font-weight:800;color:var(--amber)}
 .rec,.tot,.card,.slip,.shot.has{box-shadow:0 1px 2px rgba(27,34,44,.06)}
 .empty{text-align:center;color:var(--dim);padding:52px 20px;font-size:15px}
+
 .toast{
   position:fixed;left:16px;right:16px;bottom:112px;z-index:60;background:var(--card2);
   border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px;font-weight:600;
@@ -122,59 +141,63 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .toast.good{border-color:rgba(46,139,87,.5);color:var(--ok)}
 .toast.err{border-color:rgba(200,64,47,.5);color:var(--bad)}
 .hint{font-size:12.5px;color:var(--dim);line-height:1.65;margin-top:8px}
+.ocr{margin-top:9px;padding:12px 14px;border-radius:11px;font-size:14px;font-weight:600;
+  border:1px solid var(--line);background:var(--card2);color:var(--dim);display:none}
+.ocr.on{display:block}
+.ocr.work{background:#FFF5E4;border-color:rgba(160,99,26,.3);color:var(--amber)}
+.ocr.ok{background:#EDF7F1;border-color:rgba(46,139,87,.4);color:var(--ok)}
+.ocr.no{background:#FDF2F0;border-color:rgba(200,64,47,.4);color:var(--bad)}
+.wt input.auto{background:#EDF7F1;border-color:rgba(46,139,87,.45)}
 .viewer{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
 .viewer.on{display:flex}
 .viewer img{max-width:100%;max-height:100%;object-fit:contain}
-.ocr-box{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-  padding:14px;margin:12px 0;display:none;
-}
-.ocr-box.on{display:block}
-.ocr-box .title{font-size:13px;font-weight:700;color:var(--amber);margin-bottom:10px}
-.ocr-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
-.ocr-row:last-child{border-bottom:none}
-.ocr-row .k{color:var(--dim)}
-.ocr-row .v{font-weight:700}
-.ocr-loading{text-align:center;padding:20px;color:var(--dim);font-size:14px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+
 <header>
   <div class="veh"><b id="hVeh">—</b><span id="hSeong">차량을 먼저 정하세요</span></div>
   <div class="net" id="hNet">확인 중</div>
 </header>
+
 <nav>
   <button class="sel" data-p="in">입력</button>
   <button data-p="li">목록</button>
   <button data-p="st">설정</button>
 </nav>
+
 <main>
+
+<!-- ============ 입력 ============ -->
 <section class="pane sel" id="p-in">
   <div class="lbl">계근일 <span style="font-weight:400">— 전표에 찍힌 날짜</span></div>
   <div class="chips" id="fDay"></div>
   <div class="lbl" style="margin:12px 0 6px">다른 날짜는 아래를 눌러 고르세요</div>
   <input type="date" id="fDate">
+
   <div class="lbl">성상 <span style="font-weight:400">— 전표의 제품명 그대로</span></div>
   <div class="chips" id="fSeong"></div>
+
   <div class="lbl">반입처</div>
   <div class="chips" id="fSite"></div>
   <input type="text" id="fSiteEtc" placeholder="시설명을 넣으면 다음부터 버튼으로 나옵니다" style="display:none;margin-top:8px">
-  <div class="lbl">전표 사진 <span style="font-weight:400;color:var(--amber)">— 찍으면 자동 인식</span></div>
-  <div class="shot" id="fShot">전표를 펼쳐놓고 촬영</div>
+
+  <div class="lbl">전표 사진</div>
+  <div class="shot" id="fShot">전표를 촬영 — 실중량을 자동으로 읽습니다</div>
   <input type="file" id="fFile" accept="image/*" capture="environment" style="display:none">
-  
-  <div class="ocr-box" id="ocrBox">
-    <div class="title">📷 자동 인식 결과 (확인하고 수정하세요)</div>
-    <div id="ocrContent"></div>
-  </div>
+  <div class="ocr" id="fOcr"></div>
 
   <div class="lbl">전표 몇 장</div>
   <div class="chips" id="fCnt"></div>
+
   <div class="lbl">실중량</div>
   <div id="fSlips"></div>
+
   <div style="height:8px"></div>
 </section>
+
+<!-- ============ 목록 ============ -->
 <section class="pane" id="p-li">
   <div class="chips" id="lFil"></div>
   <div style="height:14px"></div>
@@ -184,35 +207,46 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <button class="btn" id="bCsv">엑셀용 CSV 내려받기</button>
   <div class="hint">사무실 대장 시트에 붙여넣는 파일입니다.</div>
 </section>
+
+<!-- ============ 설정 ============ -->
 <section class="pane" id="p-st">
   <div class="lbl">내 차량</div>
   <div class="chips" id="sVeh"></div>
   <input type="text" id="sVehEtc" placeholder="목록에 없으면 끝 4자리 입력" style="margin-top:9px">
   <div class="hint">한 번 정하면 이 폰에 저장됩니다. 성상과 반입처도 이 차량 기준으로 미리 선택됩니다.</div>
+
   <div class="lbl">서버 주소</div>
   <input type="url" id="sDb" placeholder="https://xxx.firebasedatabase.app">
   <div class="hint">Firebase 실시간 데이터베이스 주소입니다. 비워두면 폰에만 저장되고 사무실로 전송되지 않습니다.</div>
+
   <div class="lbl">전송 대기</div>
   <div class="card" style="display:flex;justify-content:space-between;align-items:center">
     <span style="font-size:14px;color:var(--dim)">아직 못 보낸 건</span>
     <b id="sQ" class="num" style="font-size:20px">0</b>
   </div>
   <button class="btn" id="bSync">지금 전송</button>
+
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v1.1 · 계근 전표 입력 + OCR · 본에코</div>
+  <div class="hint">v1 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
+
 </main>
+
 <div class="dock" id="dock">
   <div class="sum"><span id="dCnt">전표 0장</span><b id="dSum" class="num">0 kg</b></div>
   <button class="btn go" id="bSave">저장</button>
 </div>
+
 <div class="toast" id="toast"></div>
 <div class="viewer" id="viewer"><img id="viewerImg" alt=""></div>
+
 <script>
 /* ================= 기준 데이터 ================= */
 const SEONG = ['생활','음식물','음식물(다량)','재활용','재활용(다량)','대형','기타'];
+
+// 차량 → 기본 성상 / 기본 반입처
 const JO = ['주간','야간'];
 const CARS = {
   '7201':{s:'생활',  d:'자원순환공원',      f:'88나7201',  j:'야간'},
@@ -227,6 +261,7 @@ const CARS = {
   '7657':{s:'재활용',d:'자원순환공원',      f:'82마7657',  j:'야간'},
   '8686':{s:'대형',  d:'자원순환공원',      f:'877가8686', j:'주간'},
   '8666':{s:'대형',  d:'자원순환공원',      f:'877가8666', j:'주간'},
+  // 성상을 매번 고르는 차량
   '1286':{s:'',      d:'자원순환공원', f:'83도1286',  j:'주간', n:'다목적'},
   '5635':{s:'',      d:'자원순환공원', f:'84도5635',  j:'주간', n:'다목적'},
   '4830':{s:'',      d:'자원순환공원', f:'86마4830',  j:'주간', n:'매각(과거분)'},
@@ -235,6 +270,7 @@ const CARS = {
   '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'야간', n:'신차'}
 };
 const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
+// 직접 입력해서 쓴 시설은 이 폰에 기억해두고 다음부터 버튼으로 보여줍니다
 function allSites(){
   const extra = LS.get('gg_sites',[]);
   const used  = recs.map(r=>r.site).filter(Boolean);
@@ -245,6 +281,7 @@ function rememberSite(name){
   const extra = LS.get('gg_sites',[]);
   if(!SITES.includes(name) && !extra.includes(name)){ extra.push(name); LS.set('gg_sites',extra); }
 }
+
 /* ================= 저장소 ================= */
 const LS = {
   get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
@@ -253,26 +290,32 @@ const LS = {
 const DEFAULT_DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 let cfg  = LS.get('gg_cfg',{veh:'',db:''});
 if(!cfg.db){ cfg.db = DEFAULT_DB; }
-let recs = LS.get('gg_recs',[]);
-let pics = LS.get('gg_pics',{});
+let recs = LS.get('gg_recs',[]);   // {id,date,veh,seong,site,weight,gross,tare,batch,sent}
+let pics = LS.get('gg_pics',{});   // batchId -> dataURL
+
 const saveAll = ()=>{ LS.set('gg_cfg',cfg); LS.set('gg_recs',recs); LS.set('gg_pics',pics); };
 const $ = s=>document.querySelector(s);
 const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const comma = n=> (n||0).toLocaleString('ko-KR');
+
 function toast(msg,kind){
   const t=$('#toast'); t.textContent=msg; t.className='toast on '+(kind||'');
   clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400);
 }
+
 /* ================= 입력 폼 상태 ================= */
 let form = { date:'', seong:'', site:'', etc:'', cnt:1, photo:null, rows:[] };
+
 function ymd(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function today(){ return ymd(new Date()); }
 function yesterday(){ const d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
+function addDays(iso,n){ const [y,m,d]=iso.split('-').map(Number); const t=new Date(y,m-1,d); t.setDate(t.getDate()+n); return ymd(t); }
 const WD=['일','월','화','수','목','금','토'];
 function label(iso){
   const [y,m,d]=iso.split('-').map(Number);
   return `${m}/${d} (${WD[new Date(y,m-1,d).getDay()]})`;
 }
+// 새벽에 앱을 열면 전날이 기본 — 야간조는 전날 밤 계근분이 먼저 나옵니다
 function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today(); }
 function drawDay(){
   const t=today(), y=yesterday(), cur=form.date;
@@ -282,15 +325,17 @@ function drawDay(){
   el.value = cur;
   el.classList.toggle('pick', cur!==t && cur!==y);
 }
+
 function initForm(){
   const c = CARS[cfg.veh] || {s:'',d:'자원순환공원'};
   const d0 = defaultDay();
   form = { date:d0, seong:c.s||'', site:c.d, etc:'', cnt:1, photo:null,
            rows:[{w:'',site:''}] };
   $('#fSiteEtc').value='';
-  $('#ocrBox').classList.remove('on');
+  ocrMsg('');
   drawDay(); drawSeong(); drawSite(); drawCnt(); drawShot(); drawSlips();
 }
+
 function drawSeong(){
   $('#fSeong').innerHTML = SEONG.map(s=>
     `<button class="chip${s===form.seong?' sel':''}" data-s="${s}">${s}</button>`).join('');
@@ -313,10 +358,11 @@ function drawShot(){
     el.innerHTML=`<img src="${form.photo}" alt="전표 사진"><div class="re">다시 찍기</div>`;
   }else{
     el.className='shot';
-    el.textContent='전표를 펼쳐놓고 촬영';
+    el.textContent='전표를 촬영 — 실중량을 자동으로 읽습니다';
   }
 }
 function siteName(){ return form.site==='＋ 직접 입력' ? (form.etc.trim()||'') : form.site; }
+
 function drawSlips(){
   $('#fSlips').innerHTML = form.rows.map((r,i)=>{
     const s = r.site || siteName();
@@ -326,7 +372,7 @@ function drawSlips(){
         <div class="site">${s}</div>
       </div>
       <div class="wt">
-        <input type="number" inputmode="numeric" class="w" placeholder="0" value="${r.w}">
+        <input type="number" inputmode="numeric" class="w${r.auto?' auto':''}" placeholder="0" value="${r.w}">
         <span class="kg">kg</span>
       </div>
     </div>`;
@@ -340,136 +386,6 @@ function updateDock(){
   $('#dSum').textContent = comma(s)+' kg';
   $('#bSave').disabled = n===0 || !cfg.veh || !form.seong;
 }
-/* ================= OCR ================= */
-async function runOCR(dataUrl){
-  const box = $('#ocrBox');
-  const content = $('#ocrContent');
-  box.classList.add('on');
-  content.innerHTML = '<div class="ocr-loading">글자를 읽는 중입니다...<br><small>잠시만 기다려 주세요</small></div>';
-
-  try{
-    const result = await Tesseract.recognize(dataUrl, 'kor', {
-      logger: m => {
-        if(m.status === 'recognizing text'){
-          content.innerHTML = `<div class="ocr-loading">인식 중... ${Math.round(m.progress*100)}%</div>`;
-        }
-      }
-    });
-    const text = result.data.text || '';
-    const parsed = parseTicket(text);
-    applyOCR(parsed);
-    showOCRResult(parsed);
-  }catch(e){
-    content.innerHTML = '<div style="color:var(--bad);padding:10px 0">인식에 실패했습니다. 수기로 입력해 주세요.</div>';
-    toast('OCR 실패 — 수기 입력하세요','err');
-  }
-}
-
-function parseTicket(text){
-  const t = text.replace(/\s+/g,' ');
-  const res = { veh:'', date:'', seong:'', weight:0, site:'', raw:text };
-
-  // ===== 차량번호 =====
-  // "84루 3587" 또는 "84루3587" 형태를 우선 찾음
-  let vehMatch = t.match(/(?:차\s*번\s*호|차량번호|차번호|차량)[^\d]*(\d{2})\s*[가-힣]{1,2}\s*(\d{4})/i);
-  if(vehMatch){
-    res.veh = vehMatch[2]; // 끝 4자리
-  } else {
-    // 4자리 숫자 중 CARS에 등록된 차량 우선
-    const fourDigits = [...t.matchAll(/\b(\d{4})\b/g)].map(m=>m[1]);
-    const known = fourDigits.find(d => CARS[d]);
-    if(known) res.veh = known;
-  }
-  // 차량번호는 앱에서 이미 설정되어 있으므로, 못 찾아도 크게 문제 없음
-
-  // ===== 날짜 =====
-  let dateMatch = t.match(/(?:날\s*짜|계량일시|계근일|일자)[^\d]*(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
-  if(!dateMatch) dateMatch = t.match(/(\d{4})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/);
-  if(dateMatch){
-    let year = dateMatch[1];
-    // OCR이 연도를 잘못 읽는 경우 보정
-    if(year.startsWith('20') && year !== '2026' && year !== '2025') year = '2026';
-    res.date = `${year}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}`;
-  }
-
-  // ===== 성상 =====
-  if(/생활/.test(t)) res.seong = '생활';
-  else if(/음식물.*다량|다량.*음식물/.test(t)) res.seong = '음식물(다량)';
-  else if(/음식물/.test(t)) res.seong = '음식물';
-  else if(/재활용.*다량|다량.*재활용/.test(t)) res.seong = '재활용(다량)';
-  else if(/재활용/.test(t)) res.seong = '재활용';
-  else if(/대형/.test(t)) res.seong = '대형';
-  else res.seong = '기타';
-
-  // ===== 실중량 (가장 중요) =====
-  let weight = 0;
-  const exclude = res.veh ? parseInt(res.veh,10) : 0; // 차량번호는 중량에서 제외
-
-  // 모든 콤마 숫자 후보 수집 (12,910 / 20,540 / 33,450 형태)
-  const commaNums = [...t.matchAll(/(\d{1,3}[,\s]\d{3})/g)]
-    .map(m => parseInt(m[1].replace(/[,\s]/g,''),10))
-    .filter(n => n >= 5000 && n <= 45000 && n !== exclude);
-
-  // 1순위: "실중량" 근처의 콤마 숫자
-  let wMatch = t.match(/(?:실\s*중\s*량|실중량|실중)[\s\S]{0,40}?(\d{1,3}[,\s]?\d{3})/i);
-  if(wMatch){
-    const n = parseInt(wMatch[1].replace(/[,\s]/g,''),10);
-    if(n >= 5000 && n <= 45000 && n !== exclude) weight = n;
-  }
-
-  // 2순위: 콤마 숫자 중 가장 작은 값 (실중량 < 차중량 < 총중량)
-  if(!weight && commaNums.length){
-    weight = Math.min(...commaNums);
-  }
-
-  // 3순위: 그냥 4~5자리 숫자 중 차량번호 제외
-  if(!weight){
-    const plainNums = [...t.matchAll(/\b(\d{4,5})\b/g)]
-      .map(m => parseInt(m[1],10))
-      .filter(n => n >= 5000 && n <= 45000 && n !== exclude);
-    if(plainNums.length) weight = Math.min(...plainNums);
-  }
-
-  res.weight = weight;
-
-  // ===== 반입처 =====
-  if(/자원순환공원|송파/.test(t)) res.site = '자원순환공원';
-  else if(/강남.*자원|자원회수|강남/.test(t)) res.site = '강남자원회수시설';
-  else if(/뉴그린/.test(t)) res.site = '뉴그린';
-  else if(/대일/.test(t)) res.site = '대일개발';
-  else if(/리누/.test(t)) res.site = '리누';
-  else if(/번영/.test(t)) res.site = '번영';
-  else if(/케이텍|K.?TEC/i.test(t)) res.site = '케이텍';
-
-  return res;
-}
-
-function applyOCR(p){
-  if(p.date){ form.date = p.date; drawDay(); }
-  if(p.seong){ form.seong = p.seong; drawSeong(); }
-  if(p.site){ form.site = p.site; drawSite(); }
-  if(p.weight > 0){
-    form.rows = [{w: String(p.weight), site:''}];
-    form.cnt = 1;
-    drawCnt(); drawSlips();
-  }
-  if(p.veh && cfg.veh && p.veh !== cfg.veh){
-    toast(`인식된 차량 ${p.veh} (현재 설정: ${cfg.veh})`,'err');
-  }
-}
-
-function showOCRResult(p){
-  const rows = [];
-  if(p.veh) rows.push(`<div class="ocr-row"><span class="k">차량</span><span class="v">${p.veh}</span></div>`);
-  if(p.date) rows.push(`<div class="ocr-row"><span class="k">날짜</span><span class="v">${p.date}</span></div>`);
-  if(p.seong) rows.push(`<div class="ocr-row"><span class="k">성상</span><span class="v">${p.seong}</span></div>`);
-  if(p.weight) rows.push(`<div class="ocr-row"><span class="k">실중량</span><span class="v">${comma(p.weight)} kg</span></div>`);
-  if(p.site) rows.push(`<div class="ocr-row"><span class="k">반입처</span><span class="v">${p.site}</span></div>`);
-
-  $('#ocrContent').innerHTML = rows.length
-    ? rows.join('') + '<div style="margin-top:10px;font-size:12px;color:var(--dim)">위 내용이 맞는지 확인하고 필요하면 수정하세요.</div>'
-    : '<div style="color:var(--bad)">인식된 내용이 없습니다. 수기로 입력해 주세요.</div>';
-}
 
 /* ================= 입력 이벤트 ================= */
 $('#fDate').onchange = e=>{ if(e.target.value){ form.date=e.target.value; drawDay(); } };
@@ -477,10 +393,12 @@ $('#fDay').onclick = e=>{
   const b=e.target.closest('[data-d]'); if(!b) return;
   form.date=b.dataset.d; drawDay();
 };
+
 $('#fSeong').onclick = e=>{ const b=e.target.closest('[data-s]'); if(!b)return; form.seong=b.dataset.s; drawSeong(); };
 $('#fSite').onclick  = e=>{ const b=e.target.closest('[data-t]'); if(!b)return; form.site=b.dataset.t; drawSite(); drawSlips(); };
 $('#fSiteEtc').oninput = e=>{ form.etc=e.target.value; drawSlips(); };
 $('#fSiteEtc').onchange = e=>{ rememberSite(e.target.value); };
+
 $('#fCnt').onclick = e=>{
   const b=e.target.closest('[data-c]'); if(!b)return;
   const n=+b.dataset.c; form.cnt=n;
@@ -488,49 +406,152 @@ $('#fCnt').onclick = e=>{
   form.rows.length=n;
   drawCnt(); drawSlips();
 };
+
 $('#fShot').onclick = ()=> $('#fFile').click();
 $('#fFile').onchange = e=>{
   const f=e.target.files[0]; if(!f) return;
-  shrink(f, url=>{
-    form.photo=url;
-    drawShot();
-    runOCR(url);
-  });
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const raw=rd.result;
+    shrink(raw, url=>{ form.photo=url; drawShot(); });
+    runOcr(raw);
+  };
+  rd.readAsDataURL(f);
   e.target.value='';
 };
-function shrink(file,cb){
-  const img=new Image(), rd=new FileReader();
-  rd.onload=()=>{ img.onload=()=>{
-    // 고해상도 유지 (OCR 정확도 위해)
-    const max=1800, sc=Math.min(1,max/Math.max(img.width,img.height));
+function shrink(dataUrl,cb){
+  const img=new Image();
+  img.onload=()=>{
+    const max=1500, sc=Math.min(1,max/Math.max(img.width,img.height));
     const c=document.createElement('canvas');
     c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
-    const ctx=c.getContext('2d');
-    ctx.drawImage(img,0,0,c.width,c.height);
-
-    // 대비 높이기 + 흑백 처리 (숫자 인식률 향상)
-    const imageData = ctx.getImageData(0,0,c.width,c.height);
-    const d = imageData.data;
-    for(let i=0;i<d.length;i+=4){
-      // 그레이스케일
-      let g = d[i]*0.3 + d[i+1]*0.59 + d[i+2]*0.11;
-      // 대비 강화
-      g = g < 140 ? 0 : 255;
-      d[i]=d[i+1]=d[i+2]=g;
-    }
-    ctx.putImageData(imageData,0,0);
-
-    // OCR용은 고품질, 저장용은 압축
-    cb(c.toDataURL('image/jpeg',0.92));
-  }; img.src=rd.result; };
-  rd.readAsDataURL(file);
+    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',0.55));
+  };
+  img.src=dataUrl;
 }
+
+/* ================= 전표 판독 ================= */
+// 무료 판독기(Tesseract)를 폰 안에서 돌립니다. 사진은 밖으로 나가지 않습니다.
+const OCR_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker = null;
+
+function ocrMsg(text, kind){
+  const el=$('#fOcr');
+  el.textContent = text || '';
+  el.className = 'ocr' + (text ? ' on ' + (kind||'') : '');
+}
+
+function loadScript(src){
+  return new Promise((ok,no)=>{
+    const t=document.createElement('script');
+    t.src=src; t.onload=ok; t.onerror=()=>no(new Error('load'));
+    document.head.appendChild(t);
+  });
+}
+
+async function getOcr(onStep){
+  if(ocrWorker) return ocrWorker;
+  if(!window.Tesseract){
+    onStep('판독기 내려받는 중 — 처음 한 번만 걸립니다');
+    await loadScript(OCR_CDN);
+  }
+  onStep('판독기 준비 중');
+  ocrWorker = await Tesseract.createWorker('eng', 1, {
+    logger: m => {
+      if(m.status==='recognizing text') onStep(`판독 중 ${Math.round((m.progress||0)*100)}%`);
+      else if(/load|initial/i.test(m.status||'')) onStep('판독기 준비 중');
+    }
+  });
+  await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789,.:' });
+  return ocrWorker;
+}
+
+// 사진을 판독하기 좋게 — 크기 맞추고, 돌리고, 흑백으로 또렷하게
+function prep(dataUrl, rot){
+  return new Promise(ok=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1800, sc=Math.min(1, max/Math.max(img.width,img.height));
+      const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+      const turned = rot%180!==0;
+      const c=document.createElement('canvas');
+      c.width = turned?h:w; c.height = turned?w:h;
+      const x=c.getContext('2d');
+      x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+      x.translate(c.width/2, c.height/2);
+      x.rotate(rot*Math.PI/180);
+      x.drawImage(img, -w/2, -h/2, w, h);
+      const d=x.getImageData(0,0,c.width,c.height), p=d.data;
+      for(let i=0;i<p.length;i+=4){
+        const g=p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114;
+        const v = g<110 ? 0 : g>175 ? 255 : Math.round((g-110)*255/65);
+        p[i]=p[i+1]=p[i+2]=v;
+      }
+      x.putImageData(d,0,0);
+      ok(c);
+    };
+    img.src=dataUrl;
+  });
+}
+
+// 읽은 글자에서 실중량만 골라냅니다.
+// 1차 중량 − 2차 중량 = 실중량 이 맞는 세 숫자를 찾는 방식이라
+// 한글을 못 읽어도, 숫자만 제대로 나오면 잡아냅니다.
+function pickWeights(text){
+  const toks=[]; const re=/\d{1,3}(?:,\d{3})+|\d{2,6}/g; let m;
+  while((m=re.exec(text))){
+    const v=parseInt(m[0].replace(/,/g,''),10);
+    if(v>=10 && v<=99999) toks.push({v, comma:m[0].includes(',')});
+  }
+  const find=(strict)=>{
+    const out=[];
+    for(let i=0;i+2<toks.length;i++){
+      const A=toks[i],B=toks[i+1],C=toks[i+2];
+      if(strict && !(A.comma && B.comma)) continue;
+      if(Math.abs(A.v-B.v)===C.v && C.v>=10){ out.push(C.v); i+=2; }
+    }
+    return out;
+  };
+  const r=find(true);
+  return r.length ? r : find(false);
+}
+
+async function runOcr(dataUrl){
+  ocrMsg('판독 준비 중','work');
+  let found=[];
+  try{
+    const w = await getOcr(t=>ocrMsg(t,'work'));
+    for(const rot of [0,90,270,180]){
+      if(rot) ocrMsg('각도를 바꿔 다시 읽는 중','work');
+      const c = await prep(dataUrl, rot);
+      const res = await w.recognize(c);
+      found = pickWeights(res.data.text || '');
+      if(found.length) break;
+    }
+  }catch(err){
+    ocrMsg('판독을 쓸 수 없습니다. 실중량을 손으로 넣으세요.','no');
+    return;
+  }
+  if(!found.length){
+    ocrMsg('숫자를 읽지 못했습니다. 장수를 고르고 손으로 넣으세요.','no');
+    return;
+  }
+  const n=Math.min(8, found.length);
+  form.cnt=n;
+  form.rows = found.slice(0,n).map(v=>({w:String(v), site:'', auto:true}));
+  drawCnt(); drawSlips();
+  ocrMsg(`전표 ${n}장을 읽었습니다. 숫자가 전표와 맞는지 확인하세요.`
+        + (found.length>n ? ` (${found.length}장 중 8장까지만)` : ''), 'ok');
+}
+
 $('#fSlips').addEventListener('input', e=>{
   const box=e.target.closest('.slip'); if(!box) return;
   const r=form.rows[+box.dataset.i];
-  if(e.target.classList.contains('w')) r.w=e.target.value;
+  if(e.target.classList.contains('w')){ r.w=e.target.value; r.auto=false; e.target.classList.remove('auto'); }
   updateDock();
 });
+
 /* ================= 저장 ================= */
 $('#bSave').onclick = ()=>{
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
@@ -539,6 +560,7 @@ $('#bSave').onclick = ()=>{
   rememberSite(siteName());
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
+
   const batch=uid();
   if(form.photo){ pics[batch]=form.photo; }
   rows.forEach(r=>{
@@ -558,9 +580,11 @@ $('#bSave').onclick = ()=>{
   push();
   drawList();
 };
+
 /* ================= 전송 ================= */
 function pending(){ return recs.filter(r=>!r.sent); }
 function online(){ return navigator.onLine; }
+
 function drawNet(){
   const q=pending().length, el=$('#hNet');
   if(!cfg.db){ el.className='net'; el.textContent='폰 저장만'; }
@@ -569,6 +593,7 @@ function drawNet(){
   else { el.className='net on'; el.textContent='전송됨'; }
   $('#sQ').textContent=q;
 }
+
 async function push(){
   if(!cfg.db || !online()) { drawNet(); return; }
   const base = cfg.db.replace(/\/+$/,'');
@@ -606,6 +631,7 @@ $('#bSync').onclick = ()=>{
 };
 window.addEventListener('online', ()=>{ drawNet(); push(); });
 window.addEventListener('offline', drawNet);
+
 /* ================= 목록 ================= */
 let fil='today';
 function drawFil(){
@@ -613,6 +639,7 @@ function drawFil(){
   $('#lFil').innerHTML = F.map(([k,t])=>`<button class="chip sm${k===fil?' sel':''}" data-f="${k}">${t}</button>`).join('');
 }
 $('#lFil').onclick = e=>{ const b=e.target.closest('[data-f]'); if(!b)return; fil=b.dataset.f; drawFil(); drawList(); };
+
 function inRange(d){
   const t=today();
   if(fil==='all') return true;
@@ -648,6 +675,7 @@ $('#lList').onclick = e=>{
   }
 };
 $('#viewer').onclick = ()=> $('#viewer').classList.remove('on');
+
 /* ================= CSV ================= */
 $('#bCsv').onclick = ()=>{
   const list = recs.filter(r=>inRange(r.date)).sort((a,b)=> a.date.localeCompare(b.date)||a.at-b.at);
@@ -660,6 +688,7 @@ $('#bCsv').onclick = ()=>{
   a.download=`계근대장_${cfg.veh||'전체'}_${today()}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
 };
+
 /* ================= 설정 ================= */
 function drawVeh(){
   $('#sVeh').innerHTML = Object.keys(CARS).map(v=>
@@ -685,6 +714,7 @@ $('#bWipe').onclick = ()=>{
   if(!confirm('이 폰에 저장된 기록과 사진을 모두 지웁니다. 전송하지 않은 건은 복구할 수 없습니다.')) return;
   recs=[]; pics={}; saveAll(); drawList(); drawNet(); toast('모두 지웠습니다');
 };
+
 /* ================= 탭 ================= */
 document.querySelector('nav').onclick = e=>{
   const b=e.target.closest('[data-p]'); if(!b)return;
@@ -693,12 +723,14 @@ document.querySelector('nav').onclick = e=>{
   $('#dock').style.display = b.dataset.p==='in' ? 'block':'none';
   if(b.dataset.p==='li') drawList();
 };
+
 /* ================= 서비스워커 ================= */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
 /* ================= 시작 ================= */
 drawVeh(); drawFil(); initForm(); drawList(); drawNet();
 if(cfg.db) push();

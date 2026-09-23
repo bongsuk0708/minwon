@@ -463,7 +463,7 @@ async function getOcr(onStep){
       else if(/load|initial/i.test(m.status||'')) onStep('판독기 준비 중');
     }
   });
-  await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789,.:' });
+  await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789,.:/-' });
   return ocrWorker;
 }
 
@@ -517,16 +517,34 @@ function pickWeights(text){
   return r.length ? r : find(false);
 }
 
+// 전표에 찍힌 계량일시를 찾습니다.
+// 자원순환공원은 2026/09/07, 강남은 2026-09-15-00104 꼴입니다.
+function pickDate(text){
+  const t=String(text||'').replace(/\s+/g,'');
+  const pats=[/(20\d{2})\D(\d{1,2})\D(\d{1,2})/, /(20\d{2})(\d{2})(\d{2})/];
+  for(const re of pats){
+    const m=t.match(re); if(!m) continue;
+    const y=+m[1], mo=+m[2], d=+m[3];
+    if(mo<1||mo>12||d<1||d>31) continue;
+    const dt=new Date(y,mo-1,d);
+    if(dt.getMonth()!==mo-1||dt.getDate()!==d) continue;      // 2월 31일 같은 것 거르기
+    if(Math.abs(Date.now()-dt.getTime())/86400000 > 90) continue;  // 석 달 넘게 벗어나면 잘못 읽은 것
+    return ymd(dt);
+  }
+  return '';
+}
+
 async function runOcr(dataUrl){
   ocrMsg('판독 준비 중','work');
-  let found=[];
+  let found=[], text='';
   try{
     const w = await getOcr(t=>ocrMsg(t,'work'));
     for(const rot of [0,90,270,180]){
       if(rot) ocrMsg('각도를 바꿔 다시 읽는 중','work');
       const c = await prep(dataUrl, rot);
       const res = await w.recognize(c);
-      found = pickWeights(res.data.text || '');
+      text = res.data.text || '';
+      found = pickWeights(text);
       if(found.length) break;
     }
   }catch(err){
@@ -540,8 +558,13 @@ async function runOcr(dataUrl){
   const n=Math.min(8, found.length);
   form.cnt=n;
   form.rows = found.slice(0,n).map(v=>({w:String(v), site:'', auto:true}));
+  const d=pickDate(text);
+  let dmsg='';
+  if(d && d!==form.date){ form.date=d; drawDay(); dmsg = ` 계근일은 ${label(d)}로 맞췄습니다.`; }
+  else if(d){ dmsg = ` 계근일 ${label(d)} 확인.`; }
+  else { dmsg = ' 날짜는 못 읽었으니 위에서 확인하세요.'; }
   drawCnt(); drawSlips();
-  ocrMsg(`전표 ${n}장을 읽었습니다. 숫자가 전표와 맞는지 확인하세요.`
+  ocrMsg(`전표 ${n}장을 읽었습니다.${dmsg} 숫자가 전표와 맞는지 확인하세요.`
         + (found.length>n ? ` (${found.length}장 중 8장까지만)` : ''), 'ok');
 }
 

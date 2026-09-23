@@ -592,6 +592,25 @@ function pickDate(text){
   return '';
 }
 
+// 전표 양식으로 반입처를 가려냅니다.
+//  자원순환공원 계량전표 : 계량일시 2026/09/07 · 시각 04:21:36 (초까지)
+//  강남 계근표        : 날짜 2026-09-18-00100 · 시각 03:18 (분까지)
+// 두 곳 양식만 알고 있으므로, 둘 중 하나로 잡혀 있을 때만 바꿉니다.
+const OCR_SITES = ['자원순환공원','강남자원회수시설'];
+function pickSite(text){
+  const t=String(text||'');
+  let jw=0, gn=0;
+  if(/20\d{2}\s*\/\s*\d{1,2}\s*\/\s*\d{1,2}/.test(t)) jw+=3;
+  if(/20\d{2}\s*-\s*\d{1,2}\s*-\s*\d{1,2}\s*-\s*\d{4,5}/.test(t)) gn+=3;
+  const hms=(t.match(/\d{1,2}\s*:\s*\d{2}\s*:\s*\d{2}/g)||[]).length;
+  const hm=(t.replace(/\d{1,2}\s*:\s*\d{2}\s*:\s*\d{2}/g,' ')
+             .match(/\d{1,2}\s*:\s*\d{2}/g)||[]).length;
+  jw+=hms; gn+=hm;
+  if(jw>=gn+2) return '자원순환공원';
+  if(gn>=jw+2) return '강남자원회수시설';
+  return '';
+}
+
 async function runOcr(dataUrl){
   ocrMsg('판독 준비 중','work');
   let found=[], text='', best=-1;
@@ -624,8 +643,16 @@ async function runOcr(dataUrl){
   if(d && d!==form.date){ form.date=d; drawDay(); dmsg = ` 계근일은 ${label(d)}로 맞췄습니다.`; }
   else if(d){ dmsg = ` 계근일 ${label(d)} 확인.`; }
   else { dmsg = ' 날짜는 못 읽었으니 위에서 확인하세요.'; }
+
+  const site=pickSite(text);
+  let smsg='';
+  if(site && site!==siteName() && OCR_SITES.includes(siteName())){
+    form.site=site; form.etc='';
+    drawSite();
+    smsg = ` 반입처는 ${site}로 맞췄습니다.`;
+  }
   drawCnt(); drawSlips();
-  ocrMsg(`전표 ${n}장을 읽었습니다.${dmsg} 숫자가 전표와 맞는지 확인하세요.`
+  ocrMsg(`전표 ${n}장을 읽었습니다.${dmsg}${smsg} 숫자가 전표와 맞는지 확인하세요.`
         + (found.length>n ? ` (${found.length}장 중 8장까지만)` : ''), 'ok', d ? '' : text);
 }
 

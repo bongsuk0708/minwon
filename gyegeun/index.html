@@ -565,18 +565,29 @@ function pickWeights(text){
 }
 
 // 전표에 찍힌 계량일시를 찾습니다.
-// 자원순환공원은 2026/09/07, 강남은 2026-09-15-00104 꼴입니다.
+// 자원순환공원은 2026/09/07, 강남은 2026-09-18-00100 꼴입니다.
 function pickDate(text){
-  const t=String(text||'').replace(/\s+/g,'');
-  const pats=[/(20\d{2})\D(\d{1,2})\D(\d{1,2})/, /(20\d{2})(\d{2})(\d{2})/];
-  for(const re of pats){
-    const m=t.match(re); if(!m) continue;
-    const y=+m[1], mo=+m[2], d=+m[3];
-    if(mo<1||mo>12||d<1||d>31) continue;
-    const dt=new Date(y,mo-1,d);
-    if(dt.getMonth()!==mo-1||dt.getDate()!==d) continue;      // 2월 31일 같은 것 거르기
-    if(Math.abs(Date.now()-dt.getTime())/86400000 > 90) continue;  // 석 달 넘게 벗어나면 잘못 읽은 것
-    return ymd(dt);
+  const norm = t => String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
+                    .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  for(const src of [String(text||''), norm(text)]){
+    const t = src.replace(/[ \t]+/g,'');
+    const cands=[];
+    // 구분기호가 있든(2026-09-18) 없든(20260918) 잡습니다
+    const re=/(20\d{2})\D{0,2}(\d{1,2})\D{0,2}(\d{1,2})/g;
+    let m;
+    while((m=re.exec(t))){
+      const y=+m[1], mo=+m[2], d=+m[3];
+      if(mo<1||mo>12||d<1||d>31) continue;
+      const dt=new Date(y,mo-1,d);
+      if(dt.getMonth()!==mo-1 || dt.getDate()!==d) continue;   // 2월 31일 같은 것 거르기
+      const diff=Math.abs(Date.now()-dt.getTime())/86400000;
+      if(diff>120) continue;                                    // 넉 달 넘게 벗어나면 잘못 읽은 것
+      cands.push({iso:ymd(dt), diff});
+    }
+    if(cands.length){
+      cands.sort((a,b)=>a.diff-b.diff);   // 오늘에 가까운 쪽
+      return cands[0].iso;
+    }
   }
   return '';
 }
@@ -615,7 +626,7 @@ async function runOcr(dataUrl){
   else { dmsg = ' 날짜는 못 읽었으니 위에서 확인하세요.'; }
   drawCnt(); drawSlips();
   ocrMsg(`전표 ${n}장을 읽었습니다.${dmsg} 숫자가 전표와 맞는지 확인하세요.`
-        + (found.length>n ? ` (${found.length}장 중 8장까지만)` : ''), 'ok');
+        + (found.length>n ? ` (${found.length}장 중 8장까지만)` : ''), 'ok', d ? '' : text);
 }
 
 $('#fSlips').addEventListener('input', e=>{

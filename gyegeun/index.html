@@ -476,7 +476,12 @@ async function getOcr(onStep){
       else if(/load|initial/i.test(m.status||'')) onStep('판독기 준비 중');
     }
   });
-  await ocrWorker.setParameters({ tessedit_char_whitelist: '0123456789,.:/-' });
+  // 글자를 숫자로만 제한하면 지금 판독기(LSTM)는 오히려 결과가 망가집니다.
+  // 전부 읽게 두고, 숫자는 아래 pickWeights 에서 골라냅니다.
+  await ocrWorker.setParameters({
+    tessedit_pageseg_mode: '6',          // 영수증처럼 한 덩어리로 읽기
+    preserve_interword_spaces: '1'
+  });
   return ocrWorker;
 }
 
@@ -496,9 +501,24 @@ function prep(dataUrl, rot){
       x.rotate(rot*Math.PI/180);
       x.drawImage(img, -w/2, -h/2, w, h);
       const d=x.getImageData(0,0,c.width,c.height), p=d.data;
+      // 흑백으로 바꾸면서 밝기 분포를 셉니다
+      const hist=new Array(256).fill(0);
       for(let i=0;i<p.length;i+=4){
-        const g=p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114;
-        const v = g<110 ? 0 : g>175 ? 255 : Math.round((g-110)*255/65);
+        const g=Math.round(p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114);
+        p[i]=g; hist[g]++;
+      }
+      // 아주 어두운 2%, 아주 밝은 2%를 잘라내고 그 사이를 넓게 폅니다.
+      // 조명이 어둡든 밝든 글자가 또렷해집니다.
+      const total=p.length/4, cut=total*0.02;
+      let acc=0, lo=0, hi=255;
+      for(let g=0; g<256; g++){ acc+=hist[g]; if(acc>cut){ lo=g; break; } }
+      acc=0;
+      for(let g=255; g>=0; g--){ acc+=hist[g]; if(acc>cut){ hi=g; break; } }
+      if(hi-lo < 30){ lo=0; hi=255; }
+      const span=hi-lo;
+      for(let i=0;i<p.length;i+=4){
+        let v=Math.round((p[i]-lo)*255/span);
+        v = v<0?0 : v>255?255 : v;
         p[i]=p[i+1]=p[i+2]=v;
       }
       x.putImageData(d,0,0);
@@ -511,30 +531,36 @@ function prep(dataUrl, rot){
 // 읽은 글자에서 실중량만 골라냅니다.
 // 1차 중량 − 2차 중량 = 실중량 이 맞는 세 숫자를 찾는 방식이라
 // 한글을 못 읽어도, 숫자만 제대로 나오면 잡아냅니다.
+function ocrTokens(t){
+  const out=[]; const re=/\d{1,3}(?:,\d{3})+|\d{2,6}/g; let m;
+  while((m=re.exec(t))){
+    const comma=m[0].includes(',');
+    const v=parseInt(m[0].replace(/,/g,''),10);
+    if(v>=10 && v<=99999) out.push({v,comma});
+  }
+  return out;
+}
+function ocrScan(toks,strict){
+  const out=[];
+  for(let i=0;i+2<toks.length;i++){
+    const A=toks[i],B=toks[i+1],C=toks[i+2];
+    if(strict && !(A.comma&&B.comma)) continue;
+    if(Math.abs(A.v-B.v)===C.v && C.v>=10){ out.push(C.v); i+=2; }
+  }
+  return out;
+}
 function pickWeights(text){
-  // 시각(03:08, 04:21:36)을 먼저 지웁니다 — 강남 전표는 중량 줄에 시각이 끼어 있습니다
-  const t = String(text||'').replace(/\d{1,2}\s*:\s*\d{2}(\s*:\s*\d{2})?/g,' ');
-  const grab = only => {
-    const out=[]; const re=/\d{1,3}(?:,\d{3})+|\d{2,6}/g; let m;
-    while((m=re.exec(t))){
-      const comma=m[0].includes(',');
-      if(only && !comma) continue;
-      const v=parseInt(m[0].replace(/,/g,''),10);
-      if(v>=10 && v<=99999) out.push({v,comma});
-    }
-    return out;
-  };
-  const scan=(toks,strict)=>{
-    const out=[];
-    for(let i=0;i+2<toks.length;i++){
-      const A=toks[i],B=toks[i+1],C=toks[i+2];
-      if(strict && !(A.comma&&B.comma)) continue;
-      if(Math.abs(A.v-B.v)===C.v && C.v>=10){ out.push(C.v); i+=2; }
-    }
-    return out;
-  };
-  const tries=[ scan(grab(true),false), scan(grab(false),true), scan(grab(false),false) ];
-  for(const r of tries) if(r.length) return r;
+  // 시각(03:18, 04:21:36)은 먼저 지웁니다 — 강남 전표는 중량 줄에 시각이 끼어 있습니다
+  const clean = t => String(t||'').replace(/\d{1,2}\s*:\s*\d{2}(\s*:\s*\d{2})?/g,' ');
+  // 0을 O로, 5를 S로 잘못 읽는 일이 잦아 한 번 더 시도합니다
+  const norm  = t => String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
+                     .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  for(const t of [clean(text), clean(norm(text))]){
+    const all = ocrTokens(t);
+    const withComma = all.filter(x=>x.comma);
+    for(const r of [ocrScan(withComma,false), ocrScan(all,true), ocrScan(all,false)])
+      if(r.length) return r;
+  }
   return [];
 }
 
@@ -557,16 +583,19 @@ function pickDate(text){
 
 async function runOcr(dataUrl){
   ocrMsg('판독 준비 중','work');
-  let found=[], text='';
+  let found=[], text='', best=-1;
   try{
     const w = await getOcr(t=>ocrMsg(t,'work'));
     for(const rot of [0,90,270,180]){
       if(rot) ocrMsg('각도를 바꿔 다시 읽는 중','work');
       const c = await prep(dataUrl, rot);
       const res = await w.recognize(c);
-      text = res.data.text || '';
-      found = pickWeights(text);
-      if(found.length) break;
+      const txt = res.data.text || '';
+      const got = pickWeights(txt);
+      if(got.length){ found=got; text=txt; break; }
+      // 못 찾았으면, 숫자가 제일 많이 나온 쪽을 남겨둡니다 (진단용)
+      const score=(txt.match(/\d/g)||[]).length;
+      if(score>best){ best=score; text=txt; }
     }
   }catch(err){
     ocrMsg('판독을 쓸 수 없습니다. 실중량을 손으로 넣으세요.','no');

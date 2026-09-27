@@ -114,6 +114,16 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .mfoot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
 .empty{text-align:center;color:var(--dim);padding:60px 20px}
 /* 엑셀 양식에 자리가 없는 전표 경고 */
+/* 사진과 다른 전표 표시 */
+tr.bad{background:#FFF6F5}
+tr.bad td{border-color:#F2D6D2}
+.mini.warn{background:#C0392B;border-color:#C0392B;color:#fff;font-weight:800}
+.flag{display:inline-block;background:#FBEAE8;border:1px solid #E4B4AE;color:#A32E22;
+  border-radius:6px;padding:1px 7px;font-size:11.5px;font-weight:800;margin-left:6px;vertical-align:1px}
+.chkbar{display:flex;align-items:center;gap:12px;background:#FFF8E9;border:1px solid #E7D3A8;
+  border-radius:11px;padding:12px 16px;margin-bottom:16px;font-size:14px;color:#7A5A16}
+.chkbar .bar{flex:1;height:7px;background:#EADDBE;border-radius:4px;overflow:hidden}
+.chkbar .bar i{display:block;height:100%;background:#A0631A;width:0}
 .xw{background:#FBEAE8;border:1px solid #E4B4AE;border-radius:12px;padding:16px 18px;margin-bottom:20px}
 .xw h3{margin:0 0 6px;font-size:16px;color:#A32E22}
 .xw p{margin:0 0 12px;font-size:13.5px;color:#8A4238;line-height:1.6}
@@ -170,6 +180,8 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
     <select id="fJo"><option value="">전체 조</option><option>주간</option><option>야간</option></select>
     <div class="sp"></div>
     <span class="srch"><input type="search" id="fQ" placeholder="차량번호 검색" autocomplete="off"></span>
+    <button class="chip" id="bChk">사진 대조</button>
+    <button class="chip" id="bOnlyBad" style="display:none">확인 필요만 보기</button>
     <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
@@ -194,6 +206,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 
   <div id="msg"></div>
   <div id="xlwarn"></div>
+  <div id="chkbar"></div>
 
   <div class="cols">
     <div class="colL">
@@ -271,13 +284,92 @@ const XL_SLOTS = new Set([
   '4968|대형|자원순환공원',      '4830|대형|자원순환공원',      '5635|대형|자원순환공원'
 ]);
 const slotKey = r => `${r.veh}|${r.seong}|${r.site||''}`;
+
+/* 차량·성상별 평소 중량 (이번 달 기준). 자릿수 실수를 잡는 데 씁니다 */
+let BAND = {};
+function buildBand(rows){
+  const g={};
+  rows.forEach(r=>{ const k=r.veh+'|'+r.seong; (g[k]=g[k]||[]).push(r.weight); });
+  BAND={};
+  for(const k in g){
+    const a=g[k].slice().sort((x,y)=>x-y);
+    if(a.length>=6) BAND[k]={n:a.length, med:a[a.length>>1]};
+  }
+}
+/* 저장 버튼을 두 번 눌러 같은 전표가 두 번 들어간 것.
+   같은 날 같은 무게를 두 번 나르는 건 정상이라, 저장 시각이 붙어 있을 때만 봅니다. */
+let DUP = {};
+const dupKey = r => `${r.date}|${r.veh}|${r.seong}|${r.site}|${r.weight}`;
+function buildDup(rows){
+  DUP={};
+  rows.forEach(r=>{ (DUP[dupKey(r)]=DUP[dupKey(r)]||[]).push(r.at||0); });
+}
+function isDoubleSave(r){
+  const a=DUP[dupKey(r)]; if(!a || a.length<2 || !r.at) return false;
+  // 한 번에 올린 전표들은 저장 시각이 같습니다 — 그건 서로 다른 전표이니 넘어갑니다.
+  // 몇 초~몇십 분 뒤에 똑같은 게 또 들어온 것만 '두 번 저장'으로 봅니다.
+  return a.some(t=>{ const d=Math.abs(t-r.at); return t && d>2000 && d<30*60*1000; });
+}
+
+/* 이 전표가 사진·양식과 어긋나는 점들 */
+function flagsOf(r){
+  const f=[];
+  if(!XL_SLOTS.has(slotKey(r))) f.push('엑셀에 칸 없음');
+  // 계근기는 10kg 단위로 찍습니다 — 끝자리가 0이 아니면 손으로 잘못 넣은 것
+  if(r.weight % 10) f.push('실중량 끝자리가 0이 아님 — 오타 의심');
+  // 자릿수를 빠뜨렸거나 더 넣은 것
+  const bd = BAND[r.veh+'|'+r.seong];
+  if(bd){
+    if(r.weight < bd.med/5) f.push(`평소(${comma(bd.med)}kg)보다 너무 적음 — 자릿수 확인`);
+    else if(r.weight > bd.med*5) f.push(`평소(${comma(bd.med)}kg)보다 너무 많음 — 자릿수 확인`);
+  }
+  if(isDoubleSave(r)) f.push('저장을 두 번 눌러 같은 전표가 두 번 들어감');
+  const c = r.batch && chk[r.batch];
+  if(c){
+    if(c.w && c.w.length && !c.w.includes(r.weight))
+      f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
+    if(c.d && c.d!==r.date)
+      f.push(`사진 날짜와 다름 (사진: ${c.d.slice(5).replace('-','/')})`);
+  }
+  if(r.at){
+    const gap = Math.round((new Date(r.date+'T00:00:00').getTime() - new Date(r.at).setHours(0,0,0,0))/86400000);
+    if(gap>1)        f.push(`계근일이 저장일보다 ${gap}일 뒤`);
+    else if(gap<-10) f.push(`계근일이 저장일보다 ${-gap}일 전 — 달이 맞는지 확인`);
+  }
+  return f;
+}
 function drawXlWarn(){
   // 화면 필터와 상관없이 이번 달 전체를 봅니다 — 걸러서 보다가 놓치면 안 되니까
   const bad = all.filter(r=> inRange(r.date) && !XL_SLOTS.has(slotKey(r)))
                  .sort((a,b)=> a.date.localeCompare(b.date) || a.veh.localeCompare(b.veh));
-  if(!bad.length){ $('#xlwarn').innerHTML=''; return; }
+  // 이번 달 밖인데 날짜를 잘못 저장했을 법한 것들 (앞뒤 45일 안)
+  let near=[];
+  if(mode==='month'){
+    const m=$('#fMonth').value;
+    if(m){
+      const a=new Date(m+'-01T00:00:00').getTime(), z=a+45*86400000, y=a-45*86400000;
+      near = all.filter(r=>{
+        if(inRange(r.date)) return false;
+        const t=new Date(r.date+'T00:00:00').getTime();
+        if(t<y||t>z) return false;
+        return true;                 // 달 밖이면 일단 보여 줍니다
+      }).sort((x,y2)=> x.date.localeCompare(y2.date));
+    }
+  }
+  const nearHtml = near.length ? `<div class="xw" style="background:#FFF8E9;border-color:#E7D3A8">
+    <h3 style="color:#7A5A16">⚠ 이번 달 밖에 있는 전표 ${near.length}건</h3>
+    <p style="color:#7A5A16">계근일을 잘못 저장했을 수 있습니다. 사진을 눌러 전표의 계량일시를 보고, 다르면 고치세요.</p>
+    <table><thead><tr><th>저장된 날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
+    <tbody>${near.map(r=>`<tr>
+      <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
+      <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
+      <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+      <td style="text-align:right"><button class="mini warn" data-ed="${r.id}">수정 ●</button></td>
+    </tr>`).join('')}</tbody></table></div>` : '';
+
+  if(!bad.length){ $('#xlwarn').innerHTML = nearHtml; return; }
   const kinds=[...new Set(bad.map(slotKey))];
-  $('#xlwarn').innerHTML = `<div class="xw">
+  $('#xlwarn').innerHTML = nearHtml + `<div class="xw">
     <h3>⚠ 엑셀에 안 들어가는 전표 ${bad.length}건</h3>
     <p>이 조합은 월별 계근량 엑셀에 받아 줄 칸이 없습니다. 새로고침해도 표에 안 나타나고 합계에서도 빠집니다.<br>
        대부분 <b>성상을 잘못 고른 것</b>입니다 — 전표의 제품명을 보고 아래에서 고친 뒤 엑셀을 새로고침하세요.
@@ -350,6 +442,132 @@ const CARS = {
 const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
 
 let all = [], picCache = {}, rots = {}, mode = 'month';
+let chk = {};          // batch -> {w:[읽은 실중량들], d:'읽은 날짜', at:ts}
+let onlyBad = false;
+
+/* ===================== 사진 대조 =====================
+   전표 사진을 다시 읽어 저장된 실중량·계근일과 맞는지 봅니다.
+   결과는 서버에 남겨 두 PC가 같이 씁니다. */
+const OCR_CDN='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker=null, chkStop=false, chkRunning=false;
+
+function loadScript(src){
+  return new Promise((ok,no)=>{ const t=document.createElement('script');
+    t.src=src; t.onload=ok; t.onerror=()=>no(new Error('load')); document.head.appendChild(t); });
+}
+async function getOcr(){
+  if(ocrWorker) return ocrWorker;
+  if(!window.Tesseract) await loadScript(OCR_CDN);
+  ocrWorker = await Tesseract.createWorker('eng',1);
+  await ocrWorker.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});
+  return ocrWorker;
+}
+function prep(dataUrl, rot, hard){
+  return new Promise(ok=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=hard?1800:2600, sc=Math.min(1,max/Math.max(img.width,img.height));
+      const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+      const turned=rot%180!==0;
+      const c=document.createElement('canvas');
+      c.width=turned?h:w; c.height=turned?w:h;
+      const x=c.getContext('2d');
+      x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+      x.translate(c.width/2,c.height/2); x.rotate(rot*Math.PI/180);
+      x.drawImage(img,-w/2,-h/2,w,h);
+      const d=x.getImageData(0,0,c.width,c.height), p=d.data;
+      const hist=new Array(256).fill(0);
+      for(let i=0;i<p.length;i+=4){
+        const g=Math.round(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114); p[i]=g; hist[g]++;
+      }
+      const total=p.length/4, cut=total*0.02;
+      let acc=0, lo=0, hi=255;
+      for(let g=0;g<256;g++){ acc+=hist[g]; if(acc>cut){lo=g;break;} }
+      acc=0;
+      for(let g=255;g>=0;g--){ acc+=hist[g]; if(acc>cut){hi=g;break;} }
+      if(hi-lo<30){ lo=0; hi=255; }
+      const span=hi-lo;
+      for(let i=0;i<p.length;i+=4){
+        let v=Math.round((p[i]-lo)*255/span); v=v<0?0:v>255?255:v;
+        p[i]=p[i+1]=p[i+2]=v;
+      }
+      x.putImageData(d,0,0); ok(c);
+    };
+    img.onerror=()=>ok(null);
+    img.src=dataUrl;
+  });
+}
+function ocrTokens(t){
+  const out=[]; const re=/\d{1,3}(?:,\d{3})+|\d{2,6}/g; let m;
+  while((m=re.exec(t))){
+    const v=parseInt(m[0].replace(/,/g,''),10);
+    if(v>=10&&v<=99999) out.push({v,comma:m[0].includes(',')});
+  }
+  return out;
+}
+function ocrScan(toks,strict){
+  const out=[];
+  for(let i=0;i+2<toks.length;i++){
+    const A=toks[i],B=toks[i+1],C=toks[i+2];
+    if(strict&&!(A.comma&&B.comma)) continue;
+    if(Math.abs(A.v-B.v)===C.v&&C.v>=10){ out.push(C.v); i+=2; }
+  }
+  return out;
+}
+function pickWeights(text){
+  const clean=t=>String(t||'').replace(/(\D|^)(\d{1,2}\s*:\s*\d{2}(?:\s*:\s*\d{2})?)(?!\d)/g,'$1 ');
+  const norm =t=>String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
+                  .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  for(const t of [clean(text), clean(norm(text))]){
+    const all=ocrTokens(t), wc=all.filter(x=>x.comma);
+    for(const r of [ocrScan(wc,false), ocrScan(all,true), ocrScan(all,false)])
+      if(r.length) return r;
+  }
+  return [];
+}
+function pickDate(text){
+  const norm=t=>String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
+                 .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  const pats=[/(20\d{2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/g,
+              /(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/g];
+  for(const src of [String(text||''), norm(text)]){
+    const c=[];
+    for(const re of pats){
+      re.lastIndex=0; let m;
+      while((m=re.exec(src))){
+        const y=+m[1],mo=+m[2],d=+m[3];
+        if(mo<1||mo>12||d<1||d>31) continue;
+        const dt=new Date(y,mo-1,d);
+        if(dt.getMonth()!==mo-1||dt.getDate()!==d) continue;
+        c.push(`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+      }
+      if(c.length) break;
+    }
+    if(c.length) return c[0];
+  }
+  return '';
+}
+async function readBatch(batch){
+  if(!picCache[batch]){
+    const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
+    if(!res.ok) return null;
+    picCache[batch]=await res.json();
+  }
+  const url=picCache[batch];
+  if(!url) return null;
+  const w=await getOcr();
+  let best='', bestN=-1;
+  for(const tr of [{rot:0},{rot:0,h:1},{rot:90},{rot:270}]){
+    const c=await prep(url,tr.rot,tr.h);
+    if(!c) return null;
+    const txt=(await w.recognize(c)).data.text||'';
+    const got=pickWeights(txt);
+    if(got.length) return {w:got, d:pickDate(txt), at:Date.now()};
+    const n=(txt.match(/\d/g)||[]).length;
+    if(n>bestN){ bestN=n; best=txt; }
+  }
+  return {w:[], d:pickDate(best), at:Date.now()};
+}
 const $ = s=>document.querySelector(s);
 const comma = n=> (n||0).toLocaleString('ko-KR');
 const ton = n=> (n/1000).toFixed(2);
@@ -360,13 +578,15 @@ function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on
 async function load(){
   $('#st').textContent='불러오는 중';
   try{
-    const [rRes,mRes] = await Promise.all([
+    const [rRes,mRes,cRes] = await Promise.all([
       fetch(`${DB}/gyegeun/records.json`),
-      fetch(`${DB}/gyegeun/rot.json`)
+      fetch(`${DB}/gyegeun/rot.json`),
+      fetch(`${DB}/gyegeun/chk.json`)
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
     rots = (mRes.ok ? await mRes.json() : null) || {};
+    chk  = (cRes.ok ? await cRes.json() : null) || {};
     all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
     all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
     $('#msg').innerHTML='';
@@ -442,16 +662,27 @@ function render(){
   </table>` : '';
 
   const q=($('#fQ').value||'').trim();
-  const shown = q ? rows.filter(r=>
+  let shown = q ? rows.filter(r=>
       String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
       (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
     ) : rows;
+  // 평소 범위·중복은 그 달 전체를 기준으로 봅니다 (검색·필터에 흔들리지 않게)
+  const month = all.filter(r=>inRange(r.date));
+  buildBand(month); buildDup(month);
+  const fl={}; shown.forEach(r=>{ const f=flagsOf(r); if(f.length) fl[r.id]=f; });
+  const nBad=Object.keys(fl).length;
+  $('#bOnlyBad').style.display = nBad ? '' : 'none';
+  $('#bOnlyBad').textContent = onlyBad ? `전체 보기 (확인 필요 ${nBad})` : `확인 필요만 보기 (${nBad})`;
+  $('#bOnlyBad').classList.toggle('go', onlyBad);
+  if(onlyBad) shown = shown.filter(r=>fl[r.id]);
+
   const shownSum = shown.reduce((a,r)=>a+r.weight,0);
-  $('#lCnt').textContent = shown.length
-      ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg` : '';
+  $('#lCnt').innerHTML = shown.length
+      ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg`
+        + (nBad&&!onlyBad?`<span class="flag">확인 필요 ${nBad}</span>`:'') : '';
   $('#list').innerHTML = shown.length ? `<table>
     <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${[...shown].reverse().map(r=>`<tr>
+    <tbody>${[...shown].reverse().map(r=>`<tr${fl[r.id]?` class="bad" title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
       <td class="num">${r.date.slice(5).replace('-','/')}</td>
       <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
@@ -460,7 +691,7 @@ function render(){
       <td class="r b num">${comma(r.weight)}</td>
       <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
       <td style="text-align:right;white-space:nowrap">
-        <button class="mini" data-ed="${r.id}">수정</button>
+        <button class="mini${fl[r.id]?' warn':''}" data-ed="${r.id}">${fl[r.id]?'수정 ●':'수정'}</button>
         <button class="mini x" data-del="${r.id}">삭제</button>
       </td>
     </tr>`).join('')}</tbody>
@@ -620,6 +851,50 @@ $('#fMonth').onchange = ()=>{
 $('#fVeh').onchange = render;
 $('#fSeong').onchange = render;
 $('#fJo').onchange = render;
+/* ---------- 사진 대조 실행 ---------- */
+function chkBar(done,total,msg){
+  if(total===null){ $('#chkbar').innerHTML=''; return; }
+  const pct = total ? Math.round(done/total*100) : 0;
+  $('#chkbar').innerHTML = `<div class="chkbar">
+    <span>${msg||`사진 대조 중 ${done}/${total}`}</span>
+    <span class="bar"><i style="width:${pct}%"></i></span>
+    <button class="chip" id="bChkStop">멈추기</button></div>`;
+  const b=$('#bChkStop'); if(b) b.onclick=()=>{ chkStop=true; };
+}
+async function runCheck(){
+  if(chkRunning) return;
+  const rows = picked().filter(r=>r.batch);
+  const todo = [...new Set(rows.map(r=>r.batch))].filter(b=>!chk[b]);
+  if(!todo.length){
+    chkBar(0,null);
+    toast(rows.length ? '이미 다 대조했습니다' : '사진이 있는 전표가 없습니다');
+    render(); return;
+  }
+  chkRunning=true; chkStop=false;
+  chkBar(0,todo.length,'판독기 준비 중 — 처음 한 번만 걸립니다');
+  let done=0;
+  for(const b of todo){
+    if(chkStop) break;
+    try{
+      const r = await readBatch(b);
+      if(r){
+        chk[b]=r;
+        fetch(`${DB}/gyegeun/chk/${b}.json`,{method:'PUT',
+          headers:{'Content-Type':'application/json'},body:JSON.stringify(r)}).catch(()=>{});
+      }
+    }catch(e){}
+    done++;
+    chkBar(done,todo.length);
+    if(done%5===0) render();
+  }
+  chkRunning=false;
+  chkBar(0,null);
+  render();
+  toast(chkStop ? `${done}장까지 대조하고 멈췄습니다` : `사진 ${done}장 대조 완료`,'good');
+}
+$('#bChk').onclick = runCheck;
+$('#bOnlyBad').onclick = ()=>{ onlyBad=!onlyBad; render(); };
+
 $('#bReload').onclick = load;
 $('#fQ').oninput = render;
 $('#fQ').onkeydown = e=>{ if(e.key==='Escape'){ e.target.value=''; render(); } };

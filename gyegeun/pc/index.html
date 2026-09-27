@@ -116,7 +116,12 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 /* 엑셀 양식에 자리가 없는 전표 경고 */
 /* 사진과 다른 전표 표시 */
 tr.bad{background:#FFF6F5}
-tr.bad td{border-color:#F2D6D2}
+tr.bad td{border-color:#F2D6D2;border-bottom:0}
+tr.why td{background:#FFF6F5;border-color:#F2D6D2;padding:0 14px 11px;font-size:13px;color:#A32E22}
+tr.why .rs{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+tr.why b{font-weight:800}
+.okbtn{background:#2F7A4F;border:1px solid #2F7A4F;color:#fff;border-radius:7px;
+  padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
 .ver{font-size:12px;font-weight:700;color:var(--dim);background:var(--card2);
   border:1px solid var(--line);border-radius:6px;padding:2px 7px;vertical-align:3px}
 .mini.warn{background:#C0392B;border-color:#C0392B;color:#fff;font-weight:800}
@@ -163,7 +168,7 @@ tr.bad td{border-color:#F2D6D2}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v26</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v28</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -315,6 +320,7 @@ function isDoubleSave(r){
 
 /* 이 전표가 사진·양식과 어긋나는 점들 */
 function flagsOf(r){
+  if(okm[r.id]) return [];      // 사람이 보고 맞다고 한 것
   const f=[];
   if(!XL_SLOTS.has(slotKey(r))) f.push('엑셀에 칸 없음');
   // 계근기는 10kg 단위로 찍습니다 — 끝자리가 0이 아니면 손으로 잘못 넣은 것
@@ -445,6 +451,7 @@ const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
 
 let all = [], picCache = {}, rots = {}, mode = 'month';
 let chk = {};          // batch -> {w:[읽은 실중량들], d:'읽은 날짜', at:ts}
+let okm = {};          // id -> true  (사람이 보고 '맞음'이라고 표시한 전표)
 let onlyBad = false;
 
 /* ===================== 사진 대조 =====================
@@ -580,15 +587,17 @@ function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on
 async function load(){
   $('#st').textContent='불러오는 중';
   try{
-    const [rRes,mRes,cRes] = await Promise.all([
+    const [rRes,mRes,cRes,oRes] = await Promise.all([
       fetch(`${DB}/gyegeun/records.json`),
       fetch(`${DB}/gyegeun/rot.json`),
-      fetch(`${DB}/gyegeun/chk.json`)
+      fetch(`${DB}/gyegeun/chk.json`),
+      fetch(`${DB}/gyegeun/ok.json`)
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
     rots = (mRes.ok ? await mRes.json() : null) || {};
     chk  = (cRes.ok ? await cRes.json() : null) || {};
+    okm  = (oRes.ok ? await oRes.json() : null) || {};
     all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
     all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
     $('#msg').innerHTML='';
@@ -663,16 +672,23 @@ function render(){
     <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
   </table>` : '';
 
-  const q=($('#fQ').value||'').trim();
-  let shown = q ? rows.filter(r=>
-      String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
-      (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q)
-    ) : rows;
   // 평소 범위·중복은 그 달 전체를 기준으로 봅니다 (검색·필터에 흔들리지 않게)
   const month = all.filter(r=>inRange(r.date));
   buildBand(month); buildDup(month);
-  const fl={}; shown.forEach(r=>{ const f=flagsOf(r); if(f.length) fl[r.id]=f; });
+  const fl={}; rows.forEach(r=>{ const f=flagsOf(r); if(f.length) fl[r.id]=f; });
+
+  const q=($('#fQ').value||'').trim();
+  // '수정' · '확인' 이라고 치면 확인이 필요한 것만 봅니다
+  const BADQ = ['수정','확인','확인필요','이상','오류'];
+  const wantBad = BADQ.includes(q);
+  let shown = !q ? rows
+    : wantBad ? rows.filter(r=>fl[r.id])
+    : rows.filter(r=>
+        String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
+        (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q) ||
+        (fl[r.id]||[]).some(f=>f.includes(q)));
   const nBad=Object.keys(fl).length;
+  $('#fQ').placeholder = nBad ? '차량번호 검색 · "수정" 입력 시 확인 필요만' : '차량번호 검색';
   $('#bOnlyBad').style.display = nBad ? '' : 'none';
   $('#bOnlyBad').textContent = onlyBad ? `전체 보기 (확인 필요 ${nBad})` : `확인 필요만 보기 (${nBad})`;
   $('#bOnlyBad').classList.toggle('go', onlyBad);
@@ -696,11 +712,28 @@ function render(){
         <button class="mini${fl[r.id]?' warn':''}" data-ed="${r.id}">${fl[r.id]?'수정 ●':'수정'}</button>
         <button class="mini x" data-del="${r.id}">삭제</button>
       </td>
-    </tr>`).join('')}</tbody>
+    </tr>${fl[r.id]?`<tr class="why"><td colspan="8"><div class="rs">
+      <span>⚠ <b>${fl[r.id].join('</b> · <b>')}</b></span>
+      ${r.batch?`<button class="mini pic" data-pic="${r.batch}">사진으로 확인</button>`:''}
+      <button class="okbtn" data-ok="${r.id}">맞음 · 확인함</button>
+    </div></td></tr>`:''}`).join('')}</tbody>
   </table>` : `<div class="empty">${q?`'${q}' 에 해당하는 전표가 없습니다.`:'해당 기간에 전표가 없습니다.'}</div>`;
 }
 
 /* ---------- 사진 뷰어 ---------- */
+async function markOk(id){
+  const r = all.find(x=>x.id===id); if(!r) return;
+  okm[id]=true; render();
+  try{
+    await fetch(`${DB}/gyegeun/ok/${id}.json`,{method:'PUT',
+      headers:{'Content-Type':'application/json'}, body:'true'});
+    toast(`${r.date.slice(5).replace('-','/')} ${r.veh} ${comma(r.weight)}kg — 확인함`,'good');
+  }catch(e){
+    delete okm[id]; render();
+    toast('저장하지 못했습니다 — 인터넷을 확인하세요','err');
+  }
+}
+
 let vw = { batch:null, rot:0, zoom:1, x:0, y:0, base:1 };
 
 function apply(){
@@ -827,6 +860,7 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.pic) showPic(b.dataset.pic);
   if(b.dataset.ed)  edit(b.dataset.ed);
   if(b.dataset.del) del(b.dataset.del);
+  if(b.dataset.ok)  markOk(b.dataset.ok);
   if(b.dataset.q){
     mode=b.dataset.q;
     $('#fDay').value=''; $('#bDayClear').style.display='none';

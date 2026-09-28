@@ -275,7 +275,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v38 · 2026-09-28 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v39 · 2026-09-28 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -713,7 +713,9 @@ function ocrScan(toks,strict){
   for(let i=0;i+2<toks.length;i++){
     const A=toks[i],B=toks[i+1],C=toks[i+2];
     if(strict && !(A.comma&&B.comma)) continue;
-    if(Math.abs(A.v-B.v)===C.v && C.v>=10){
+    // 계근 전표의 1차·2차 중량은 빈 차 무게가 들어 있어 늘 1톤이 넘습니다.
+    // 이 문턱이 없으면 잡음 숫자 몇 개가 우연히 A-B=C 를 만족해 '12kg' 같은 게 나옵니다.
+    if(Math.abs(A.v-B.v)===C.v && C.v>=50 && A.v>=1000 && B.v>=1000){
       out.push({g:Math.max(A.v,B.v), t:Math.min(A.v,B.v), n:C.v});
       i+=2;
     }

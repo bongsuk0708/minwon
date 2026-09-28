@@ -169,7 +169,7 @@ tr.why b{font-weight:800}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v33</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v34</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -737,7 +737,7 @@ function render(){
     <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...shown].reverse().map(r=>`<tr${fl[r.id]?` class="bad" title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
       <td class="num">${r.date.slice(5).replace('-','/')}
-        ${r.t2||r.t1?`<div class="tm num">${r.t2||r.t1}</div>`:''}</td>
+        ${r.t1||r.t2?`<div class="tm num">${[r.t1,r.t2].filter(Boolean).join('~')}</div>`:''}</td>
       <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
@@ -1000,8 +1000,8 @@ $('#bCsv').onclick = ()=>{
    || String(a.site||'').localeCompare(String(b.site||''))
    || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,계근시각,조,차량번호,성상,반입처,실중량';
-  const body=rows.map(r=>[r.date,r.t2||r.t1||'',joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
+  const head='날짜,1차시각,2차시각,조,차량번호,성상,반입처,실중량';
+  const body=rows.map(r=>[r.date,r.t1||'',r.t2||'',joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);

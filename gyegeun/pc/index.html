@@ -120,6 +120,7 @@ tr.bad td{border-color:#F2D6D2;border-bottom:0}
 tr.why td{background:#FFF6F5;border-color:#F2D6D2;padding:0 14px 11px;font-size:13px;color:#A32E22}
 tr.why .rs{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 tr.why b{font-weight:800}
+.tm{font-size:11.5px;color:var(--dim);font-weight:600;margin-top:1px}
 .okbtn{background:#2F7A4F;border:1px solid #2F7A4F;color:#fff;border-radius:7px;
   padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer}
 .ver{font-size:12px;font-weight:700;color:var(--dim);background:var(--card2);
@@ -168,7 +169,7 @@ tr.why b{font-weight:800}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v28</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v30</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -337,7 +338,8 @@ function flagsOf(r){
     if(c.w && c.w.length && !c.w.includes(r.weight))
       f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
     if(c.d && c.d!==r.date)
-      f.push(`사진 날짜와 다름 (사진: ${c.d.slice(5).replace('-','/')})`);
+      f.push(`사진 날짜와 다름 (사진: ${c.d.slice(5).replace('-','/')}`
+           + (c.t && c.t.length ? ` ${c.t.join('·')}` : '') + ')');
   }
   if(r.at){
     const gap = Math.round((new Date(r.date+'T00:00:00').getTime() - new Date(r.at).setHours(0,0,0,0))/86400000);
@@ -552,9 +554,31 @@ function pickDate(text){
       }
       if(c.length) break;
     }
-    if(c.length) return c[0];
+    if(c.length){
+      // 넉 달 넘게 벗어난 것은 잘못 읽은 것 — 버립니다
+      const now=Date.now();
+      const ok=c.filter(d=>Math.abs(now-new Date(d+'T00:00:00').getTime())/86400000 <= 120);
+      const use=ok.length?ok:[];
+      if(!use.length) continue;
+      // 같은 날짜가 여러 번 나오면 그게 맞을 확률이 높습니다
+      const cnt={}; use.forEach(d=>cnt[d]=(cnt[d]||0)+1);
+      return use.sort((a,b)=>cnt[b]-cnt[a])[0];
+    }
   }
   return '';
+}
+
+/* 전표에 찍힌 계량 시각 (1차·2차). 숫자만 보면 되니 날짜보다 잘 읽힙니다. */
+function pickTimes(text){
+  const out=[];
+  const re=/(\D|^)([0-2]?\d)\s*:\s*([0-5]\d)(?:\s*:\s*([0-5]\d))?(?!\d)/g;
+  let m;
+  while((m=re.exec(String(text||'')))){
+    const h=+m[2], mi=+m[3];
+    if(h>23) continue;
+    out.push(`${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`);
+  }
+  return [...new Set(out)].slice(0,4);
 }
 async function readBatch(batch){
   if(!picCache[batch]){
@@ -571,11 +595,11 @@ async function readBatch(batch){
     if(!c) return null;
     const txt=(await w.recognize(c)).data.text||'';
     const got=pickWeights(txt);
-    if(got.length) return {w:got, d:pickDate(txt), at:Date.now()};
+    if(got.length) return {w:got, d:pickDate(txt), t:pickTimes(txt), at:Date.now()};
     const n=(txt.match(/\d/g)||[]).length;
     if(n>bestN){ bestN=n; best=txt; }
   }
-  return {w:[], d:pickDate(best), at:Date.now()};
+  return {w:[], d:pickDate(best), t:pickTimes(best), at:Date.now()};
 }
 const $ = s=>document.querySelector(s);
 const comma = n=> (n||0).toLocaleString('ko-KR');
@@ -701,7 +725,8 @@ function render(){
   $('#list').innerHTML = shown.length ? `<table>
     <thead><tr><th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
     <tbody>${[...shown].reverse().map(r=>`<tr${fl[r.id]?` class="bad" title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
-      <td class="num">${r.date.slice(5).replace('-','/')}</td>
+      <td class="num">${r.date.slice(5).replace('-','/')}
+        ${r.t2||r.t1?`<div class="tm num">${r.t2||r.t1}</div>`:''}</td>
       <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
@@ -944,8 +969,8 @@ $('#bCsv').onclick = ()=>{
    || String(a.site||'').localeCompare(String(b.site||''))
    || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,조,차량번호,성상,반입처,실중량';
-  const body=rows.map(r=>[r.date,joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
+  const head='날짜,계근시각,조,차량번호,성상,반입처,실중량';
+  const body=rows.map(r=>[r.date,r.t2||r.t1||'',joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);

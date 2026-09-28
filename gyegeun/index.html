@@ -275,7 +275,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v37 · 2026-09-28 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v38 · 2026-09-28 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -740,6 +740,29 @@ function pickWeights(text){
 
 // 전표에 찍힌 계량일시를 찾습니다.
 // 자원순환공원은 2026/09/07, 강남은 2026-09-18-00100 꼴입니다.
+/* 전표에 찍힌 계량 시각 (1차·2차).
+   콜론이 낀 모양이라 다른 숫자와 헷갈릴 일이 없어 날짜보다 잘 읽힙니다. */
+function pickTimes(text){
+  const out=[];
+  const re=/(\D|^)([0-2]?\d)\s*:\s*([0-5]\d)(?:\s*:\s*([0-5]\d))?(?!\d)/g;
+  let m;
+  while((m=re.exec(String(text||'')))){
+    const h=+m[2]; if(h>23) continue;
+    out.push(`${String(h).padStart(2,'0')}:${m[3]}`);
+  }
+  return out;
+}
+/* 읽은 시각을 전표 줄에 나눠 답니다.
+   한 전표에 1차·2차 두 개씩 찍히므로, 딱 떨어질 때만 붙이고 아니면 비워 둡니다. */
+function attachTimes(rows, times){
+  const n=rows.length;
+  if(times.length === 2*n){
+    rows.forEach((r,i)=>{ r.t1=times[2*i]; r.t2=times[2*i+1]; });
+  }else if(n===1 && times.length===1){
+    rows[0].t1=times[0];
+  }
+}
+
 // 전표 양식으로 반입처를 가려냅니다.
 //  자원순환공원 계량전표 : 계량일시 2026/09/07 · 시각 04:21:36 (초까지)
 //  강남 계근표        : 날짜 2026-09-18-00100 · 시각 03:18 (분까지)
@@ -769,7 +792,7 @@ function gridRects(){
 async function runOcrSpread(dataUrl, sid){
   ocrLast = {url:dataUrl, sid:sid};
   ocrMsg('펼쳐 찍은 전표를 나눠 읽는 중','work');
-  const keep=new Map();
+  const keep=new Map(), tkeep=new Set();
   try{
     const w = await getOcr(t=>ocrMsg(t,'work'));
     const plan = [null, ...gridRects()];
@@ -778,16 +801,19 @@ async function runOcrSpread(dataUrl, sid){
       const c = await prep(dataUrl, 0, false, plan[i]);
       if(!c) throw new Error('사진을 열 수 없습니다');
       const res = await w.recognize(c);
-      for(const t of pickWeights(res.data.text||'')){
+      const txt=res.data.text||'';
+      for(const t of pickWeights(txt)){
         // 같은 전표가 조각마다 겹쳐 나오므로 1차중량으로 한 번 걸러냅니다
         if(![...keep.values()].some(x=>x.g===t.g)) keep.set(`${t.g}-${t.t}-${t.n}`, t);
       }
+      pickTimes(txt).forEach(x=>tkeep.add(x));
     }
   }catch(err){
     ocrMsg('판독을 쓸 수 없습니다. 실중량을 손으로 넣으세요.','no','',[{k:'shot',t:'다시 찍기'}]);
     return;
   }
   const found=[...keep.values()];
+  const spreadTimes=[...tkeep];
   if(!found.length){
     form.rows = form.rows.filter(r=>String(r.w).trim()!=='');
     if(sid && form.rows.length<8) form.rows.push({w:'',site:'',shot:sid});
@@ -801,7 +827,9 @@ async function runOcrSpread(dataUrl, sid){
   form.rows = form.rows.filter(r=>String(r.w).trim()!=='');
   const room=Math.max(0, 8-form.rows.length);
   const n=Math.min(room, found.length);
-  found.slice(0,n).forEach(v=> form.rows.push({w:String(v.n), site:'', auto:true, shot:sid}));
+  const fresh2 = found.slice(0,n).map(v=>({w:String(v.n), site:'', auto:true, shot:sid}));
+  attachTimes(fresh2, spreadTimes);
+  fresh2.forEach(r=> form.rows.push(r));
   form.cnt=form.rows.length;
   drawCnt(); drawSlips();
   ocrMsg(`전표 ${n}장을 찾았습니다. 장수와 숫자가 전표와 맞는지 꼭 확인하세요 — `
@@ -879,7 +907,9 @@ async function runOcr(dataUrl, sid, hard){
     return;
   }
   const n=Math.min(room, found.length);
-  found.slice(0,n).forEach(v=> form.rows.push({w:String(v.n), site:'', auto:true, shot:sid}));
+  const fresh = found.slice(0,n).map(v=>({w:String(v.n), site:'', auto:true, shot:sid}));
+  attachTimes(fresh, pickTimes(text));
+  fresh.forEach(r=> form.rows.push(r));
   form.cnt = form.rows.length;
   // 날짜는 판독을 믿지 않습니다 (9를 8로 읽는 일이 잦습니다). 위에서 기사가 고른 날로 갑니다.
 
@@ -976,6 +1006,7 @@ $('#bSave').onclick = ()=>{
       veh:cfg.veh, seong:form.seong,
       site: r.site || siteName(),
       weight:+r.w, gross:null, tare:null,
+      t1: r.t1||'', t2: r.t2||'',
       batch: bat[sid] || null, at:Date.now(), sent:false
     });
   });
@@ -1014,7 +1045,9 @@ async function push(){
         body: JSON.stringify({
           date:r.date, jo:r.jo||'',
           veh:r.veh, seong:r.seong, site:r.site,
-          weight:r.weight, gross:r.gross, tare:r.tare, batch:r.batch, at:r.at
+          weight:r.weight, gross:r.gross, tare:r.tare,
+          t1:r.t1||'', t2:r.t2||'',
+          batch:r.batch, at:r.at
         })
       });
       if(!res.ok) throw new Error(res.status);

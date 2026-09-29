@@ -225,8 +225,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <input type="text" id="fSiteEtc" placeholder="시설명을 넣으면 다음부터 버튼으로 나옵니다" style="display:none;margin-top:8px">
 
   <div class="lbl">전표 사진 <span style="font-weight:400">— 한 장씩 찍으면 아래에 계속 더해집니다</span></div>
-  <div class="tip">한 장씩: 중량 세 줄(1차·2차·실중량)이 <b>화면에 꽉 차게</b> 가까이 · 폰을 전표와 나란히 ·
-  찍기 전 숫자를 한 번 눌러 초점<br>
+  <div class="tip">한 장씩: <b>전표 한 장이 화면에 꽉 차게</b> 가까이 (전표번호·차량번호·계량일시까지 다 나오게) ·
+  폰을 전표와 나란히 · 찍기 전 숫자를 한 번 눌러 초점<br>
   펼쳐 찍기: 전표를 <b>겹치지 않게 벌려</b> 놓고 화면에 꽉 차게 <b>위에서 똑바로</b> 내려다보며.
   두세 장뿐이면 한 장씩 찍는 편이 잘 읽힙니다</div>
   <div class="shots" id="fShot"></div>
@@ -279,7 +279,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v44 · 2026-09-29 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v45 · 2026-09-30 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -976,10 +976,10 @@ async function runOcr(dataUrl, sid, hard){
 
     const digits=(text.match(/\d/g)||[]).length;
     const why = digits < 25
-      ? '글자가 거의 안 읽혔습니다. 전표 전체를 찍지 말고 중량 세 줄이 화면에 꽉 차게 '
-        + '가까이 대고, 숫자를 한 번 눌러 초점을 맞춘 뒤 찍어 주세요.'
+      ? '글자가 거의 안 읽혔습니다. 전표 한 장이 화면에 꽉 차게 '
+        + '가까이 대고, 숫자를 한 번 눌러 초점을 맞춘 뒤 밝은 곳에서 다시 찍어 주세요.'
       : '숫자는 읽혔는데 1차−2차＝실중량이 맞는 줄을 못 찾았습니다. '
-        + '세 줄이 다 보이게, 조금 더 가까이서 다시 찍어 주세요.';
+        + '전표 한 장이 화면에 꽉 차게, 조금 더 가까이서 다시 찍어 주세요.';
     const acts = hard ? [{k:'shot',t:'다시 찍기'}]
                       : [{k:'hard',t:'세게 다시 읽기'},{k:'shot',t:'다시 찍기'}];
     ocrMsg('숫자를 읽지 못했습니다. 아래에 손으로 넣으세요! ' + why,'no', text, acts);

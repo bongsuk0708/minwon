@@ -224,7 +224,8 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="lbl">전표 사진 <span style="font-weight:400">— 한 장씩 찍으면 아래에 계속 더해집니다</span></div>
   <div class="tip">한 장씩: 중량 세 줄(1차·2차·실중량)이 <b>화면에 꽉 차게</b> 가까이 · 폰을 전표와 나란히 ·
   찍기 전 숫자를 한 번 눌러 초점<br>
-  펼쳐 찍기: 전표를 <b>겹치지 않게 벌려</b> 놓고 네 장이 화면에 꽉 차게 <b>위에서 똑바로</b> 내려다보며</div>
+  펼쳐 찍기: 전표를 <b>겹치지 않게 벌려</b> 놓고 화면에 꽉 차게 <b>위에서 똑바로</b> 내려다보며.
+  두세 장뿐이면 한 장씩 찍는 편이 잘 읽힙니다</div>
   <div class="shots" id="fShot"></div>
   <input type="file" id="fFile" accept="image/*" capture="environment" style="display:none">
   <input type="file" id="fSpread" accept="image/*" capture="environment" style="display:none">
@@ -275,7 +276,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v39 · 2026-09-28 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v40 · 2026-09-29 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -797,18 +798,33 @@ async function runOcrSpread(dataUrl, sid){
   const keep=new Map(), tkeep=new Set();
   try{
     const w = await getOcr(t=>ocrMsg(t,'work'));
-    const plan = [null, ...gridRects()];
-    for(let i=0;i<plan.length;i++){
-      ocrMsg(`펼쳐 찍은 전표를 나눠 읽는 중 ${i+1}/${plan.length}`,'work');
-      const c = await prep(dataUrl, 0, false, plan[i]);
-      if(!c) throw new Error('사진을 열 수 없습니다');
-      const res = await w.recognize(c);
-      const txt=res.data.text||'';
+    const harvest = txt=>{
       for(const t of pickWeights(txt)){
         // 같은 전표가 조각마다 겹쳐 나오므로 1차중량으로 한 번 걸러냅니다
         if(![...keep.values()].some(x=>x.g===t.g)) keep.set(`${t.g}-${t.t}-${t.n}`, t);
       }
       pickTimes(txt).forEach(x=>tkeep.add(x));
+    };
+    // 1단계 — 전표가 어느 방향으로 누워 있는지 먼저 봅니다.
+    //   책상에 늘어놓고 찍으면 옆으로 눕는 일이 흔한데, 돌려 보지 않으면 한 글자도 못 읽습니다.
+    let rot=0, bestN=-1;
+    for(const r of [0,90,270,180]){
+      ocrMsg('전표 방향을 찾는 중','work');
+      const c = await prep(dataUrl, r, false, null);
+      if(!c) throw new Error('사진을 열 수 없습니다');
+      const txt=(await w.recognize(c)).data.text||'';
+      harvest(txt);
+      const n=(txt.match(/\d/g)||[]).length;
+      if(n>bestN){ bestN=n; rot=r; }
+      if(keep.size) { rot=r; break; }      // 중량이 나왔으면 이 방향이 맞습니다
+    }
+    // 2단계 — 그 방향 그대로 네 조각으로 잘라, 글자를 원본 크기로 키워 읽습니다
+    const plan = gridRects();
+    for(let i=0;i<plan.length;i++){
+      ocrMsg(`펼쳐 찍은 전표를 나눠 읽는 중 ${i+1}/${plan.length}`,'work');
+      const c = await prep(dataUrl, rot, false, plan[i]);
+      if(!c) throw new Error('사진을 열 수 없습니다');
+      harvest((await w.recognize(c)).data.text||'');
     }
   }catch(err){
     ocrMsg('판독을 쓸 수 없습니다. 실중량을 손으로 넣으세요.','no','',[{k:'shot',t:'다시 찍기'}]);
@@ -822,7 +838,8 @@ async function runOcrSpread(dataUrl, sid){
     if(!form.rows.length) form.rows=[{w:'',site:''}];
     form.cnt=form.rows.length; drawCnt(); drawSlips();
     ocrMsg('숫자를 읽지 못했습니다. 아래에 손으로 넣으세요! '
-         + '전표끼리 겹치지 않게 벌려 놓고, 네 장이 화면에 꽉 차게 위에서 똑바로 내려다보며 찍어 주세요.',
+         + '전표끼리 겹치지 않게 벌려 놓고, 전표가 화면에 꽉 차게 위에서 똑바로 내려다보며 찍어 주세요. '
+         + '두세 장뿐이면 ＋ 전표 추가로 한 장씩 찍는 편이 훨씬 잘 읽힙니다.',
       'no','',[{k:'shot',t:'다시 찍기'}]);
     return;
   }

@@ -279,7 +279,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v41 · 2026-09-29 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v44 · 2026-09-29 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -397,8 +397,15 @@ function label(iso){
   const [y,m,d]=iso.split('-').map(Number);
   return `${m}/${d} (${WD[new Date(y,m-1,d).getDay()]})`;
 }
-// 새벽에 앱을 열면 전날이 기본 — 야간조는 전날 밤 계근분이 먼저 나옵니다
-function defaultDay(){ return new Date().getHours() < 9 ? yesterday() : today(); }
+/* 기본 계근일을 조에 맞춰 잡습니다.
+   야간조는 밤~새벽에 계근하고 일 끝난 뒤 아침이나 낮에 올립니다.
+   그래서 오후 3시 전에 여는 야간 차량은 어제 것으로 봅니다. */
+function defaultDay(){
+  const j = (CARS[cfg.veh]||{}).j;
+  const h = new Date().getHours();
+  if(j === '야간') return h < 15 ? yesterday() : today();
+  return h < 9 ? yesterday() : today();
+}
 function drawDay(){
   const t=today(), y=yesterday(), y2=addDays(t,-2), cur=form.date;
   const mk=(iso,cap)=>`<button class="chip day${iso===cur?' sel':''}" data-d="${iso}"><b>${label(iso)}</b><span>${cap}</span></button>`;
@@ -584,11 +591,16 @@ function ocrMsg(text, kind, raw, acts){
   el.className = 'ocr' + (text ? ' on ' + (kind||'') : '');
 }
 let ocrLast = null;                       // 마지막으로 판독한 사진 {url, sid}
+let ocrDate = '';                         // 사진에서 읽은 계량일시
 $('#fOcr').onclick = e=>{
   const a=e.target.closest('[data-act]');
   if(a){
     if(a.dataset.act==='hard' && ocrLast) queueOcr(ocrLast.url, ocrLast.sid, true);
     if(a.dataset.act==='shot')            $('#fFile').click();
+    if(a.dataset.act==='date' && ocrDate){
+      form.date=ocrDate; form.dateFrom='사진'; drawDay(); drawSlips();
+      ocrMsg(`계근일을 ${label(ocrDate)}로 바꿨습니다. 전표와 맞는지 한 번 더 보세요.`,'ok');
+    }
     return;
   }
   if(e.target.id!=='fRaw' || !ocrRaw) return;
@@ -765,6 +777,37 @@ function markDups(rows){
     if(r.dup) n++;
   });
   return n;
+}
+
+/* 전표에 찍힌 계량일시를 읽습니다.
+   9를 8로 잘못 보는 일이 잦으니, 오늘 기준으로 말이 되는 날짜만 씁니다.
+   전표는 당일이나 하루이틀 안에 올리니, 보름을 넘어가면 잘못 읽은 것입니다. */
+function readSlipDate(text){
+  const norm = t => String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
+                    .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
+  const pats = [/(20\d{2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/g,
+                /(?<!\d)(20\d{2})(\d{2})(\d{2})(?!\d)/g];
+  const cands=[];
+  for(const src of [String(text||''), norm(text)]){
+    for(const re of pats){
+      re.lastIndex=0; let m;
+      while((m=re.exec(src))){
+        const y=+m[1], mo=+m[2], d=+m[3];
+        if(mo<1||mo>12||d<1||d>31) continue;
+        const dt=new Date(y,mo-1,d);
+        if(dt.getMonth()!==mo-1||dt.getDate()!==d) continue;
+        cands.push(ymd(dt));
+      }
+    }
+    if(cands.length) break;
+  }
+  if(!cands.length) return '';
+  const now = new Date().setHours(0,0,0,0);
+  const ok = [...new Set(cands)]
+    .map(d=>({d, gap:(now - new Date(d+'T00:00:00').getTime())/86400000}))
+    .filter(x=> x.gap >= -1 && x.gap <= 15)
+    .sort((a,b)=>Math.abs(a.gap)-Math.abs(b.gap));
+  return ok.length ? ok[0].d : '';
 }
 
 /* 전표에 찍힌 계량 시각 (1차·2차).
@@ -971,11 +1014,27 @@ async function runOcr(dataUrl, sid, hard){
   const chk = form.seong
       ? `숫자와 제품명이 전표와 맞는지 확인하세요 — 지금 성상은 ${form.seong}입니다.`
       : '숫자를 확인하고, 전표의 제품명을 보고 성상을 고르세요.';
+  const sd = readSlipDate(text);
+  let dmsg='', dact=[];
+  if(sd && sd===form.date){
+    dmsg = ` 계근일 ${label(sd)} 맞습니다.`;
+    form.dateFrom = form.dateFrom || '사진';
+  }else if(sd && !form.dateFrom){
+    // 아직 아무도(기사도, 앞 사진도) 날짜를 정하지 않았을 때만 맞춥니다.
+    // 앞 사진이 이미 정했으면 건드리지 않습니다 — 자정을 넘긴 묶음에서
+    // 뒷 사진이 앞 전표들까지 다른 날로 끌고 가면 안 되니까요.
+    form.date = sd; form.dateFrom = '사진'; drawDay(); drawSlips();
+    dmsg = ` 계근일을 ${label(sd)}로 맞췄습니다 (전표에서 읽음).`;
+  }else if(sd){
+    // 기사가 손으로 고른 날과 다르면 함부로 바꾸지 않고 물어봅니다
+    dmsg = ` ⚠ 사진에는 ${label(sd)}로 보입니다. 전표를 다시 보세요.`;
+    ocrDate = sd; dact = [{k:'date', t:`${label(sd)}로 바꾸기`}];
+  }
   ocrMsg(`전표 ${n}장을 읽었습니다.`
         + (tot>n ? ` 지금까지 ${tot}장.` : '')
         + (dupN ? ` ⚠ 이미 올린 전표입니다 — 빨간 줄은 × 로 지우세요.` : '')
-        + `${smsg} ${chk}`
-        + (found.length>n ? ` (${found.length}장 중 ${n}장까지만)` : ''), 'ok', '');
+        + `${dmsg}${smsg} ${chk}`
+        + (found.length>n ? ` (${found.length}장 중 ${n}장까지만)` : ''), 'ok', '', dact);
 }
 
 $('#fSlips').addEventListener('click', e=>{

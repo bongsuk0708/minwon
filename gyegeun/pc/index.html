@@ -180,7 +180,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v35</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v36</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -358,8 +358,9 @@ function flagsOf(r){
     const ws = BWS[r.batch] || [r.weight];
     if(c.w && c.w.length >= ws.length && !c.w.includes(r.weight))
       f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
-    if(c.d && c.d!==r.date)
-      f.push(`사진 날짜와 다름 (사진: ${c.d.slice(5).replace('-','/')}`
+    const pd = plausibleDate(c.ds || (c.d?[c.d]:[]), r.at);
+    if(pd && pd!==r.date)
+      f.push(`사진 날짜와 다름 (사진: ${pd.slice(5).replace('-','/')}`
            + (c.t && c.t.length ? ` ${c.t.join('·')}` : '') + ')');
   }
   if(r.at){
@@ -624,7 +625,7 @@ function pickWeights(text){
   }
   return [];
 }
-function pickDate(text){
+function pickDates(text){
   const norm=t=>String(t||'').replace(/[Oo]/g,'0').replace(/[lI|]/g,'1')
                  .replace(/[Ss]/g,'5').replace(/[Bb]/g,'8').replace(/[Zz]/g,'2');
   const pats=[/(20\d{2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/g,
@@ -646,14 +647,29 @@ function pickDate(text){
       // 넉 달 넘게 벗어난 것은 잘못 읽은 것 — 버립니다
       const now=Date.now();
       const ok=c.filter(d=>Math.abs(now-new Date(d+'T00:00:00').getTime())/86400000 <= 120);
-      const use=ok.length?ok:[];
-      if(!use.length) continue;
+      if(!ok.length) continue;
       // 같은 날짜가 여러 번 나오면 그게 맞을 확률이 높습니다
-      const cnt={}; use.forEach(d=>cnt[d]=(cnt[d]||0)+1);
-      return use.sort((a,b)=>cnt[b]-cnt[a])[0];
+      const cnt={}; ok.forEach(d=>cnt[d]=(cnt[d]||0)+1);
+      return [...new Set(ok)].sort((a,b)=>cnt[b]-cnt[a]);
     }
   }
-  return '';
+  return [];
+}
+// 후보 중 하나만 (예전 쓰임새)
+function pickDate(text){ const a=pickDates(text); return a.length?a[0]:''; }
+
+/* 사진에서 읽은 날짜 후보 중, 올린 날과 견줘 말이 되는 것을 고릅니다.
+   전표는 보통 당일이나 하루이틀 안에 올라옵니다. 한 달 전 날짜가 나왔다면
+   그건 옛날 전표가 아니라 9를 8로 잘못 읽은 것입니다. */
+function plausibleDate(cands, savedAt){
+  if(!cands || !cands.length) return '';
+  if(!savedAt) return cands[0];
+  const day = new Date(savedAt).setHours(0,0,0,0);
+  const ok = cands
+    .map(d=>({d, gap:(day - new Date(d+'T00:00:00').getTime())/86400000}))
+    .filter(x=> x.gap >= -1 && x.gap <= 15)      // 올린 날 기준 하루 뒤 ~ 보름 전
+    .sort((a,b)=>Math.abs(a.gap)-Math.abs(b.gap));
+  return ok.length ? ok[0].d : '';
 }
 
 /* 전표에 찍힌 계량 시각 (1차·2차). 숫자만 보면 되니 날짜보다 잘 읽힙니다. */
@@ -683,11 +699,11 @@ async function readBatch(batch){
     if(!c) return null;
     const txt=(await w.recognize(c)).data.text||'';
     const got=pickWeights(txt);
-    if(got.length) return {v:2, w:got, d:pickDate(txt), t:pickTimes(txt), at:Date.now()};
+    if(got.length) return {v:3, w:got, d:pickDate(txt), ds:pickDates(txt), t:pickTimes(txt), at:Date.now()};
     const n=(txt.match(/\d/g)||[]).length;
     if(n>bestN){ bestN=n; best=txt; }
   }
-  return {v:2, w:[], d:pickDate(best), t:pickTimes(best), at:Date.now()};
+  return {v:3, w:[], d:pickDate(best), ds:pickDates(best), t:pickTimes(best), at:Date.now()};
 }
 const $ = s=>document.querySelector(s);
 const comma = n=> (n||0).toLocaleString('ko-KR');
@@ -1018,7 +1034,7 @@ async function runCheck(){
   if(chkRunning) return;
   const rows = picked().filter(r=>r.batch);
   // v2 이전 결과는 판독 규칙이 허술하던 때 것이라 다시 읽습니다
-  const todo = [...new Set(rows.map(r=>r.batch))].filter(b=>!chk[b] || (chk[b].v||1) < 2);
+  const todo = [...new Set(rows.map(r=>r.batch))].filter(b=>!chk[b] || (chk[b].v||1) < 3);
   if(!todo.length){
     chkBar(0,null);
     toast(rows.length ? '이미 다 대조했습니다' : '사진이 있는 전표가 없습니다');

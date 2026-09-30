@@ -135,13 +135,6 @@ input,select,textarea{font-family:inherit;outline:none}
 .empty .ei{font-size:38px;margin-bottom:6px}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:28px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
-/* 동 구분 선택 */
-.dong-picker{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px 11px;margin-top:6px}
-.dong-picker-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-.dong-picker-label{font-size:12px;font-weight:800;color:var(--blue)}
-.dong-select{width:100%;padding:8px 10px;border:1.5px solid #93c5fd;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);background:#fff;appearance:auto;cursor:pointer}
-.dong-select:focus{border-color:var(--blue);outline:none}
-.dong-sub-select{display:none;margin-top:8px}
 /* 지도 고정 마커 (말풍선 핀) */
 .map-pin-fixed{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:#6d28d9;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:default}
 /* 사진 업로드 진행 */
@@ -198,18 +191,18 @@ input,select,textarea{font-family:inherit;outline:none}
           </div>
         </div>
         <div class="form-row">
-          <div class="dong-picker">
-            <div class="dong-picker-hdr"><span class="dong-picker-label">📌 동 구분</span></div>
-            <select class="dong-select" id="m-dong-sel" onchange="onDongChange('m')">
-              <option value="">동 선택</option>
-              <option value="잠실동">잠실동</option>
-              <option value="삼전동">삼전동</option>
-              <option value="가락동">가락동</option>
-            </select>
-            <select class="dong-select dong-sub-select" id="m-loc-sel" onchange="onLocChange('m')">
-              <option value="">위치 선택</option>
-            </select>
-          </div>
+          <span class="form-label">📌 동 구분</span>
+          <select class="form-select" id="m-dong-sel" onchange="onDongChange('m')">
+            <option value="">동/위치 선택</option>
+            <option value="잠실동">잠실동</option>
+            <option value="삼전동">삼전동</option>
+            <option value="삼전현대">삼전현대</option>
+            <option value="잠실현대">잠실현대</option>
+            <option value="우성4차">우성4차</option>
+            <option value="레이크">레이크</option>
+            <option value="트리지움">트리지움</option>
+            <option value="가락시장">가락시장</option>
+          </select>
         </div>
         <div class="form-row">
           <span class="form-label">배출/발생 주소 *</span>
@@ -283,18 +276,18 @@ input,select,textarea{font-family:inherit;outline:none}
           <div><span class="form-label">점검일자</span><input class="form-input" id="h-inspdate" type="date"></div>
         </div>
         <div class="form-row">
-          <div class="dong-picker">
-            <div class="dong-picker-hdr"><span class="dong-picker-label">📌 동 구분</span></div>
-            <select class="dong-select" id="h-dong-sel" onchange="onDongChange('h')">
-              <option value="">동 선택</option>
-              <option value="잠실동">잠실동</option>
-              <option value="삼전동">삼전동</option>
-              <option value="가락동">가락동</option>
-            </select>
-            <select class="dong-select dong-sub-select" id="h-loc-sel" onchange="onLocChange('h')">
-              <option value="">위치 선택</option>
-            </select>
-          </div>
+          <span class="form-label">📌 동 구분</span>
+          <select class="form-select" id="h-dong-sel" onchange="onDongChange('h')">
+            <option value="">동/위치 선택</option>
+            <option value="잠실동">잠실동</option>
+            <option value="삼전동">삼전동</option>
+            <option value="삼전현대">삼전현대</option>
+            <option value="잠실현대">잠실현대</option>
+            <option value="우성4차">우성4차</option>
+            <option value="레이크">레이크</option>
+            <option value="트리지움">트리지움</option>
+            <option value="가락시장">가락시장</option>
+          </select>
         </div>
         <div class="form-row">
           <span class="form-label">위험지점 주소 *</span>
@@ -523,39 +516,23 @@ function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('o
 let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
 
-// ── 동 구분 드롭다운 → 위치 드롭다운 표시 ──
+// ── 동 구분 선택 → 주소란 자동 입력 ──
 function onDongChange(form){
   const selEl = document.getElementById(form==='m' ? 'm-dong-sel' : 'h-dong-sel');
-  const locEl = document.getElementById(form==='m' ? 'm-loc-sel' : 'h-loc-sel');
-  const dong = selEl ? selEl.value : '';
-  locEl.innerHTML='<option value="">위치 선택</option>';
-  if(!dong){locEl.style.display='none';return;}
-  const locs = FIXED_LOCS.filter(function(l){return l.dong===dong;});
-  locs.forEach(function(l){
-    var opt=document.createElement('option');
-    opt.value=l.name; opt.textContent=l.name;
-    locEl.appendChild(opt);
-  });
-  locEl.style.display='block';
-}
-
-// ── 위치 드롭다운 선택 → 주소란 자동 입력 ──
-function onLocChange(form){
-  const locEl = document.getElementById(form==='m' ? 'm-loc-sel' : 'h-loc-sel');
-  const name = locEl.value;
-  if(!name)return;
-  const loc = FIXED_LOCS.find(function(l){return l.name===name;});
-  if(!loc)return;
-  var addrEl, okEl;
-  if(form==='m'){
-    addrEl=$('m-addr'); okEl=$('m-addr-ok');
-    mPos={lat:loc.lat,lng:loc.lng};
+  const val = selEl ? selEl.value : '';
+  if(!val) return;
+  const addrEl = form==='m' ? $('m-addr') : $('h-addr');
+  const okEl   = form==='m' ? $('m-addr-ok') : $('h-addr-ok');
+  const loc = FIXED_LOCS.find(function(l){return l.name===val;});
+  if(loc){
+    addrEl.value = loc.short;
+    okEl.textContent = '📍 '+loc.name+' 위치 확인됨';
+    if(form==='m') mPos={lat:loc.lat,lng:loc.lng};
+    else hPos={lat:loc.lat,lng:loc.lng};
   } else {
-    addrEl=$('h-addr'); okEl=$('h-addr-ok');
-    hPos={lat:loc.lat,lng:loc.lng};
+    addrEl.value = val+' ';
+    okEl.textContent = '';
   }
-  addrEl.value=loc.short;
-  okEl.textContent='📍 '+loc.name+' 위치 확인됨';
   addrEl.focus();
   var l=addrEl.value.length;
   addrEl.setSelectionRange(l,l);
@@ -621,7 +598,6 @@ function resetMForm(){
   $('m-before').value='';$('m-after').value='';
   if(mPill){mPill.classList.remove('on');mPill=null;}mSub='';mPos=null;$('m-addr-ok').textContent='';
   $('m-dong-sel').value='';
-  var ml=$('m-loc-sel');if(ml){ml.innerHTML='<option value="">위치 선택</option>';ml.style.display='none';}
   tmpPhoto={before:null,after:null,hazard:null};
 }
 
@@ -650,7 +626,6 @@ function resetHForm(){
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';
   hPos=null;$('h-addr-ok').textContent='';
   $('h-dong-sel').value='';
-  var hl=$('h-loc-sel');if(hl){hl.innerHTML='<option value="">위치 선택</option>';hl.style.display='none';}
   tmpPhoto={before:null,after:null,hazard:null};
 }
 

@@ -174,7 +174,10 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 #map-container{width:100%;height:calc(100vh - 170px);}
 .map-pin{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer;position:relative;display:inline-block;}
 .map-pin::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top-width:5px;border-top-style:solid;}
-.map-pin-fixed{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:#6d28d9;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:default;}
+/* 지도 마커 (원형 배지 + 주소 라벨) */
+.mk-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;cursor:pointer;}
+.mk-lbl{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);border:1.5px solid;line-height:1.45;}
+.mk-badge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35);}
 </style>
 </head>
 <body>
@@ -605,6 +608,22 @@ function fieldPinColor(r){
   const w=r.waste||r.subtype||'';
   return w==='생활'?'#22c55e':w==='음식물'?'#eab308':'#3b82f6';
 }
+// 라벨용 진한 색 (흰 배경 위 가독성)
+function fieldPinColorDark(r){
+  const isH=(r.type==='사고예방')||(r.recType==='hazard');
+  if(isH) return (r.risk||r.riskLevel)==='High'?'#dc2626':(r.risk||r.riskLevel)==='Medium'?'#ca8a04':'#64748b';
+  const w=r.waste||r.subtype||'';
+  return w==='생활'?'#16a34a':w==='음식물'?'#ca8a04':'#2563eb';
+}
+// 배지 안 2글자
+function fieldPinBadge(r){
+  const isH=(r.type==='사고예방')||(r.recType==='hazard');
+  if(isH) return '사고';
+  const w=r.waste||r.subtype||'';
+  return w==='생활'?'생활':w==='음식물'?'음식':'재활';
+}
+function mkEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function mkAddr(r){const a=String(r.addr||'').trim();return mkEsc(a.length>13?a.slice(0,13)+'…':(a||'주소없음'));}
 function fieldPinLabel(r){
   const isH=(r.type==='사고예방')||(r.recType==='hazard');
   if(isH) return r.factor||r.riskType||'위험';
@@ -632,8 +651,8 @@ function renderFieldMap(){
     const lbl=fieldPinLabel(r);
     const ov=new kakao.maps.CustomOverlay({
       position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
-      content:`<div class="map-pin" style="background:${c};border-top-color:${c}" onclick="openDetail('${r.id}')">${lbl}</div>`,
-      yAnchor:1.5,zIndex:2
+      content:`<div class="mk-wrap" onclick="openDetail('${r.id}')"><span class="mk-lbl" style="border-color:${fieldPinColorDark(r)};color:${fieldPinColorDark(r)}">${mkAddr(r)}</span><span class="mk-badge" style="background:${c}">${fieldPinBadge(r)}</span></div>`,
+      yAnchor:0.5,zIndex:2
     });
     ov.setMap(fieldMap); fieldPins.push(ov);
   });

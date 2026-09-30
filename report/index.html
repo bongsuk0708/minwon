@@ -141,12 +141,9 @@ input,select,textarea{font-family:inherit;outline:none}
 .dong-picker-label{font-size:12px;font-weight:800;color:var(--blue)}
 .dong-select{width:100%;padding:8px 10px;border:1.5px solid #93c5fd;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);background:#fff;appearance:auto;cursor:pointer}
 .dong-select:focus{border-color:var(--blue);outline:none}
-.dong-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:0}
-.qa-chip{padding:6px 13px;border-radius:16px;font-size:13px;font-weight:700;border:1.5px solid #93c5fd;background:#eff6ff;color:var(--blue);cursor:pointer;transition:all .15s}
-.qa-chip:hover{background:#dbeafe}
-.qa-chip.sel{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 1px 5px rgba(30,64,175,.3)}
-/* 지도 고정 마커 */
-.map-pin-fixed{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#475569;background:rgba(255,255,255,.93);border:1.5px dashed #94a3b8;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.12);cursor:default}
+.dong-sub-select{display:none;margin-top:8px}
+/* 지도 고정 마커 (말풍선 핀) */
+.map-pin-fixed{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:#6d28d9;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:default}
 /* 사진 업로드 진행 */
 #photo-progress{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
 #photo-progress.on{display:flex}
@@ -209,7 +206,9 @@ input,select,textarea{font-family:inherit;outline:none}
               <option value="삼전동">삼전동</option>
               <option value="가락동">가락동</option>
             </select>
-            <div class="dong-chips" id="m-dong-chips"></div>
+            <select class="dong-select dong-sub-select" id="m-loc-sel" onchange="onLocChange('m')">
+              <option value="">위치 선택</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -292,7 +291,9 @@ input,select,textarea{font-family:inherit;outline:none}
               <option value="삼전동">삼전동</option>
               <option value="가락동">가락동</option>
             </select>
-            <div class="dong-chips" id="h-dong-chips"></div>
+            <select class="dong-select dong-sub-select" id="h-loc-sel" onchange="onLocChange('h')">
+              <option value="">위치 선택</option>
+            </select>
           </div>
         </div>
         <div class="form-row">
@@ -407,7 +408,7 @@ let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
 let mSub='',mPos=null,hPos=null,curDetailId=null;
 let tmpPhoto={before:null,after:null,hazard:null};
 let fltFrom='',fltTo='';
-let selQaChip=null, fixedPins=[];
+let fixedPins=[];
 
 // 주요 장소 (지도 고정 마커 + 동 구분 칩) — 하드코딩 좌표
 // short = 주소란에 입력되는 텍스트 (뒤에 추가 입력 가능)
@@ -522,31 +523,29 @@ function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('o
 let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
 
-// ── 동 구분 드롭다운 → 칩 표시 ──
+// ── 동 구분 드롭다운 → 위치 드롭다운 표시 ──
 function onDongChange(form){
-  const selId = form==='m' ? 'm-dong-sel' : 'h-dong-sel';
-  const chipsId = form==='m' ? 'm-dong-chips' : 'h-dong-chips';
-  const selEl = document.getElementById(selId);
-  const chipsEl = document.getElementById(chipsId);
+  const selEl = document.getElementById(form==='m' ? 'm-dong-sel' : 'h-dong-sel');
+  const locEl = document.getElementById(form==='m' ? 'm-loc-sel' : 'h-loc-sel');
   const dong = selEl ? selEl.value : '';
-  if(selQaChip){selQaChip.classList.remove('sel');selQaChip=null;}
-  if(!dong){chipsEl.innerHTML='';return;}
+  locEl.innerHTML='<option value="">위치 선택</option>';
+  if(!dong){locEl.style.display='none';return;}
   const locs = FIXED_LOCS.filter(function(l){return l.dong===dong;});
-  var html = '';
   locs.forEach(function(l){
-    html += '<button class="qa-chip" data-locname="'+l.name+'" data-form="'+form+'" onclick="pickLocChip(this)">'+l.name+'</button>';
+    var opt=document.createElement('option');
+    opt.value=l.name; opt.textContent=l.name;
+    locEl.appendChild(opt);
   });
-  chipsEl.innerHTML = html;
+  locEl.style.display='block';
 }
 
-// ── 아파트 칩 클릭 (하드코딩 좌표 — 즉시 확인, 뒤에 추가 입력 가능) ──
-function pickLocChip(chipEl){
-  const name = chipEl.dataset.locname;
-  const form = chipEl.dataset.form;
+// ── 위치 드롭다운 선택 → 주소란 자동 입력 ──
+function onLocChange(form){
+  const locEl = document.getElementById(form==='m' ? 'm-loc-sel' : 'h-loc-sel');
+  const name = locEl.value;
+  if(!name)return;
   const loc = FIXED_LOCS.find(function(l){return l.name===name;});
   if(!loc)return;
-  if(selQaChip)selQaChip.classList.remove('sel');
-  chipEl.classList.add('sel'); selQaChip=chipEl;
   var addrEl, okEl;
   if(form==='m'){
     addrEl=$('m-addr'); okEl=$('m-addr-ok');
@@ -555,21 +554,11 @@ function pickLocChip(chipEl){
     addrEl=$('h-addr'); okEl=$('h-addr-ok');
     hPos={lat:loc.lat,lng:loc.lng};
   }
-  addrEl.value=loc.short;          // 짧은 이름만 입력 (예: "잠실현대 ")
+  addrEl.value=loc.short;
   okEl.textContent='📍 '+loc.name+' 위치 확인됨';
-  addrEl.focus();                   // 주소란 포커스
+  addrEl.focus();
   var l=addrEl.value.length;
-  addrEl.setSelectionRange(l,l);    // 커서를 끝에 위치 → 바로 추가 입력 가능
-}
-
-// ── 하위 호환 (pickAddr 구버전 호출 대비) ──
-function pickAddr(idx,chipEl,form){
-  if(selQaChip)selQaChip.classList.remove('sel');
-  chipEl.classList.add('sel'); selQaChip=chipEl;
-  const loc=FIXED_LOCS[idx];
-  if(!loc)return;
-  if(form==='m'){$('m-addr').value=loc.short;mPos={lat:loc.lat,lng:loc.lng};$('m-addr-ok').textContent='📍 '+loc.name+' 위치 확인됨';}
-  else{$('h-addr').value=loc.short;hPos={lat:loc.lat,lng:loc.lng};$('h-addr-ok').textContent='📍 '+loc.name+' 위치 확인됨';}
+  addrEl.setSelectionRange(l,l);
 }
 
 // ── 지도 고정 마커 초기화 (하드코딩 좌표 — geocoding 없음) ──
@@ -579,8 +568,8 @@ function initFixedMarkers(){
     if(!kakaoMap)return;
     const ov=new kakao.maps.CustomOverlay({
       position:new kakao.maps.LatLng(loc.lat,loc.lng),
-      content:`<div class="map-pin-fixed" title="${loc.dong} ${loc.name}">${loc.name}</div>`,
-      yAnchor:1.5,
+      content:`<div style="display:flex;flex-direction:column;align-items:center"><div class="map-pin-fixed">${loc.name}</div><div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #6d28d9"></div></div>`,
+      yAnchor:1,
       zIndex:1
     });
     ov.setMap(kakaoMap);
@@ -631,8 +620,8 @@ function resetMForm(){
   $('m-before-th').style.display='none';$('m-after-th').style.display='none';
   $('m-before').value='';$('m-after').value='';
   if(mPill){mPill.classList.remove('on');mPill=null;}mSub='';mPos=null;$('m-addr-ok').textContent='';
-  $('m-dong-sel').value='';$('m-dong-chips').innerHTML='';
-  if(selQaChip){selQaChip.classList.remove('sel');selQaChip=null;}
+  $('m-dong-sel').value='';
+  var ml=$('m-loc-sel');if(ml){ml.innerHTML='<option value="">위치 선택</option>';ml.style.display='none';}
   tmpPhoto={before:null,after:null,hazard:null};
 }
 
@@ -660,7 +649,8 @@ function resetHForm(){
   $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';
   hPos=null;$('h-addr-ok').textContent='';
-  $('h-dong-sel').value='';$('h-dong-chips').innerHTML='';
+  $('h-dong-sel').value='';
+  var hl=$('h-loc-sel');if(hl){hl.innerHTML='<option value="">위치 선택</option>';hl.style.display='none';}
   tmpPhoto={before:null,after:null,hazard:null};
 }
 

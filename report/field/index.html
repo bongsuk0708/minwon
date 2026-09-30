@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4421ecfa7ea279c190db811c789e450d&libraries=services"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -166,6 +167,14 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .empty{text-align:center;padding:40px 20px;color:var(--sub);}
 .empty-ico{font-size:36px;margin-bottom:8px;}
+/* ── 지도 ── */
+#map-legend{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid var(--border);}
+.leg{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--text);}
+.leg-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+#map-container{width:100%;height:calc(100vh - 170px);}
+.map-pin{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer;position:relative;display:inline-block;}
+.map-pin::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top-width:5px;border-top-style:solid;}
+.map-pin-fixed{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#475569;background:rgba(255,255,255,.93);border:1.5px dashed #94a3b8;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.12);cursor:default;}
 </style>
 </head>
 <body>
@@ -182,6 +191,7 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 <!-- 탭 -->
 <div id="tabs">
   <div class="tab on" data-tab="list">📋 목록</div>
+  <div class="tab" data-tab="map">🗺 지도</div>
   <div class="tab" data-tab="update">🔄 업데이트</div>
 </div>
 
@@ -199,6 +209,19 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
       <div class="fbtn" data-f="High" onclick="setFilter(this)">🔴 High</div>
     </div>
     <div id="rec-list"><div class="loading"><div class="spinner"></div><br>불러오는 중...</div></div>
+  </div>
+
+  <!-- ══ 지도 탭 ══ -->
+  <div class="page" id="tab-map" style="padding:0;">
+    <div id="map-legend">
+      <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
+      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>음식물</div>
+      <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
+      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고High</div>
+      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>사고Mid</div>
+      <div class="leg"><div class="leg-dot" style="background:#94a3b8"></div>사고Low</div>
+    </div>
+    <div id="map-container"></div>
   </div>
 
   <!-- ══ 업데이트 탭 ══ -->
@@ -274,6 +297,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     t.classList.add('on');
     document.getElementById('tab-'+t.dataset.tab).classList.add('on');
     if(t.dataset.tab==='list') renderList();
+    if(t.dataset.tab==='map') setTimeout(initFieldMap,80);
   });
 });
 
@@ -563,12 +587,77 @@ function openModal(){document.getElementById('modal-bg').classList.add('on');}
 function closeModal(){document.getElementById('modal-bg').classList.remove('on');}
 function closeMBg(e){if(e.target===document.getElementById('modal-bg'))closeModal();}
 
+/* ── 지도 ── */
+// 하드코딩 좌표 — geocoding 불필요
+const FIXED_LOCS=[
+  {name:'레이크팰리스', dong:'잠실동', lat:37.5083, lng:127.0899},
+  {name:'트리지움',     dong:'잠실동', lat:37.5095, lng:127.0855},
+  {name:'잠실현대',     dong:'잠실동', lat:37.5090, lng:127.0872},
+  {name:'우성4차',      dong:'잠실동', lat:37.5082, lng:127.0867},
+  {name:'삼전현대',     dong:'삼전동', lat:37.5062, lng:127.0921},
+  {name:'가락시장',     dong:'가락동', lat:37.4926, lng:127.1214},
+];
+let fieldMap=null, fieldMapInited=false, fieldPins=[], fixedPins=[];
+
+function fieldPinColor(r){
+  const isH=(r.type==='사고예방')||(r.recType==='hazard');
+  if(isH) return (r.risk||r.riskLevel)==='High'?'#ef4444':(r.risk||r.riskLevel)==='Medium'?'#eab308':'#94a3b8';
+  const w=r.waste||r.subtype||'';
+  return w==='생활'?'#22c55e':w==='음식물'?'#eab308':'#3b82f6';
+}
+function fieldPinLabel(r){
+  const isH=(r.type==='사고예방')||(r.recType==='hazard');
+  if(isH) return r.factor||r.riskType||'위험';
+  const w=r.waste||r.subtype||'';
+  return w||'민원';
+}
+
+function initFieldMap(){
+  if(fieldMapInited){renderFieldMap();return;}
+  fieldMap=new kakao.maps.Map(document.getElementById('map-container'),{
+    center:new kakao.maps.LatLng(37.504,127.090),level:5
+  });
+  fieldMapInited=true;
+  initFixedPins();
+  renderFieldMap();
+}
+
+function initFixedPins(){
+  if(!fieldMap)return;
+  fixedPins.forEach(p=>p.setMap(null)); fixedPins=[];
+  FIXED_LOCS.forEach(loc=>{
+    const ov=new kakao.maps.CustomOverlay({
+      position:new kakao.maps.LatLng(loc.lat,loc.lng),
+      content:`<div class="map-pin-fixed">${loc.name}</div>`,
+      yAnchor:1.5,zIndex:1
+    });
+    ov.setMap(fieldMap); fixedPins.push(ov);
+  });
+}
+
+function renderFieldMap(){
+  if(!fieldMap)return;
+  fieldPins.forEach(p=>p.setMap(null)); fieldPins=[];
+  allRecs.filter(r=>!r.del&&r.addrPos).forEach(r=>{
+    const c=fieldPinColor(r);
+    const lbl=fieldPinLabel(r);
+    const ov=new kakao.maps.CustomOverlay({
+      position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
+      content:`<div class="map-pin" style="background:${c};border-top-color:${c}" onclick="openDetail('${r.id}')">${lbl}</div>`,
+      yAnchor:1.5,zIndex:2
+    });
+    ov.setMap(fieldMap); fieldPins.push(ov);
+  });
+}
+
 /* ── Firebase 구독 ── */
 RECS.on('value',snap=>{
   const val=snap.val()||{};
   allRecs=Object.values(val).filter(r=>!r.del);
   const activeTab=document.querySelector('.tab.on');
-  if(!activeTab||activeTab.dataset.tab==='list') renderList();
+  const t=activeTab?activeTab.dataset.tab:'list';
+  if(t==='list') renderList();
+  if(t==='map') renderFieldMap();
 });
 
 if('serviceWorker' in navigator){

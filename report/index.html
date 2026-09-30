@@ -36,7 +36,6 @@ input,select,textarea{font-family:inherit;outline:none}
 #hdr h1{font-size:15px;font-weight:800}
 #hdr-right{display:flex;align-items:center;gap:6px}
 #staff-name{font-size:12px;opacity:.85}
-#field-link{font-size:12px;background:rgba(255,255,255,.25);color:#fff;padding:4px 9px;border-radius:20px;text-decoration:none;font-weight:700}
 #logout-btn{font-size:11px;background:rgba(255,255,255,.2);color:#fff;padding:3px 8px;border-radius:20px}
 #net-bar{font-size:11px;padding:3px 0;text-align:center;border-top:1px solid rgba(255,255,255,.15)}
 .net-ok{color:#86efac}.net-err{color:#fca5a5}.net-wait{color:#fde68a}
@@ -60,7 +59,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .pill-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .pill{padding:6px 11px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
 .pill.green.on{background:#dcfce7;border-color:var(--green2);color:var(--green)}
-.pill.orange.on{background:#ffedd5;border-color:var(--orange2);color:var(--orange)}
+.pill.orange.on{background:#fef9c3;border-color:var(--yellow2);color:var(--yellow)}
 .pill.blue2.on{background:#dbeafe;border-color:var(--blue2);color:var(--blue)}
 .addr-row{display:flex;gap:6px;align-items:flex-end}
 .addr-row .form-input{flex:1}
@@ -136,13 +135,14 @@ input,select,textarea{font-family:inherit;outline:none}
 .empty .ei{font-size:38px;margin-bottom:6px}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:28px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
-/* 빠른 주소 선택 */
-.qa-wrap{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:9px 10px;margin-top:6px}
-.qa-title{font-size:11px;font-weight:800;color:var(--blue);margin-bottom:6px}
-.qa-dong{font-size:10px;font-weight:800;color:var(--sub);margin:5px 0 3px;letter-spacing:.3px}
-.qa-dong:first-of-type{margin-top:0}
-.qa-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:2px}
-.qa-chip{padding:5px 11px;border-radius:16px;font-size:12px;font-weight:700;border:1.5px solid #93c5fd;background:#eff6ff;color:var(--blue);cursor:pointer;transition:all .15s}
+/* 동 구분 선택 */
+.dong-picker{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px 11px;margin-top:6px}
+.dong-picker-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.dong-picker-label{font-size:12px;font-weight:800;color:var(--blue)}
+.dong-select{width:100%;padding:8px 10px;border:1.5px solid #93c5fd;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink);background:#fff;appearance:auto;cursor:pointer}
+.dong-select:focus{border-color:var(--blue);outline:none}
+.dong-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.qa-chip{padding:6px 13px;border-radius:16px;font-size:13px;font-weight:700;border:1.5px solid #93c5fd;background:#eff6ff;color:var(--blue);cursor:pointer;transition:all .15s}
 .qa-chip:hover{background:#dbeafe}
 .qa-chip.sel{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 1px 5px rgba(30,64,175,.3)}
 /* 지도 고정 마커 */
@@ -168,7 +168,6 @@ input,select,textarea{font-family:inherit;outline:none}
       <h1>📋 민원·사고예방 관리 v2</h1>
       <div id="hdr-right">
         <span id="staff-name"></span>
-        <a id="field-link" href="./field/" target="_blank">📱현장</a>
         <button id="logout-btn" onclick="doLogout()">변경</button>
       </div>
     </div>
@@ -197,7 +196,7 @@ input,select,textarea{font-family:inherit;outline:none}
           <span class="form-label">폐기물 구분 *</span>
           <div class="pill-group">
             <span class="pill green" onclick="pickSub(this,'생활')">🟢 생활</span>
-            <span class="pill orange" onclick="pickSub(this,'음식물')">🟠 음식물</span>
+            <span class="pill orange" onclick="pickSub(this,'음식물')">🟡 음식물</span>
             <span class="pill blue2" onclick="pickSub(this,'재활용')">🔵 재활용</span>
           </div>
         </div>
@@ -208,23 +207,15 @@ input,select,textarea{font-family:inherit;outline:none}
             <button class="geo-btn" onclick="geoM()">📍확인</button>
           </div>
           <div class="addr-preview" id="m-addr-ok"></div>
-          <div class="qa-wrap">
-            <div class="qa-title">📌 빠른 주소 선택</div>
-            <div class="qa-dong">잠실동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 레이크팰리스아파트','레이크팰리스',this,'m')">레이크팰리스</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 트리지움아파트','트리지움',this,'m')">트리지움</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 잠실현대아파트','잠실현대',this,'m')">잠실현대</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 우성4차아파트','우성4차',this,'m')">우성4차</button>
-            </div>
-            <div class="qa-dong">삼전동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 삼전동 삼전현대아파트','삼전현대',this,'m')">삼전현대</button>
-            </div>
-            <div class="qa-dong">가락동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 가락동 가락시장','가락시장',this,'m')">가락시장</button>
-            </div>
+          <div class="dong-picker">
+            <div class="dong-picker-hdr"><span class="dong-picker-label">📌 동 구분</span></div>
+            <select class="dong-select" id="m-dong-sel" onchange="onDongChange('m')">
+              <option value="">동 선택</option>
+              <option value="잠실동">잠실동</option>
+              <option value="삼전동">삼전동</option>
+              <option value="가락동">가락동</option>
+            </select>
+            <div class="dong-chips" id="m-dong-chips" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -297,23 +288,15 @@ input,select,textarea{font-family:inherit;outline:none}
             <button class="geo-btn" onclick="geoH()">📍확인</button>
           </div>
           <div class="addr-preview" id="h-addr-ok"></div>
-          <div class="qa-wrap">
-            <div class="qa-title">📌 빠른 주소 선택</div>
-            <div class="qa-dong">잠실동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 레이크팰리스아파트','레이크팰리스',this,'h')">레이크팰리스</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 트리지움아파트','트리지움',this,'h')">트리지움</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 잠실현대아파트','잠실현대',this,'h')">잠실현대</button>
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 우성4차아파트','우성4차',this,'h')">우성4차</button>
-            </div>
-            <div class="qa-dong">삼전동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 삼전동 삼전현대아파트','삼전현대',this,'h')">삼전현대</button>
-            </div>
-            <div class="qa-dong">가락동</div>
-            <div class="qa-chips">
-              <button class="qa-chip" onclick="pickAddr('서울 송파구 가락동 가락시장','가락시장',this,'h')">가락시장</button>
-            </div>
+          <div class="dong-picker">
+            <div class="dong-picker-hdr"><span class="dong-picker-label">📌 동 구분</span></div>
+            <select class="dong-select" id="h-dong-sel" onchange="onDongChange('h')">
+              <option value="">동 선택</option>
+              <option value="잠실동">잠실동</option>
+              <option value="삼전동">삼전동</option>
+              <option value="가락동">가락동</option>
+            </select>
+            <div class="dong-chips" id="h-dong-chips" style="display:none"></div>
           </div>
         </div>
       </div>
@@ -422,14 +405,14 @@ let tmpPhoto={before:null,after:null,hazard:null};
 let fltFrom='',fltTo='';
 let selQaChip=null, fixedPins=[];
 
-// 주요 장소 (지도 고정 마커 + 빠른 주소 선택)
+// 주요 장소 (지도 고정 마커 + 동 구분 칩) — 하드코딩 좌표
 const FIXED_LOCS=[
-  {name:'레이크팰리스', addr:'서울 송파구 잠실동 레이크팰리스아파트', dong:'잠실동'},
-  {name:'트리지움',     addr:'서울 송파구 잠실동 트리지움아파트',      dong:'잠실동'},
-  {name:'잠실현대',     addr:'서울 송파구 잠실동 잠실현대아파트',       dong:'잠실동'},
-  {name:'우성4차',      addr:'서울 송파구 잠실동 우성4차아파트',         dong:'잠실동'},
-  {name:'삼전현대',     addr:'서울 송파구 삼전동 삼전현대아파트',        dong:'삼전동'},
-  {name:'가락시장',     addr:'서울 송파구 가락동 가락시장',               dong:'가락동'},
+  {name:'레이크팰리스', short:'잠실동 레이크팰리스', dong:'잠실동', lat:37.5083, lng:127.0899},
+  {name:'트리지움',     short:'잠실동 트리지움',     dong:'잠실동', lat:37.5095, lng:127.0855},
+  {name:'잠실현대',     short:'잠실동 잠실현대',     dong:'잠실동', lat:37.5090, lng:127.0872},
+  {name:'우성4차',      short:'잠실동 우성4차',      dong:'잠실동', lat:37.5082, lng:127.0867},
+  {name:'삼전현대',     short:'삼전동 삼전현대',     dong:'삼전동', lat:37.5062, lng:127.0921},
+  {name:'가락시장',     short:'가락동 가락시장',      dong:'가락동', lat:37.4926, lng:127.1214},
 ];
 
 const $=id=>document.getElementById(id);
@@ -533,56 +516,49 @@ function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('o
 let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
 
-// ── 빠른 주소 선택 ──
-function pickAddr(addr,label,chipEl,form){
-  // 칩 선택 표시
+// ── 동 구분 드롭다운 → 칩 표시 ──
+function onDongChange(form){
+  const dong=$(form==='m'?'m-dong-sel':'h-dong-sel').value;
+  const chipsEl=$(form==='m'?'m-dong-chips':'h-dong-chips');
+  if(selQaChip){selQaChip.classList.remove('sel');selQaChip=null;}
+  if(!dong){chipsEl.style.display='none';chipsEl.innerHTML='';return;}
+  const locs=FIXED_LOCS.filter(l=>l.dong===dong);
+  chipsEl.innerHTML=locs.map((l,i)=>{
+    const idx=FIXED_LOCS.indexOf(l);
+    return `<button class="qa-chip" onclick="pickAddr(${idx},this,'${form}')">${l.name}</button>`;
+  }).join('');
+  chipsEl.style.display='flex';
+}
+
+// ── 주소 칩 선택 (하드코딩 좌표 — geocoding 없음) ──
+function pickAddr(idx,chipEl,form){
+  const loc=FIXED_LOCS[idx];
   if(selQaChip)selQaChip.classList.remove('sel');
   chipEl.classList.add('sel'); selQaChip=chipEl;
-  // 주소 입력 및 자동 지오코딩
   if(form==='m'){
-    $('m-addr').value=addr;
-    $('m-addr-ok').textContent='🔄 위치 확인 중…';
-    mPos=null;
-    getGeo().addressSearch(addr,(res,st)=>{
-      if(st===kakao.maps.services.Status.OK){
-        mPos={lat:+res[0].y,lng:+res[0].x};
-        $('m-addr-ok').textContent='📍 '+label+' 위치 확인됨';
-      } else {
-        $('m-addr-ok').textContent='⚠️ 📍확인 버튼을 눌러주세요';
-      }
-    });
+    $('m-addr').value=loc.short;
+    mPos={lat:loc.lat,lng:loc.lng};
+    $('m-addr-ok').textContent='📍 '+loc.name+' 위치 확인됨';
   } else {
-    $('h-addr').value=addr;
-    $('h-addr-ok').textContent='🔄 위치 확인 중…';
-    hPos=null;
-    getGeo().addressSearch(addr,(res,st)=>{
-      if(st===kakao.maps.services.Status.OK){
-        hPos={lat:+res[0].y,lng:+res[0].x};
-        $('h-addr-ok').textContent='📍 '+label+' 위치 확인됨';
-      } else {
-        $('h-addr-ok').textContent='⚠️ 📍확인 버튼을 눌러주세요';
-      }
-    });
+    $('h-addr').value=loc.short;
+    hPos={lat:loc.lat,lng:loc.lng};
+    $('h-addr-ok').textContent='📍 '+loc.name+' 위치 확인됨';
   }
 }
 
-// ── 지도 고정 마커 초기화 ──
+// ── 지도 고정 마커 초기화 (하드코딩 좌표 — geocoding 없음) ──
 function initFixedMarkers(){
-  const geo=getGeo();
   fixedPins.forEach(p=>p.setMap(null)); fixedPins=[];
   FIXED_LOCS.forEach(loc=>{
-    geo.addressSearch(loc.addr,(res,st)=>{
-      if(st===kakao.maps.services.Status.OK&&kakaoMap){
-        const ov=new kakao.maps.CustomOverlay({
-          position:new kakao.maps.LatLng(+res[0].y,+res[0].x),
-          content:`<div class="map-pin-fixed" title="${loc.dong} ${loc.name}">${loc.name}</div>`,
-          yAnchor:1.5,
-          zIndex:1
-        });
-        ov.setMap(kakaoMap);
-        fixedPins.push(ov);
-      }
+    if(!kakaoMap)return;
+    const ov=new kakao.maps.CustomOverlay({
+      position:new kakao.maps.LatLng(loc.lat,loc.lng),
+      content:`<div class="map-pin-fixed" title="${loc.dong} ${loc.name}">${loc.name}</div>`,
+      yAnchor:1.5,
+      zIndex:1
     });
+    ov.setMap(kakaoMap);
+    fixedPins.push(ov);
   });
 }
 
@@ -629,6 +605,8 @@ function resetMForm(){
   $('m-before-th').style.display='none';$('m-after-th').style.display='none';
   $('m-before').value='';$('m-after').value='';
   if(mPill){mPill.classList.remove('on');mPill=null;}mSub='';mPos=null;$('m-addr-ok').textContent='';
+  $('m-dong-sel').value='';$('m-dong-chips').style.display='none';$('m-dong-chips').innerHTML='';
+  if(selQaChip){selQaChip.classList.remove('sel');selQaChip=null;}
   tmpPhoto={before:null,after:null,hazard:null};
 }
 
@@ -655,7 +633,9 @@ function resetHForm(){
   ['h-addr','h-riskcont','h-insp','h-action','h-note'].forEach(i=>$(i).value='');
   $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';
-  hPos=null;$('h-addr-ok').textContent='';tmpPhoto={before:null,after:null,hazard:null};
+  hPos=null;$('h-addr-ok').textContent='';
+  $('h-dong-sel').value='';$('h-dong-chips').style.display='none';$('h-dong-chips').innerHTML='';
+  tmpPhoto={before:null,after:null,hazard:null};
 }
 
 // ── 목록 ──

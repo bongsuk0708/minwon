@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="민원관리">
+<title>민원·사고예방 관리 v2</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="../../icon-192.png">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4421ecfa7ea279c190db811c789e450d&libraries=services"></script>
+<style>
+:root{
+  --blue:#1e40af;--blue2:#3b82f6;--green:#16a34a;--green2:#22c55e;
+  --orange:#ea580c;--orange2:#f97316;--red:#dc2626;--red2:#ef4444;
+  --yellow:#ca8a04;--yellow2:#eab308;--gray2:#94a3b8;
+  --ink:#0f172a;--sub:#64748b;--line:#e2e8f0;--bg:#f8fafc;--card:#fff;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);max-width:540px;margin:0 auto;min-height:100vh;padding-bottom:80px}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select,textarea{font-family:inherit;outline:none}
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;gap:16px}
+#login-screen h1{font-size:22px;font-weight:800;color:var(--blue);text-align:center}
+#login-screen p{font-size:14px;color:var(--sub);text-align:center}
+#login-name{width:100%;padding:14px;border:2px solid var(--line);border-radius:var(--radius);font-size:16px;text-align:center}
+#login-name:focus{border-color:var(--blue)}
+#login-btn{width:100%;padding:14px;background:var(--blue);color:#fff;border-radius:var(--radius);font-size:16px;font-weight:700}
+#hdr{position:sticky;top:0;z-index:100;background:var(--blue);color:#fff;padding:10px 14px 0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+#hdr h1{font-size:15px;font-weight:800}
+#hdr-right{display:flex;align-items:center;gap:6px}
+#staff-name{font-size:12px;opacity:.85}
+#field-link{font-size:12px;background:rgba(255,255,255,.25);color:#fff;padding:4px 9px;border-radius:20px;text-decoration:none;font-weight:700}
+#logout-btn{font-size:11px;background:rgba(255,255,255,.2);color:#fff;padding:3px 8px;border-radius:20px}
+#net-bar{font-size:11px;padding:3px 0;text-align:center;border-top:1px solid rgba(255,255,255,.15)}
+.net-ok{color:#86efac}.net-err{color:#fca5a5}.net-wait{color:#fde68a}
+#tabs{display:flex;background:rgba(0,0,0,.15)}
+.tab{flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;color:rgba(255,255,255,.65);cursor:pointer}
+.tab.on{color:#fff;border-bottom:3px solid #fff}
+.pane{display:none;padding:14px}
+.pane.on{display:block}
+#type-toggle{display:flex;gap:8px;margin-bottom:14px}
+.type-btn{flex:1;padding:11px 8px;border-radius:var(--radius);font-size:14px;font-weight:700;border:2.5px solid var(--line);background:var(--card);color:var(--sub)}
+.type-btn.on.minwon{background:var(--blue);border-color:var(--blue);color:#fff}
+.type-btn.on.hazard{background:var(--red);border-color:var(--red);color:#fff}
+.form-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
+.form-label{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;display:block}
+.form-input{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink);background:#fff}
+.form-input:focus{border-color:var(--blue)}
+.form-select{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink);background:#fff;appearance:auto}
+.form-textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:14px;color:var(--ink);resize:none;min-height:68px}
+.form-row{margin-bottom:10px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.pill-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.pill{padding:6px 11px;border-radius:20px;font-size:13px;font-weight:600;border:1.5px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
+.pill.green.on{background:#dcfce7;border-color:var(--green2);color:var(--green)}
+.pill.orange.on{background:#ffedd5;border-color:var(--orange2);color:var(--orange)}
+.pill.blue2.on{background:#dbeafe;border-color:var(--blue2);color:var(--blue)}
+.addr-row{display:flex;gap:6px;align-items:flex-end}
+.addr-row .form-input{flex:1}
+.geo-btn{padding:9px 11px;background:var(--blue);color:#fff;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap}
+.addr-preview{font-size:12px;color:var(--green);margin-top:3px;min-height:15px}
+.photo-section{display:flex;gap:8px;flex-wrap:wrap}
+.photo-box{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:76px}
+.photo-box label{font-size:11px;font-weight:700;color:var(--sub)}
+.photo-thumb{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);display:none}
+.photo-btn{width:70px;height:70px;background:var(--bg);border:2px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub);cursor:pointer}
+.submit-btn{width:100%;padding:14px;border-radius:var(--radius);font-size:16px;font-weight:800;color:#fff;margin-top:6px}
+.submit-btn.minwon{background:var(--blue)}.submit-btn.hazard{background:var(--red)}
+#list-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.flt-btn{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
+.flt-btn.on{color:#fff}
+.flt-btn.on.f-all{background:#334155;border-color:#334155}
+.flt-btn.on.f-생활{background:var(--green2);border-color:var(--green2)}
+.flt-btn.on.f-음식물{background:var(--orange2);border-color:var(--orange2)}
+.flt-btn.on.f-재활용{background:var(--blue2);border-color:var(--blue2)}
+.flt-btn.on.f-사고{background:var(--red2);border-color:var(--red2)}
+#rec-list{display:flex;flex-direction:column;gap:8px}
+.rec-card{background:var(--card);border-radius:var(--radius);padding:11px 13px;box-shadow:var(--shadow);border-left:4px solid var(--line);cursor:pointer}
+.rc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.rc-no{font-size:12px;font-weight:800;color:var(--sub)}
+.rc-status{font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px}
+.st-접수{background:#dbeafe;color:var(--blue)}.st-처리중{background:#fef9c3;color:var(--yellow)}.st-처리완료{background:#dcfce7;color:var(--green)}
+.rc-addr{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-meta{font-size:11px;color:var(--sub)}.rc-cat{font-size:11px;font-weight:700;margin-top:2px}
+.bdr-생활{border-color:var(--green2)}.bdr-음식물{border-color:var(--orange2)}.bdr-재활용{border-color:var(--blue2)}.bdr-hazard{border-color:var(--red2)}
+#map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.leg{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:600}
+.leg-dot{width:11px;height:11px;border-radius:50%}
+#map-container{width:100%;height:calc(100vh - 220px);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.map-pin{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer;position:relative;display:inline-block}
+.map-pin::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top-width:5px;border-top-style:solid}
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto}
+#modal-bg.on{display:flex;align-items:flex-start;justify-content:center;padding:14px}
+#modal{background:var(--card);border-radius:16px;width:100%;max-width:500px;overflow:hidden}
+#modal-hdr{padding:14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+#modal-title{font-size:15px;font-weight:800}
+#modal-close{font-size:20px;color:var(--sub);background:none;cursor:pointer}
+#modal-body{padding:14px}
+.det-row{margin-bottom:9px}
+.det-label{font-size:11px;font-weight:700;color:var(--sub);margin-bottom:2px}
+.det-val{font-size:13px;color:var(--ink)}
+.det-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+#modal-actions{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+.act-btn{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700}
+.act-btn.edit{background:#f1f5f9;color:var(--ink)}.act-btn.del{background:#fee2e2;color:var(--red)}
+.status-btn-row{display:flex;gap:5px;margin-top:5px}
+.st-btn{flex:1;padding:7px 3px;border-radius:7px;font-size:12px;font-weight:700;border:1.5px solid var(--line);background:var(--bg);color:var(--sub)}
+.st-btn.on.접수{background:#dbeafe;border-color:var(--blue2);color:var(--blue)}
+.st-btn.on.처리중{background:#fef9c3;border-color:var(--yellow2);color:var(--yellow)}
+.st-btn.on.처리완료{background:#dcfce7;border-color:var(--green2);color:var(--green)}
+/* 사진 뷰어 (PC download) */
+.photo-gallery{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.photo-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+.photo-item img{width:100px;height:100px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);cursor:pointer}
+.photo-item img:hover{opacity:.85}
+.dl-btn{font-size:11px;font-weight:700;padding:4px 10px;background:var(--blue);color:#fff;border-radius:6px}
+.photo-label{font-size:11px;color:var(--sub);font-weight:600}
+.empty{text-align:center;padding:36px 16px;color:var(--sub);font-size:14px}
+.empty .ei{font-size:38px;margin-bottom:6px}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:28px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+/* 사진 업로드 진행 */
+#photo-progress{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
+#photo-progress.on{display:flex}
+#photo-progress div{background:#fff;border-radius:12px;padding:20px 28px;text-align:center;font-weight:700;font-size:15px}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>민원·사고예방<br>관리 시스템</h1>
+  <p>사무실 (PC/태블릿) 버전 v2</p>
+  <input id="login-name" class="form-input" type="text" placeholder="담당자 이름" maxlength="10">
+  <button id="login-btn" onclick="doLogin()">시작하기</button>
+</div>
+
+<div id="app" style="display:none">
+  <div id="hdr">
+    <div id="hdr-top">
+      <h1>📋 민원·사고예방 관리 v2</h1>
+      <div id="hdr-right">
+        <span id="staff-name"></span>
+        <a id="field-link" href="./field/" target="_blank">📱현장</a>
+        <button id="logout-btn" onclick="doLogout()">변경</button>
+      </div>
+    </div>
+    <div id="net-bar" class="net-wait">연결 중…</div>
+    <div id="tabs">
+      <div class="tab on" onclick="sw('form')" id="tab-form">✏️ 접수</div>
+      <div class="tab" onclick="sw('list')" id="tab-list">📋 목록</div>
+      <div class="tab" onclick="sw('map')" id="tab-map">🗺 지도</div>
+    </div>
+  </div>
+
+  <!-- 접수 -->
+  <div class="pane on" id="pane-form">
+    <div id="type-toggle">
+      <button class="type-btn minwon on" onclick="setFT('minwon',this)">📋 민원 접수</button>
+      <button class="type-btn hazard" onclick="setFT('hazard',this)">⚠️ 사고예방</button>
+    </div>
+
+    <div id="form-minwon">
+      <div class="form-card">
+        <div class="form-2col">
+          <div><span class="form-label">접수일</span><input class="form-input" id="m-date" type="date"></div>
+          <div><span class="form-label">시간</span><input class="form-input" id="m-time" type="time"></div>
+        </div>
+        <div class="form-row">
+          <span class="form-label">폐기물 구분 *</span>
+          <div class="pill-group">
+            <span class="pill green" onclick="pickSub(this,'생활')">🟢 생활</span>
+            <span class="pill orange" onclick="pickSub(this,'음식물')">🟠 음식물</span>
+            <span class="pill blue2" onclick="pickSub(this,'재활용')">🔵 재활용</span>
+          </div>
+        </div>
+        <div class="form-row">
+          <span class="form-label">배출/발생 주소 *</span>
+          <div class="addr-row">
+            <input class="form-input" id="m-addr" type="text" placeholder="주소 입력">
+            <button class="geo-btn" onclick="geoM()">📍확인</button>
+          </div>
+          <div class="addr-preview" id="m-addr-ok"></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="form-2col">
+          <div><span class="form-label">민원인</span><input class="form-input" id="m-person" type="text" placeholder="홍길동"></div>
+          <div><span class="form-label">연락처</span><input class="form-input" id="m-tel" type="tel" placeholder="010-0000-0000"></div>
+        </div>
+        <div class="form-row">
+          <span class="form-label">접수 경로</span>
+          <select class="form-select" id="m-channel">
+            <option value="">선택</option>
+            <option>전화</option><option>홈페이지</option><option>구청민원실</option><option>동주민센터</option><option>기타</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="form-row">
+          <span class="form-label">민원 내용 구분 *</span>
+          <select class="form-select" id="m-category">
+            <option value="">선택</option>
+            <option>수거누락</option><option>잔재물</option><option>파손훼손</option><option>수거시간미준수</option>
+            <option>악취위생관리</option><option>불법투기혼합배출</option><option>불친절안전수칙</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-row"><span class="form-label">세부 민원내용</span><textarea class="form-textarea" id="m-content" placeholder="민원 내용"></textarea></div>
+        <div class="form-row"><span class="form-label">방문 확인결과</span><textarea class="form-textarea" id="m-insp" placeholder="방문 확인 결과"></textarea></div>
+        <div class="form-row"><span class="form-label">조치 내용 및 비고</span><textarea class="form-textarea" id="m-action" placeholder="조치 내용"></textarea></div>
+        <div class="form-2col">
+          <div><span class="form-label">처리 상태</span>
+            <select class="form-select" id="m-status"><option>접수</option><option>처리중</option><option>처리완료</option></select>
+          </div>
+          <div><span class="form-label">관리대상</span>
+            <select class="form-select" id="m-mgmt"><option>일반</option><option>관심</option><option>중점</option><option>특별</option></select>
+          </div>
+        </div>
+      </div>
+      <div class="form-card">
+        <span class="form-label">전후 사진 (Firebase 저장 → PC에서 보기 가능)</span>
+        <div class="photo-section">
+          <div class="photo-box"><label>처리 전</label>
+            <div class="photo-btn" onclick="$('m-before').click()">📷</div>
+            <img id="m-before-th" class="photo-thumb">
+            <input type="file" id="m-before" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'m-before-th','before')">
+          </div>
+          <div class="photo-box"><label>처리 후</label>
+            <div class="photo-btn" onclick="$('m-after').click()">📷</div>
+            <img id="m-after-th" class="photo-thumb">
+            <input type="file" id="m-after" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'m-after-th','after')">
+          </div>
+        </div>
+      </div>
+      <button class="submit-btn minwon" onclick="submitM()">✅ 민원 접수 저장</button>
+    </div>
+
+    <div id="form-hazard" style="display:none">
+      <div class="form-card">
+        <div class="form-2col">
+          <div><span class="form-label">행정동</span>
+            <select class="form-select" id="h-dong"><option value="">선택</option>
+              <option>잠실동</option><option>삼전동</option><option>석촌동</option><option>송파동</option><option>풍납동</option>
+            </select>
+          </div>
+          <div><span class="form-label">점검일자</span><input class="form-input" id="h-inspdate" type="date"></div>
+        </div>
+        <div class="form-row">
+          <span class="form-label">위험지점 주소 *</span>
+          <div class="addr-row">
+            <input class="form-input" id="h-addr" type="text" placeholder="주소 입력">
+            <button class="geo-btn" onclick="geoH()">📍확인</button>
+          </div>
+          <div class="addr-preview" id="h-addr-ok"></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <div class="form-row">
+          <span class="form-label">사고위험 요인구분 *</span>
+          <select class="form-select" id="h-risktype"><option value="">선택</option>
+            <option>급경사</option><option>교통혼잡</option><option>유리병</option><option>맹견</option><option>계단</option><option>협소골목</option><option>기타</option>
+          </select>
+        </div>
+        <div class="form-row"><span class="form-label">주요 위험내용</span><textarea class="form-textarea" id="h-riskcont" placeholder="위험요소 상세 내용"></textarea></div>
+        <div class="form-row"><span class="form-label">안전점검 결과</span><textarea class="form-textarea" id="h-insp" placeholder="점검 결과"></textarea></div>
+        <div class="form-row"><span class="form-label">사고예방 조치사항</span><textarea class="form-textarea" id="h-action" placeholder="조치사항"></textarea></div>
+        <div class="form-2col">
+          <div><span class="form-label">위험등급 *</span>
+            <select class="form-select" id="h-level"><option value="High">🔴 High</option><option value="Medium">🟡 Medium</option><option value="Low">⚫ Low</option></select>
+          </div>
+          <div><span class="form-label">비고</span><input class="form-input" id="h-note" type="text" placeholder="메모"></div>
+        </div>
+      </div>
+      <div class="form-card">
+        <span class="form-label">현장 사진</span>
+        <div class="photo-section">
+          <div class="photo-box"><label>위험지점</label>
+            <div class="photo-btn" onclick="$('h-photo').click()">📷</div>
+            <img id="h-photo-th" class="photo-thumb">
+            <input type="file" id="h-photo" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
+          </div>
+        </div>
+      </div>
+      <button class="submit-btn hazard" onclick="submitH()">✅ 사고예방 등록</button>
+    </div>
+  </div>
+
+  <!-- 목록 -->
+  <div class="pane" id="pane-list">
+    <div id="list-filter">
+      <button class="flt-btn on f-all" onclick="setFlt('all',this)">전체</button>
+      <button class="flt-btn f-생활" onclick="setFlt('생활',this)">🟢 생활</button>
+      <button class="flt-btn f-음식물" onclick="setFlt('음식물',this)">🟠 음식물</button>
+      <button class="flt-btn f-재활용" onclick="setFlt('재활용',this)">🔵 재활용</button>
+      <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">🔴 사고예방</button>
+    </div>
+    <div id="rec-list"></div>
+  </div>
+
+  <!-- 지도 -->
+  <div class="pane" id="pane-map">
+    <div id="map-legend">
+      <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
+      <div class="leg"><div class="leg-dot" style="background:#f97316"></div>음식물</div>
+      <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
+      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고High</div>
+      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>사고Mid</div>
+      <div class="leg"><div class="leg-dot" style="background:#94a3b8"></div>사고Low</div>
+    </div>
+    <div id="map-container"></div>
+  </div>
+</div>
+
+<!-- 상세 모달 -->
+<div id="modal-bg" onclick="closeMod(event)">
+  <div id="modal">
+    <div id="modal-hdr">
+      <div id="modal-title"></div>
+      <button id="modal-close" onclick="closeMod()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div id="modal-actions"></div>
+  </div>
+</div>
+
+<!-- 사진 업로드 로딩 -->
+<div id="photo-progress"><div>📷 사진 저장 중…</div></div>
+
+<div id="toast"></div>
+
+<script>
+const FB={
+  apiKey:'AIzaSyCrJaARREMDXFfhicjUwWFyqkyTbVMRsYk',
+  authDomain:'minwon-c29c2.firebaseapp.com',
+  databaseURL:'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId:'minwon-c29c2',
+  storageBucket:'minwon-c29c2.firebasestorage.app',
+  messagingSenderId:'410383379202',
+  appId:'1:410383379202:web:b5dd661f83df18530ff01b'
+};
+firebase.initializeApp(FB);
+const db=firebase.database();
+const RECS=db.ref('report/recs');
+const PHOTOS=db.ref('report/photos'); // 사진 별도 저장
+
+let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
+let mSub='',mPos=null,hPos=null,curDetailId=null;
+let tmpPhoto={before:null,after:null,hazard:null};
+
+const $=id=>document.getElementById(id);
+function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function nowStr(){return new Date().toISOString().slice(0,16).replace('T',' ')}
+function today(){return new Date().toISOString().slice(0,10)}
+function now_t(){return new Date().toTimeString().slice(0,5)}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function netBar(t,m){const b=$('net-bar');b.textContent=m;b.className='net-'+t}
+
+// ── 사진 압축 ──
+function compressPhoto(file,maxPx=640,q=0.55){
+  return new Promise(res=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const sc=Math.min(1,maxPx/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');
+      cv.width=img.width*sc; cv.height=img.height*sc;
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      URL.revokeObjectURL(url);
+      res(cv.toDataURL('image/jpeg',q));
+    };
+    img.src=url;
+  });
+}
+
+async function onPhoto(input,thumbId,field){
+  const f=input.files[0]; if(!f)return;
+  $('photo-progress').classList.add('on');
+  try{
+    const b64=await compressPhoto(f);
+    $(thumbId).src=b64; $(thumbId).style.display='block';
+    tmpPhoto[field]=b64;
+    // 상세 편집 중이면 바로 Firebase 저장
+    if(curDetailId){
+      await PHOTOS.child(curDetailId).child(field).set(b64);
+      toast('사진 저장 완료');
+    }
+  }finally{$('photo-progress').classList.remove('on');}
+}
+
+// ── 로그인 ──
+function initLogin(){const s=localStorage.getItem('rp_staff');if(s){staff=s;startApp();}}
+function doLogin(){
+  const n=$('login-name').value.trim();
+  if(!n){toast('이름을 입력해주세요');return;}
+  staff=n; localStorage.setItem('rp_staff',n); startApp();
+}
+function doLogout(){const n=prompt('담당자 이름 변경:',staff);if(n&&n.trim()){staff=n.trim();localStorage.setItem('rp_staff',staff);$('staff-name').textContent=staff;}}
+function startApp(){
+  $('login-screen').style.display='none';
+  $('app').style.display='block';
+  $('staff-name').textContent=staff;
+  $('m-date').value=today(); $('m-time').value=now_t(); $('h-inspdate').value=today();
+  connectFB();
+  if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
+}
+
+// ── Firebase ──
+function connectFB(){
+  netBar('wait','연결 중…');
+  RECS.on('value',snap=>{
+    const v=snap.val();
+    recs=v?Object.values(v).filter(r=>!r.del):[];
+    renderList(); renderMap();
+    netBar('ok','✅ 연결됨 ('+recs.length+'건)');
+  },()=>{netBar('err','⚠️ 오프라인');});
+}
+async function saveRec(rec){return RECS.child(rec.id).set(rec);}
+function softDel(id){return RECS.child(id).update({del:1,delAt:nowStr()});}
+
+// ── 번호 ──
+function nextMNo(){
+  const ns=recs.filter(r=>r.recType==='minwon'&&r.no).map(r=>parseInt((r.no||'').replace('2026-',''))||0);
+  return '2026-'+(Math.max(0,...ns)+1);
+}
+function nextHNo(){
+  const ns=recs.filter(r=>r.recType==='hazard'&&r.hazardNo).map(r=>parseInt((r.hazardNo||'').replace('26-',''))||0);
+  const n=Math.max(0,...ns)+1; return '26-'+(n<10?'0'+n:n);
+}
+
+// ── 탭 ──
+function sw(t){
+  ['form','list','map'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
+  if(t==='map')setTimeout(initMap,80);
+}
+
+// ── 폼 타입 ──
+function setFT(t,el){
+  $('form-minwon').style.display=t==='minwon'?'block':'none';
+  $('form-hazard').style.display=t==='hazard'?'block':'none';
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ── 민원 ──
+let mPill=null;
+function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('on');mPill=el;mSub=v;}
+
+let geocoder=null;
+function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
+function geoM(){
+  const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
+  getGeo().addressSearch(a,(res,st)=>{
+    if(st===kakao.maps.services.Status.OK){mPos={lat:+res[0].y,lng:+res[0].x};$('m-addr-ok').textContent='📍 위치 확인됨';}
+    else{$('m-addr-ok').textContent='❌ 주소를 찾을 수 없습니다';mPos=null;}
+  });
+}
+function geoH(){
+  const a=$('h-addr').value.trim(); if(!a){toast('주소 입력');return;}
+  getGeo().addressSearch(a,(res,st)=>{
+    if(st===kakao.maps.services.Status.OK){hPos={lat:+res[0].y,lng:+res[0].x};$('h-addr-ok').textContent='📍 위치 확인됨';}
+    else{$('h-addr-ok').textContent='❌ 주소를 찾을 수 없습니다';hPos=null;}
+  });
+}
+
+async function submitM(){
+  if(!mSub){toast('폐기물 구분 선택');return;}
+  if(!$('m-addr').value.trim()){toast('주소 입력');return;}
+  if(!$('m-category').value){toast('내용 구분 선택');return;}
+  const id=uuid();
+  const rec={id,recType:'minwon',no:nextMNo(),date:$('m-date').value,time:$('m-time').value,
+    subtype:mSub,addr:$('m-addr').value.trim(),addrPos:mPos||null,
+    person:$('m-person').value.trim(),tel:$('m-tel').value.trim(),channel:$('m-channel').value,
+    category:$('m-category').value,content:$('m-content').value.trim(),
+    inspResult:$('m-insp').value.trim(),status:$('m-status').value,mgmtLevel:$('m-mgmt').value,
+    actionNote:$('m-action').value.trim(),staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
+  $('photo-progress').classList.add('on');
+  try{
+    await saveRec(rec);
+    if(tmpPhoto.before)await PHOTOS.child(id).child('before').set(tmpPhoto.before);
+    if(tmpPhoto.after)await PHOTOS.child(id).child('after').set(tmpPhoto.after);
+    toast('✅ 민원 접수 완료! ('+rec.no+')');
+    resetMForm();
+  }catch{toast('⚠️ 저장 실패');}
+  finally{$('photo-progress').classList.remove('on');}
+}
+function resetMForm(){
+  ['m-person','m-tel','m-addr','m-content','m-insp','m-action'].forEach(i=>$(i).value='');
+  $('m-channel').value='';$('m-category').value='';$('m-status').value='접수';$('m-mgmt').value='일반';
+  $('m-date').value=today();$('m-time').value=now_t();
+  $('m-before-th').style.display='none';$('m-after-th').style.display='none';
+  $('m-before').value='';$('m-after').value='';
+  if(mPill){mPill.classList.remove('on');mPill=null;}mSub='';mPos=null;$('m-addr-ok').textContent='';
+  tmpPhoto={before:null,after:null,hazard:null};
+}
+
+async function submitH(){
+  if(!$('h-addr').value.trim()){toast('주소 입력');return;}
+  if(!$('h-risktype').value){toast('위험요인 선택');return;}
+  const id=uuid();
+  const rec={id,recType:'hazard',hazardNo:nextHNo(),dong:$('h-dong').value,
+    addr:$('h-addr').value.trim(),addrPos:hPos||null,riskType:$('h-risktype').value,
+    riskContent:$('h-riskcont').value.trim(),inspResult:$('h-insp').value.trim(),
+    action:$('h-action').value.trim(),inspDate:$('h-inspdate').value,
+    riskLevel:$('h-level').value,note:$('h-note').value.trim(),
+    staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
+  $('photo-progress').classList.add('on');
+  try{
+    await saveRec(rec);
+    if(tmpPhoto.hazard)await PHOTOS.child(id).child('hazard').set(tmpPhoto.hazard);
+    toast('✅ 사고예방 등록! ('+rec.hazardNo+')');
+    resetHForm();
+  }catch{toast('⚠️ 저장 실패');}
+  finally{$('photo-progress').classList.remove('on');}
+}
+function resetHForm(){
+  ['h-addr','h-riskcont','h-insp','h-action','h-note'].forEach(i=>$(i).value='');
+  $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
+  $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';
+  hPos=null;$('h-addr-ok').textContent='';tmpPhoto={before:null,after:null,hazard:null};
+}
+
+// ── 목록 ──
+function setFlt(f,el){curFlt=f;document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderList();}
+function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#ef4444':r.riskLevel==='Medium'?'#eab308':'#94a3b8';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#f97316':'#3b82f6';}
+function pinLabel(r){if(r.recType==='hazard')return r.riskType||'위험';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식물':'재활용';}
+
+function renderList(){
+  const el=$('rec-list');
+  let data=[...recs].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  if(curFlt==='hazard')data=data.filter(r=>r.recType==='hazard');
+  else if(curFlt!=='all')data=data.filter(r=>r.recType==='minwon'&&r.subtype===curFlt);
+  if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📭</div>항목 없음</div>';return;}
+  el.innerHTML=data.map(r=>{
+    const isH=r.recType==='hazard';
+    const bdr=isH?'hazard':r.subtype;
+    const no=isH?r.hazardNo:r.no;
+    const st=isH?'🔴 사고예방':(r.status==='처리완료'?'✅ '+r.status:r.status==='처리중'?'🔄 '+r.status:'📩 '+r.status);
+    const stCls=isH?'st-처리완료':('st-'+r.status);
+    return `<div class="rec-card bdr-${bdr}" onclick="openDet('${r.id}')">
+      <div class="rc-top"><span class="rc-no">${no||''}</span><span class="rc-status ${stCls}">${st}</span></div>
+      <div class="rc-addr">${r.addr}</div>
+      <div class="rc-meta">${r.date||''} ${isH?(r.dong||''):'('+r.subtype+')'}</div>
+      <div class="rc-cat" style="color:${pinColor(r)}">${isH?'⚠️ '+r.riskType:'📋 '+r.category}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 지도 ──
+let mapInited=false;
+function initMap(){
+  if(mapInited){renderMap();return;}
+  kakaoMap=new kakao.maps.Map($('map-container'),{center:new kakao.maps.LatLng(37.504,127.090),level:5});
+  mapInited=true; renderMap();
+}
+function renderMap(){
+  if(!kakaoMap)return;
+  mapPins.forEach(p=>p.setMap(null));mapPins=[];
+  recs.filter(r=>r.addrPos).forEach(r=>{
+    const c=pinColor(r);
+    const ov=new kakao.maps.CustomOverlay({
+      position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
+      content:`<div class="map-pin" style="background:${c};border-top-color:${c}" onclick="openDet('${r.id}')">${pinLabel(r)}</div>`,
+      yAnchor:1.5
+    });
+    ov.setMap(kakaoMap);mapPins.push(ov);
+  });
+}
+
+// ── 상세 모달 ──
+function openDet(id){
+  const r=recs.find(x=>x.id===id); if(!r)return;
+  curDetailId=id;
+  const isH=r.recType==='hazard';
+  $('modal-title').textContent=isH?`⚠️ ${r.hazardNo} 사고예방`:`📋 ${r.no} 민원 (${r.subtype})`;
+  let body='';
+  if(isH){
+    body=`<div class="det-2col">
+      <div class="det-row"><div class="det-label">관리번호</div><div class="det-val">${r.hazardNo||'-'}</div></div>
+      <div class="det-row"><div class="det-label">위험등급</div><div class="det-val" style="font-weight:800;color:${pinColor(r)}">${r.riskLevel}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">주소</div><div class="det-val">${r.addr}</div></div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">행정동</div><div class="det-val">${r.dong||'-'}</div></div>
+      <div class="det-row"><div class="det-label">위험요인</div><div class="det-val">${r.riskType||'-'}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">주요 위험내용</div><div class="det-val">${r.riskContent||'-'}</div></div>
+    <div class="det-row"><div class="det-label">안전점검 결과</div><div class="det-val">${r.inspResult||'-'}</div></div>
+    <div class="det-row"><div class="det-label">조치사항</div><div class="det-val">${r.action||'-'}</div></div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">점검일자</div><div class="det-val">${r.inspDate||'-'}</div></div>
+      <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">비고</div><div class="det-val">${r.note||'-'}</div></div>
+    <div class="det-row"><div class="det-label">현장 사진</div>
+      <div id="det-photo-area">🔄 사진 로딩 중…</div>
+      <div style="margin-top:8px">
+        <span class="form-label">사진 추가/교체</span>
+        <div class="photo-btn" onclick="$('det-hph').click()" style="width:60px;height:60px;font-size:18px">📷</div>
+        <input type="file" id="det-hph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-hth','hazard')">
+        <img id="det-hth" style="display:none">
+      </div>
+    </div>`;
+  } else {
+    body=`<div class="det-2col">
+      <div class="det-row"><div class="det-label">접수번호</div><div class="det-val">${r.no||'-'}</div></div>
+      <div class="det-row"><div class="det-label">구분</div><div class="det-val" style="color:${pinColor(r)};font-weight:800">${r.subtype}</div></div>
+    </div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">접수일</div><div class="det-val">${r.date||'-'}</div></div>
+      <div class="det-row"><div class="det-label">시간</div><div class="det-val">${r.time||'-'}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">주소</div><div class="det-val">${r.addr}</div></div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">민원인</div><div class="det-val">${r.person||'-'}</div></div>
+      <div class="det-row"><div class="det-label">연락처</div><div class="det-val">${r.tel||'-'}</div></div>
+    </div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">접수경로</div><div class="det-val">${r.channel||'-'}</div></div>
+      <div class="det-row"><div class="det-label">내용구분</div><div class="det-val">${r.category||'-'}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">민원내용</div><div class="det-val">${r.content||'-'}</div></div>
+    <div class="det-row"><div class="det-label">방문 확인결과</div><div class="det-val">${r.inspResult||'-'}</div></div>
+    <div class="det-row"><div class="det-label">조치내용</div><div class="det-val">${r.actionNote||'-'}</div></div>
+    <div class="det-row"><div class="det-label">처리 상태 변경</div>
+      <div class="status-btn-row">
+        <button class="st-btn ${r.status==='접수'?'on 접수':''}" onclick="chSt('${id}','접수')">접수</button>
+        <button class="st-btn ${r.status==='처리중'?'on 처리중':''}" onclick="chSt('${id}','처리중')">처리중</button>
+        <button class="st-btn ${r.status==='처리완료'?'on 처리완료':''}" onclick="chSt('${id}','처리완료')">완료</button>
+      </div>
+    </div>
+    <div class="det-2col">
+      <div class="det-row"><div class="det-label">관리대상</div><div class="det-val">${r.mgmtLevel||'-'}</div></div>
+      <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
+    </div>
+    <div class="det-row"><div class="det-label">전후 사진</div>
+      <div id="det-photo-area">🔄 사진 로딩 중…</div>
+      <div style="margin-top:8px">
+        <span class="form-label">사진 추가/교체</span>
+        <div class="photo-section">
+          <div class="photo-box"><label>처리 전</label>
+            <div class="photo-btn" onclick="$('det-bph').click()" style="width:55px;height:55px;font-size:17px">📷</div>
+            <input type="file" id="det-bph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-bth','before')">
+            <img id="det-bth" style="display:none">
+          </div>
+          <div class="photo-box"><label>처리 후</label>
+            <div class="photo-btn" onclick="$('det-aph').click()" style="width:55px;height:55px;font-size:17px">📷</div>
+            <input type="file" id="det-aph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-ath','after')">
+            <img id="det-ath" style="display:none">
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+  $('modal-body').innerHTML=body;
+  $('modal-actions').innerHTML=`<button class="act-btn del" onclick="delRec('${id}')">🗑 삭제</button><button class="act-btn edit" onclick="closeMod()">닫기</button>`;
+  $('modal-bg').classList.add('on');
+
+  // 사진 Firebase에서 로드
+  loadPhotos(id, isH);
+}
+
+function loadPhotos(id, isH){
+  PHOTOS.child(id).once('value', snap=>{
+    const p=snap.val()||{};
+    // v1 localStorage fallback
+    if(!p.before&&!p.after&&!p.hazard){
+      p.before=localStorage.getItem('rp_b_'+id);
+      p.after=localStorage.getItem('rp_a_'+id);
+      p.hazard=localStorage.getItem('rp_h_'+id);
+    }
+    const area=$('det-photo-area');
+    if(!area)return;
+    const photos=isH?[{key:'hazard',label:'현장'}]:[{key:'before',label:'처리 전'},{key:'after',label:'처리 후'}];
+    const items=photos.filter(ph=>p[ph.key]);
+    if(!items.length){area.innerHTML='<span style="font-size:12px;color:#94a3b8">등록된 사진 없음</span>';return;}
+    area.innerHTML=`<div class="photo-gallery">${items.map(ph=>`
+      <div class="photo-item">
+        <span class="photo-label">${ph.label}</span>
+        <img src="${p[ph.key]}" onclick="window.open(this.src)" title="클릭하면 크게 보기">
+        <a href="${p[ph.key]}" download="${ph.label}_${id.slice(0,8)}.jpg">
+          <button class="dl-btn">⬇ 다운로드</button>
+        </a>
+      </div>`).join('')}</div>`;
+  });
+}
+
+function chSt(id,st){
+  RECS.child(id).update({status:st,updatedAt:nowStr()}).then(()=>toast('상태: '+st));
+  document.querySelectorAll('.st-btn').forEach(b=>{
+    const match=b.textContent.trim()===(st==='처리완료'?'완료':st);
+    b.className='st-btn'+(match?' on '+st:'');
+  });
+}
+function delRec(id){if(!confirm('삭제하시겠습니까?'))return;softDel(id).then(()=>{closeMod();toast('삭제 완료');});}
+function closeMod(e){if(e&&e.target!==$('modal-bg'))return;$('modal-bg').classList.remove('on');curDetailId=null;}
+
+initLogin();
+</script>
+</body>
+</html>

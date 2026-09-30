@@ -1,4 +1,4 @@
-const CACHE='report-v2';
+const CACHE='report-field-v1';
 const URLS=['./','.index.html','./manifest.json',
   'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js'];

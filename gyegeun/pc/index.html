@@ -180,7 +180,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v36</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v37</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -451,16 +451,36 @@ function drawXlWarn(){
       }).sort((x,y2)=> x.date.localeCompare(y2.date));
     }
   }
-  const nearHtml = near.length ? `<div class="xw" style="background:#FFF8E9;border-color:#E7D3A8">
-    <h3 style="color:#7A5A16">⚠ 이번 달 밖에 있는 전표 ${near.length}건</h3>
+  /* 달이 다르다고 다 잘못된 건 아닙니다.
+     찍은 날 바로(또는 다음 날 아침에) 저장한 건 정상이고, 고를 달만 다른 것뿐입니다.
+     날짜와 저장 시각이 동떨어진 것만 잘못 저장한 걸로 봅니다. */
+  function dateOdd(r){
+    if(!r.at) return true;                       // 저장 시각이 없으면 판단 못 함 — 일단 확인
+    const gap = Math.round((new Date(r.at).setHours(0,0,0,0)
+                          - new Date(r.date+'T00:00:00').getTime())/86400000);
+    return !(gap >= 0 && gap <= 2);              // 당일 ~ 이틀 뒤 저장은 정상
+  }
+  const odd  = near.filter(dateOdd);
+  const okm2 = near.filter(r=>!dateOdd(r));
+
+  const monList = [...new Set(okm2.map(r=>r.date.slice(0,7)))].sort();
+  const otherHtml = okm2.length ? `<div class="xw" style="background:#EEF4FB;border-color:#C7D8EC">
+    <h3 style="color:#2C5A8A">다른 달 전표 ${okm2.length}건</h3>
+    <p style="color:#2C5A8A">잘못된 것이 아닙니다. 지금 <b>${$('#fMonth').value.replace('-','년 ')}월</b>을 보고 계셔서
+      안 보이는 것뿐입니다. 아래 단추로 달을 바꾸면 표에 나옵니다.
+      ${monList.map(m=>`<button class="mini" data-mon="${m}" style="margin-left:6px">${m.replace('-','년 ')}월 보기 (${okm2.filter(r=>r.date.slice(0,7)===m).length}건)</button>`).join('')}</p>
+    </div>` : '';
+
+  const nearHtml = otherHtml + (odd.length ? `<div class="xw" style="background:#FFF8E9;border-color:#E7D3A8">
+    <h3 style="color:#7A5A16">⚠ 계근일이 저장 시각과 맞지 않는 전표 ${odd.length}건</h3>
     <p style="color:#7A5A16">계근일을 잘못 저장했을 수 있습니다. 사진을 눌러 전표의 계량일시를 보고, 다르면 고치세요.</p>
     <table><thead><tr><th>저장된 날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${near.map(r=>`<tr>
+    <tbody>${odd.map(r=>`<tr>
       <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
       <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
       <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
       <td style="text-align:right"><button class="mini warn" data-ed="${r.id}">수정 ●</button></td>
-    </tr>`).join('')}</tbody></table></div>` : '';
+    </tr>`).join('')}</tbody></table></div>` : '');
 
   if(!bad.length){ $('#xlwarn').innerHTML = nearHtml; return; }
   const kinds=[...new Set(bad.map(slotKey))];
@@ -993,6 +1013,9 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.ed)  edit(b.dataset.ed);
   if(b.dataset.del) del(b.dataset.del);
   if(b.dataset.ok)  markOk(b.dataset.ok);
+  if(b.dataset.mon){ mode='month'; $('#fMonth').value=b.dataset.mon;
+                     $('#fDay').value=''; $('#bDayClear').style.display='none';
+                     render(); window.scrollTo(0,0); }
   if(b.id==='bPick'){ pickMode=!pickMode; if(!pickMode) pickSet.clear(); render(); }
   if(b.dataset.q){
     mode=b.dataset.q;

@@ -135,8 +135,10 @@ input,select,textarea{font-family:inherit;outline:none}
 .empty .ei{font-size:38px;margin-bottom:6px}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:28px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
-/* 지도 고정 마커 (말풍선 핀) */
-.map-pin-fixed{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;color:#fff;background:#6d28d9;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:default}
+/* 지도 마커 (원형 배지 + 주소 라벨) */
+.mk-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;cursor:pointer}
+.mk-lbl{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);border:1.5px solid;line-height:1.45}
+.mk-badge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35)}
 /* 사진 업로드 진행 */
 #photo-progress{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
 #photo-progress.on{display:flex}
@@ -668,6 +670,12 @@ function exportExcel(){
 
 function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#ef4444':r.riskLevel==='Medium'?'#eab308':'#94a3b8';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#eab308':'#3b82f6';}
 function pinLabel(r){if(r.recType==='hazard')return r.riskType||'위험';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식물':'재활용';}
+// 라벨용 진한 색 (흰 배경 위 가독성)
+function pinColorDark(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#dc2626':r.riskLevel==='Medium'?'#ca8a04':'#64748b';return r.subtype==='생활'?'#16a34a':r.subtype==='음식물'?'#ca8a04':'#2563eb';}
+// 배지 안 2글자
+function pinBadge(r){if(r.recType==='hazard')return '사고';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식':'재활';}
+function mkEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function mkAddr(r){const a=String(r.addr||'').trim();return mkEsc(a.length>13?a.slice(0,13)+'…':(a||'주소없음'));}
 
 function renderList(){
   const el=$('rec-list');
@@ -706,8 +714,8 @@ function renderMap(){
     const c=pinColor(r);
     const ov=new kakao.maps.CustomOverlay({
       position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
-      content:`<div class="map-pin" style="background:${c};border-top-color:${c}" onclick="openDet('${r.id}')">${pinLabel(r)}</div>`,
-      yAnchor:1.5
+      content:`<div class="mk-wrap" onclick="openDet('${r.id}')"><span class="mk-lbl" style="border-color:${pinColorDark(r)};color:${pinColorDark(r)}">${mkAddr(r)}</span><span class="mk-badge" style="background:${c}">${pinBadge(r)}</span></div>`,
+      yAnchor:0.5
     });
     ov.setMap(kakaoMap);mapPins.push(ov);
   });

@@ -73,12 +73,22 @@ input,select,textarea{font-family:inherit;outline:none}
 .photo-btn{width:70px;height:70px;background:var(--bg);border:2px dashed var(--line);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub);cursor:pointer}
 .submit-btn{width:100%;padding:14px;border-radius:var(--radius);font-size:16px;font-weight:800;color:#fff;margin-top:6px}
 .submit-btn.minwon{background:var(--blue)}.submit-btn.hazard{background:var(--red)}
-#list-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+#list-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+#date-filter{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+#date-filter input[type="date"]{padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink);background:#fff;flex:1;min-width:120px}
+#date-filter input[type="date"]:focus{border-color:var(--blue)}
+.date-sep{font-size:12px;color:var(--sub);white-space:nowrap}
+.date-clear{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;background:#f1f5f9;color:var(--sub);border:1.5px solid var(--line);cursor:pointer}
+.date-clear:hover{background:var(--line)}
+#excel-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:#16a34a;color:#fff;cursor:pointer;border:none;margin-bottom:8px;align-self:flex-start}
+#excel-btn:hover{background:#15803d}
+#list-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+#list-count{font-size:12px;color:var(--sub);font-weight:600}
 .flt-btn{padding:5px 11px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
 .flt-btn.on{color:#fff}
 .flt-btn.on.f-all{background:#334155;border-color:#334155}
 .flt-btn.on.f-생활{background:var(--green2);border-color:var(--green2)}
-.flt-btn.on.f-음식물{background:var(--orange2);border-color:var(--orange2)}
+.flt-btn.on.f-음식물{background:var(--yellow2);border-color:var(--yellow2)}
 .flt-btn.on.f-재활용{background:var(--blue2);border-color:var(--blue2)}
 .flt-btn.on.f-사고{background:var(--red2);border-color:var(--red2)}
 #rec-list{display:flex;flex-direction:column;gap:8px}
@@ -89,7 +99,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .st-접수{background:#dbeafe;color:var(--blue)}.st-처리중{background:#fef9c3;color:var(--yellow)}.st-처리완료{background:#dcfce7;color:var(--green)}
 .rc-addr{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rc-meta{font-size:11px;color:var(--sub)}.rc-cat{font-size:11px;font-weight:700;margin-top:2px}
-.bdr-생활{border-color:var(--green2)}.bdr-음식물{border-color:var(--orange2)}.bdr-재활용{border-color:var(--blue2)}.bdr-hazard{border-color:var(--red2)}
+.bdr-생활{border-color:var(--green2)}.bdr-음식물{border-color:var(--yellow2)}.bdr-재활용{border-color:var(--blue2)}.bdr-hazard{border-color:var(--red2)}
 #map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .leg{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:600}
 .leg-dot{width:11px;height:11px;border-radius:50%}
@@ -126,6 +136,17 @@ input,select,textarea{font-family:inherit;outline:none}
 .empty .ei{font-size:38px;margin-bottom:6px}
 #toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:28px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
+/* 빠른 주소 선택 */
+.qa-wrap{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:9px 10px;margin-top:6px}
+.qa-title{font-size:11px;font-weight:800;color:var(--blue);margin-bottom:6px}
+.qa-dong{font-size:10px;font-weight:800;color:var(--sub);margin:5px 0 3px;letter-spacing:.3px}
+.qa-dong:first-of-type{margin-top:0}
+.qa-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:2px}
+.qa-chip{padding:5px 11px;border-radius:16px;font-size:12px;font-weight:700;border:1.5px solid #93c5fd;background:#eff6ff;color:var(--blue);cursor:pointer;transition:all .15s}
+.qa-chip:hover{background:#dbeafe}
+.qa-chip.sel{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 1px 5px rgba(30,64,175,.3)}
+/* 지도 고정 마커 */
+.map-pin-fixed{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#475569;background:rgba(255,255,255,.93);border:1.5px dashed #94a3b8;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.12);cursor:default}
 /* 사진 업로드 진행 */
 #photo-progress{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
 #photo-progress.on{display:flex}
@@ -183,10 +204,28 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="form-row">
           <span class="form-label">배출/발생 주소 *</span>
           <div class="addr-row">
-            <input class="form-input" id="m-addr" type="text" placeholder="주소 입력">
+            <input class="form-input" id="m-addr" type="text" placeholder="주소 직접 입력 또는 아래 선택">
             <button class="geo-btn" onclick="geoM()">📍확인</button>
           </div>
           <div class="addr-preview" id="m-addr-ok"></div>
+          <div class="qa-wrap">
+            <div class="qa-title">📌 빠른 주소 선택</div>
+            <div class="qa-dong">잠실동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 레이크팰리스아파트','레이크팰리스',this,'m')">레이크팰리스</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 트리지움아파트','트리지움',this,'m')">트리지움</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 잠실현대아파트','잠실현대',this,'m')">잠실현대</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 우성4차아파트','우성4차',this,'m')">우성4차</button>
+            </div>
+            <div class="qa-dong">삼전동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 삼전동 삼전현대아파트','삼전현대',this,'m')">삼전현대</button>
+            </div>
+            <div class="qa-dong">가락동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 가락동 가락시장','가락시장',this,'m')">가락시장</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="form-card">
@@ -254,10 +293,28 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="form-row">
           <span class="form-label">위험지점 주소 *</span>
           <div class="addr-row">
-            <input class="form-input" id="h-addr" type="text" placeholder="주소 입력">
+            <input class="form-input" id="h-addr" type="text" placeholder="주소 직접 입력 또는 아래 선택">
             <button class="geo-btn" onclick="geoH()">📍확인</button>
           </div>
           <div class="addr-preview" id="h-addr-ok"></div>
+          <div class="qa-wrap">
+            <div class="qa-title">📌 빠른 주소 선택</div>
+            <div class="qa-dong">잠실동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 레이크팰리스아파트','레이크팰리스',this,'h')">레이크팰리스</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 트리지움아파트','트리지움',this,'h')">트리지움</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 잠실현대아파트','잠실현대',this,'h')">잠실현대</button>
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 잠실동 우성4차아파트','우성4차',this,'h')">우성4차</button>
+            </div>
+            <div class="qa-dong">삼전동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 삼전동 삼전현대아파트','삼전현대',this,'h')">삼전현대</button>
+            </div>
+            <div class="qa-dong">가락동</div>
+            <div class="qa-chips">
+              <button class="qa-chip" onclick="pickAddr('서울 송파구 가락동 가락시장','가락시장',this,'h')">가락시장</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="form-card">
@@ -296,9 +353,19 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="list-filter">
       <button class="flt-btn on f-all" onclick="setFlt('all',this)">전체</button>
       <button class="flt-btn f-생활" onclick="setFlt('생활',this)">🟢 생활</button>
-      <button class="flt-btn f-음식물" onclick="setFlt('음식물',this)">🟠 음식물</button>
+      <button class="flt-btn f-음식물" onclick="setFlt('음식물',this)">🟡 음식물</button>
       <button class="flt-btn f-재활용" onclick="setFlt('재활용',this)">🔵 재활용</button>
       <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">🔴 사고예방</button>
+    </div>
+    <div id="date-filter">
+      <input type="date" id="flt-from" onchange="renderList()" title="시작일">
+      <span class="date-sep">~</span>
+      <input type="date" id="flt-to" onchange="renderList()" title="종료일">
+      <button class="date-clear" onclick="clearDate()">✕ 초기화</button>
+    </div>
+    <div id="list-toolbar">
+      <span id="list-count"></span>
+      <button id="excel-btn" onclick="exportExcel()">📊 엑셀 내보내기</button>
     </div>
     <div id="rec-list"></div>
   </div>
@@ -307,7 +374,7 @@ input,select,textarea{font-family:inherit;outline:none}
   <div class="pane" id="pane-map">
     <div id="map-legend">
       <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
-      <div class="leg"><div class="leg-dot" style="background:#f97316"></div>음식물</div>
+      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>음식물</div>
       <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
       <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고High</div>
       <div class="leg"><div class="leg-dot" style="background:#eab308"></div>사고Mid</div>
@@ -352,6 +419,18 @@ const PHOTOS=db.ref('report/photos'); // 사진 별도 저장
 let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
 let mSub='',mPos=null,hPos=null,curDetailId=null;
 let tmpPhoto={before:null,after:null,hazard:null};
+let fltFrom='',fltTo='';
+let selQaChip=null, fixedPins=[];
+
+// 주요 장소 (지도 고정 마커 + 빠른 주소 선택)
+const FIXED_LOCS=[
+  {name:'레이크팰리스', addr:'서울 송파구 잠실동 레이크팰리스아파트', dong:'잠실동'},
+  {name:'트리지움',     addr:'서울 송파구 잠실동 트리지움아파트',      dong:'잠실동'},
+  {name:'잠실현대',     addr:'서울 송파구 잠실동 잠실현대아파트',       dong:'잠실동'},
+  {name:'우성4차',      addr:'서울 송파구 잠실동 우성4차아파트',         dong:'잠실동'},
+  {name:'삼전현대',     addr:'서울 송파구 삼전동 삼전현대아파트',        dong:'삼전동'},
+  {name:'가락시장',     addr:'서울 송파구 가락동 가락시장',               dong:'가락동'},
+];
 
 const $=id=>document.getElementById(id);
 function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
@@ -453,6 +532,60 @@ function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('o
 
 let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
+
+// ── 빠른 주소 선택 ──
+function pickAddr(addr,label,chipEl,form){
+  // 칩 선택 표시
+  if(selQaChip)selQaChip.classList.remove('sel');
+  chipEl.classList.add('sel'); selQaChip=chipEl;
+  // 주소 입력 및 자동 지오코딩
+  if(form==='m'){
+    $('m-addr').value=addr;
+    $('m-addr-ok').textContent='🔄 위치 확인 중…';
+    mPos=null;
+    getGeo().addressSearch(addr,(res,st)=>{
+      if(st===kakao.maps.services.Status.OK){
+        mPos={lat:+res[0].y,lng:+res[0].x};
+        $('m-addr-ok').textContent='📍 '+label+' 위치 확인됨';
+      } else {
+        $('m-addr-ok').textContent='⚠️ 📍확인 버튼을 눌러주세요';
+      }
+    });
+  } else {
+    $('h-addr').value=addr;
+    $('h-addr-ok').textContent='🔄 위치 확인 중…';
+    hPos=null;
+    getGeo().addressSearch(addr,(res,st)=>{
+      if(st===kakao.maps.services.Status.OK){
+        hPos={lat:+res[0].y,lng:+res[0].x};
+        $('h-addr-ok').textContent='📍 '+label+' 위치 확인됨';
+      } else {
+        $('h-addr-ok').textContent='⚠️ 📍확인 버튼을 눌러주세요';
+      }
+    });
+  }
+}
+
+// ── 지도 고정 마커 초기화 ──
+function initFixedMarkers(){
+  const geo=getGeo();
+  fixedPins.forEach(p=>p.setMap(null)); fixedPins=[];
+  FIXED_LOCS.forEach(loc=>{
+    geo.addressSearch(loc.addr,(res,st)=>{
+      if(st===kakao.maps.services.Status.OK&&kakaoMap){
+        const ov=new kakao.maps.CustomOverlay({
+          position:new kakao.maps.LatLng(+res[0].y,+res[0].x),
+          content:`<div class="map-pin-fixed" title="${loc.dong} ${loc.name}">${loc.name}</div>`,
+          yAnchor:1.5,
+          zIndex:1
+        });
+        ov.setMap(kakaoMap);
+        fixedPins.push(ov);
+      }
+    });
+  });
+}
+
 function geoM(){
   const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
   getGeo().addressSearch(a,(res,st)=>{
@@ -527,14 +660,63 @@ function resetHForm(){
 
 // ── 목록 ──
 function setFlt(f,el){curFlt=f;document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderList();}
-function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#ef4444':r.riskLevel==='Medium'?'#eab308':'#94a3b8';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#f97316':'#3b82f6';}
+function clearDate(){$('flt-from').value='';$('flt-to').value='';renderList();}
+
+// 날짜 필터 적용된 데이터 반환
+function filteredRecs(){
+  fltFrom=$('flt-from')?$('flt-from').value:'';
+  fltTo=$('flt-to')?$('flt-to').value:'';
+  let data=[...recs].sort((a,b)=>(b.createdAt||b.date||'').localeCompare(a.createdAt||a.date||''));
+  // 카테고리 필터
+  if(curFlt==='hazard') data=data.filter(r=>r.recType==='hazard');
+  else if(curFlt!=='all') data=data.filter(r=>r.recType==='minwon'&&r.subtype===curFlt);
+  // 날짜 필터 (민원: date 필드, 사고예방: inspDate 필드)
+  if(fltFrom){
+    data=data.filter(r=>{
+      const d=r.recType==='hazard'?r.inspDate:r.date;
+      return d&&d>=fltFrom;
+    });
+  }
+  if(fltTo){
+    data=data.filter(r=>{
+      const d=r.recType==='hazard'?r.inspDate:r.date;
+      return d&&d<=fltTo;
+    });
+  }
+  return data;
+}
+
+// 엑셀(CSV) 내보내기
+function exportExcel(){
+  const data=filteredRecs();
+  if(!data.length){toast('내보낼 데이터가 없습니다');return;}
+  const rows=[['구분','번호','날짜','시간','주소','폐기물구분/위험요인','민원내용/위험내용','처리상태/위험등급','민원인','연락처','접수경로','방문결과','조치내용','담당자','등록일시']];
+  data.forEach(r=>{
+    if(r.recType==='hazard'){
+      rows.push(['사고예방',r.hazardNo||'',r.inspDate||'','',r.addr||'',r.riskType||'',r.riskContent||'',r.riskLevel||'','','','',r.inspResult||'',r.action||'',r.staff||'',r.createdAt||'']);
+    } else {
+      rows.push(['민원',r.no||'',r.date||'',r.time||'',r.addr||'',r.subtype||'',r.content||'',r.status||'',r.person||'',r.tel||'',r.channel||'',r.inspResult||'',r.actionNote||'',r.staff||'',r.createdAt||'']);
+    }
+  });
+  const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const today_=new Date().toISOString().slice(0,10).replace(/-/g,'');
+  a.href=url; a.download='민원사고예방_'+today_+'.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  toast('📊 CSV 다운로드 완료 ('+data.length+'건)');
+}
+
+function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#ef4444':r.riskLevel==='Medium'?'#eab308':'#94a3b8';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#eab308':'#3b82f6';}
 function pinLabel(r){if(r.recType==='hazard')return r.riskType||'위험';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식물':'재활용';}
 
 function renderList(){
   const el=$('rec-list');
-  let data=[...recs].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
-  if(curFlt==='hazard')data=data.filter(r=>r.recType==='hazard');
-  else if(curFlt!=='all')data=data.filter(r=>r.recType==='minwon'&&r.subtype===curFlt);
+  const data=filteredRecs();
+  const cntEl=$('list-count');
+  if(cntEl)cntEl.textContent='총 '+data.length+'건';
   if(!data.length){el.innerHTML='<div class="empty"><div class="ei">📭</div>항목 없음</div>';return;}
   el.innerHTML=data.map(r=>{
     const isH=r.recType==='hazard';
@@ -556,7 +738,9 @@ let mapInited=false;
 function initMap(){
   if(mapInited){renderMap();return;}
   kakaoMap=new kakao.maps.Map($('map-container'),{center:new kakao.maps.LatLng(37.504,127.090),level:5});
-  mapInited=true; renderMap();
+  mapInited=true;
+  initFixedMarkers(); // 주요 장소 고정 마커
+  renderMap();
 }
 function renderMap(){
   if(!kakaoMap)return;

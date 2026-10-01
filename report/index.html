@@ -63,7 +63,24 @@ input,select,textarea{font-family:inherit;outline:none}
 .pill.blue2.on{background:#dbeafe;border-color:var(--blue2);color:var(--blue)}
 .addr-row{display:flex;gap:6px;align-items:flex-end}
 .addr-row .form-input{flex:1}
-.geo-btn{padding:9px 11px;background:var(--blue);color:#fff;border-radius:8px;font-size:13px;font-weight:700;white-space:nowrap}
+.geo-btn{padding:9px 10px;background:var(--blue);color:#fff;border-radius:8px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.map-btn{padding:9px 10px;background:#0d9488;color:#fff;border-radius:8px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.map-btn:active{background:#0f766e}
+/* 지도에서 위치 지정 */
+#mappick-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:12px}
+#mappick-bg.on{display:flex}
+#mappick{background:#fff;border-radius:16px;width:100%;max-width:520px;overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
+#mappick-hdr{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+#mappick-hdr b{font-size:15px;font-weight:800}
+#mappick-hdr button{font-size:21px;color:var(--sub);background:none;line-height:1}
+#mappick-map{width:100%;height:58vh;min-height:280px;background:#e5e7eb}
+#mappick-foot{padding:11px 14px 13px;border-top:1px solid var(--line)}
+#mappick-info{font-size:12.5px;color:var(--sub);font-weight:600;margin-bottom:9px;min-height:17px}
+#mappick-info.set{color:var(--green)}
+.mp-btns{display:flex;gap:8px}
+.mp-btns button{flex:1;padding:12px;border-radius:10px;font-size:14px;font-weight:800}
+.mp-cancel{background:#f1f5f9;color:var(--sub)}
+.mp-ok{background:var(--blue);color:#fff}
 .addr-preview{font-size:12px;color:var(--green);margin-top:3px;min-height:15px}
 .photo-section{display:flex;gap:8px;flex-wrap:wrap}
 .photo-box{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:76px}
@@ -198,11 +215,15 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="">동/위치 선택</option>
             <option value="잠실동">잠실동</option>
             <option value="삼전동">삼전동</option>
-            <option value="삼전현대">삼전현대</option>
+            <option value="본동">본동</option>
             <option value="잠실현대">잠실현대</option>
             <option value="우성4차">우성4차</option>
             <option value="레이크">레이크</option>
             <option value="트리지움">트리지움</option>
+            <option value="석촌호수">석촌호수</option>
+            <option value="롯데월드">롯데월드</option>
+            <option value="자전거포">자전거포</option>
+            <option value="삼전현대">삼전현대</option>
             <option value="가락시장">가락시장</option>
           </select>
         </div>
@@ -211,6 +232,7 @@ input,select,textarea{font-family:inherit;outline:none}
           <div class="addr-row">
             <input class="form-input" id="m-addr" type="text" placeholder="동 선택 후 자동 입력 또는 직접 입력">
             <button class="geo-btn" onclick="geoM()">📍확인</button>
+            <button class="map-btn" onclick="openMapPick('m')">🗺️지도</button>
           </div>
           <div class="addr-preview" id="m-addr-ok"></div>
         </div>
@@ -222,20 +244,13 @@ input,select,textarea{font-family:inherit;outline:none}
         </div>
         <div class="form-row">
           <span class="form-label">접수 경로</span>
-          <select class="form-select" id="m-channel">
-            <option value="">선택</option>
-            <option>전화</option><option>홈페이지</option><option>구청민원실</option><option>동주민센터</option><option>기타</option>
-          </select>
+          <input class="form-input" id="m-channel" type="text" placeholder="예) 전화, 홈페이지, 구청민원실" autocomplete="off">
         </div>
       </div>
       <div class="form-card">
         <div class="form-row">
           <span class="form-label">민원 내용 구분 *</span>
-          <select class="form-select" id="m-category">
-            <option value="">선택</option>
-            <option>수거누락</option><option>잔재물</option><option>파손훼손</option><option>수거시간미준수</option>
-            <option>악취위생관리</option><option>불법투기혼합배출</option><option>불친절안전수칙</option><option>기타</option>
-          </select>
+          <input class="form-input" id="m-category" type="text" placeholder="예) 수거누락, 잔재물, 파손훼손" autocomplete="off">
         </div>
         <div class="form-row"><span class="form-label">세부 민원내용</span><textarea class="form-textarea" id="m-content" placeholder="민원 내용"></textarea></div>
         <div class="form-row"><span class="form-label">방문 확인결과</span><textarea class="form-textarea" id="m-insp" placeholder="방문 확인 결과"></textarea></div>
@@ -272,7 +287,7 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="form-2col">
           <div><span class="form-label">행정동</span>
             <select class="form-select" id="h-dong"><option value="">선택</option>
-              <option>잠실동</option><option>삼전동</option><option>석촌동</option><option>송파동</option><option>풍납동</option>
+              <option>잠실동</option><option>삼전동</option><option>잠실3동</option>
             </select>
           </div>
           <div><span class="form-label">점검일자</span><input class="form-input" id="h-inspdate" type="date"></div>
@@ -283,11 +298,15 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="">동/위치 선택</option>
             <option value="잠실동">잠실동</option>
             <option value="삼전동">삼전동</option>
-            <option value="삼전현대">삼전현대</option>
+            <option value="본동">본동</option>
             <option value="잠실현대">잠실현대</option>
             <option value="우성4차">우성4차</option>
             <option value="레이크">레이크</option>
             <option value="트리지움">트리지움</option>
+            <option value="석촌호수">석촌호수</option>
+            <option value="롯데월드">롯데월드</option>
+            <option value="자전거포">자전거포</option>
+            <option value="삼전현대">삼전현대</option>
             <option value="가락시장">가락시장</option>
           </select>
         </div>
@@ -296,6 +315,7 @@ input,select,textarea{font-family:inherit;outline:none}
           <div class="addr-row">
             <input class="form-input" id="h-addr" type="text" placeholder="동 선택 후 자동 입력 또는 직접 입력">
             <button class="geo-btn" onclick="geoH()">📍확인</button>
+            <button class="map-btn" onclick="openMapPick('h')">🗺️지도</button>
           </div>
           <div class="addr-preview" id="h-addr-ok"></div>
         </div>
@@ -303,9 +323,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="form-card">
         <div class="form-row">
           <span class="form-label">사고위험 요인구분 *</span>
-          <select class="form-select" id="h-risktype"><option value="">선택</option>
-            <option>급경사</option><option>교통혼잡</option><option>유리병</option><option>맹견</option><option>계단</option><option>협소골목</option><option>기타</option>
-          </select>
+          <input class="form-input" id="h-risktype" type="text" placeholder="예) 급경사, 교통혼잡, 유리병, 맹견" autocomplete="off">
         </div>
         <div class="form-row"><span class="form-label">주요 위험내용</span><textarea class="form-textarea" id="h-riskcont" placeholder="위험요소 상세 내용"></textarea></div>
         <div class="form-row"><span class="form-label">안전점검 결과</span><textarea class="form-textarea" id="h-insp" placeholder="점검 결과"></textarea></div>
@@ -379,6 +397,24 @@ input,select,textarea{font-family:inherit;outline:none}
   </div>
 </div>
 
+<!-- 지도에서 위치 지정 -->
+<div id="mappick-bg">
+  <div id="mappick">
+    <div id="mappick-hdr">
+      <b>🗺️ 지도에서 위치 지정</b>
+      <button onclick="closeMapPick()">✕</button>
+    </div>
+    <div id="mappick-map"></div>
+    <div id="mappick-foot">
+      <div id="mappick-info">지도를 눌러 위치를 지정하세요</div>
+      <div class="mp-btns">
+        <button class="mp-cancel" onclick="closeMapPick()">취소</button>
+        <button class="mp-ok" onclick="confirmMapPick()">이 위치로 저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 사진 업로드 로딩 -->
 <div id="photo-progress"><div>📷 사진 저장 중…</div></div>
 
@@ -408,13 +444,16 @@ let fixedPins=[];
 // 주요 장소 (지도 고정 마커 + 동 구분 칩) — 하드코딩 좌표
 // short = 주소란에 입력되는 텍스트 (뒤에 추가 입력 가능)
 const FIXED_LOCS=[
-  {name:'본동',      short:'본동 ',      dong:'잠실동', lat:37.5075, lng:127.0885},
+  {name:'본동',      short:'본동 ',     dong:'잠실동', lat:37.5075, lng:127.0885},
   {name:'잠실현대',  short:'잠실현대 ', dong:'잠실동', lat:37.5090, lng:127.0872},
   {name:'우성4차',   short:'우성4차 ',  dong:'잠실동', lat:37.5082, lng:127.0867},
   {name:'레이크',    short:'레이크 ',   dong:'잠실동', lat:37.5083, lng:127.0899},
-  {name:'트리지움',  short:'트리지움 ',dong:'잠실동', lat:37.5095, lng:127.0855},
-  {name:'삼전현대',  short:'삼전현대 ',dong:'삼전동', lat:37.5062, lng:127.0921},
-  {name:'가락시장',  short:'가락시장 ',dong:'가락동', lat:37.4926, lng:127.1214},
+  {name:'트리지움',  short:'트리지움 ', dong:'잠실동', lat:37.5095, lng:127.0855},
+  {name:'석촌호수',  short:'석촌호수 ', dong:'잠실동', lat:37.5090, lng:127.1010},
+  {name:'롯데월드',  short:'롯데월드 ', dong:'잠실동', lat:37.5111, lng:127.0980},
+  {name:'자전거포',  short:'자전거포 ', dong:'잠실동', lat:37.5070, lng:127.0890},
+  {name:'삼전현대',  short:'삼전현대 ', dong:'삼전동', lat:37.5062, lng:127.0921},
+  {name:'가락시장',  short:'가락시장 ', dong:'가락동', lat:37.4926, lng:127.1214},
 ];
 
 const $=id=>document.getElementById(id);
@@ -518,6 +557,67 @@ function pickSub(el,v){if(mPill)mPill.classList.remove('on');el.classList.add('o
 let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
 
+// ── 지도에서 위치 지정 ──
+let pickMap=null, pickMarker=null, pickPos=null, pickForm='m';
+
+function openMapPick(form){
+  pickForm=form;
+  $('mappick-bg').classList.add('on');
+  const cur = (form==='m') ? mPos : hPos;
+  const center = cur ? new kakao.maps.LatLng(cur.lat,cur.lng) : new kakao.maps.LatLng(37.504,127.090);
+  setTimeout(function(){
+    if(!pickMap){
+      pickMap=new kakao.maps.Map($('mappick-map'),{center:center,level:4});
+      kakao.maps.event.addListener(pickMap,'click',function(e){setPickMarker(e.latLng);});
+    }else{
+      pickMap.relayout(); pickMap.setCenter(center);
+    }
+    if(cur){ setPickMarker(new kakao.maps.LatLng(cur.lat,cur.lng)); }
+    else{
+      pickPos=null;
+      if(pickMarker){pickMarker.setMap(null);pickMarker=null;}
+      const inf=$('mappick-info'); inf.textContent='지도를 눌러 위치를 지정하세요'; inf.classList.remove('set');
+    }
+  },120);
+}
+
+function setPickMarker(latlng){
+  pickPos={lat:latlng.getLat(),lng:latlng.getLng()};
+  if(!pickMarker){
+    pickMarker=new kakao.maps.Marker({position:latlng,draggable:true});
+    pickMarker.setMap(pickMap);
+    kakao.maps.event.addListener(pickMarker,'dragend',function(){
+      const p=pickMarker.getPosition();
+      pickPos={lat:p.getLat(),lng:p.getLng()};
+      showPickInfo();
+    });
+  }else{
+    pickMarker.setPosition(latlng);
+  }
+  showPickInfo();
+}
+
+function showPickInfo(){
+  const inf=$('mappick-info');
+  inf.textContent='📍 위치 지정됨 — 마커를 끌어서 미세조정 가능';
+  inf.classList.add('set');
+}
+
+function confirmMapPick(){
+  if(!pickPos){toast('지도를 눌러 위치를 먼저 지정하세요');return;}
+  if(pickForm==='m'){
+    mPos={lat:pickPos.lat,lng:pickPos.lng};
+    $('m-addr-ok').textContent='📍 지도에서 지정한 위치';
+  }else{
+    hPos={lat:pickPos.lat,lng:pickPos.lng};
+    $('h-addr-ok').textContent='📍 지도에서 지정한 위치';
+  }
+  closeMapPick();
+  toast('✅ 위치 저장됨');
+}
+
+function closeMapPick(){ $('mappick-bg').classList.remove('on'); }
+
 // ── 동 구분 선택 → 주소란 자동 입력 ──
 function onDongChange(form){
   const selEl = document.getElementById(form==='m' ? 'm-dong-sel' : 'h-dong-sel');
@@ -542,30 +642,41 @@ function onDongChange(form){
 
 function initFixedMarkers(){}
 
+// 주소검색 실패해도 이미 지정된 좌표(동 구분 선택/지도 찍기)는 지우지 않음
 function geoM(){
   const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
   getGeo().addressSearch(a,(res,st)=>{
-    if(st===kakao.maps.services.Status.OK){mPos={lat:+res[0].y,lng:+res[0].x};$('m-addr-ok').textContent='📍 위치 확인됨';}
-    else{$('m-addr-ok').textContent='❌ 주소를 찾을 수 없습니다';mPos=null;}
+    if(st===kakao.maps.services.Status.OK){
+      mPos={lat:+res[0].y,lng:+res[0].x};$('m-addr-ok').textContent='📍 위치 확인됨';
+    }else if(mPos){
+      $('m-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';
+    }else{
+      $('m-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';
+    }
   });
 }
 function geoH(){
   const a=$('h-addr').value.trim(); if(!a){toast('주소 입력');return;}
   getGeo().addressSearch(a,(res,st)=>{
-    if(st===kakao.maps.services.Status.OK){hPos={lat:+res[0].y,lng:+res[0].x};$('h-addr-ok').textContent='📍 위치 확인됨';}
-    else{$('h-addr-ok').textContent='❌ 주소를 찾을 수 없습니다';hPos=null;}
+    if(st===kakao.maps.services.Status.OK){
+      hPos={lat:+res[0].y,lng:+res[0].x};$('h-addr-ok').textContent='📍 위치 확인됨';
+    }else if(hPos){
+      $('h-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';
+    }else{
+      $('h-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';
+    }
   });
 }
 
 async function submitM(){
   if(!mSub){toast('폐기물 구분 선택');return;}
   if(!$('m-addr').value.trim()){toast('주소 입력');return;}
-  if(!$('m-category').value){toast('내용 구분 선택');return;}
+  if(!$('m-category').value.trim()){toast('내용 구분 입력');return;}
   const id=uuid();
   const rec={id,recType:'minwon',no:nextMNo(),date:$('m-date').value,time:$('m-time').value,
     subtype:mSub,addr:$('m-addr').value.trim(),addrPos:mPos||null,
-    person:$('m-person').value.trim(),tel:$('m-tel').value.trim(),channel:$('m-channel').value,
-    category:$('m-category').value,content:$('m-content').value.trim(),
+    person:$('m-person').value.trim(),tel:$('m-tel').value.trim(),channel:$('m-channel').value.trim(),
+    category:$('m-category').value.trim(),content:$('m-content').value.trim(),
     inspResult:$('m-insp').value.trim(),status:$('m-status').value,mgmtLevel:$('m-mgmt').value,
     actionNote:$('m-action').value.trim(),staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
   $('photo-progress').classList.add('on');
@@ -573,7 +684,7 @@ async function submitM(){
     await saveRec(rec);
     if(tmpPhoto.before)await PHOTOS.child(id).child('before').set(tmpPhoto.before);
     if(tmpPhoto.after)await PHOTOS.child(id).child('after').set(tmpPhoto.after);
-    toast('✅ 민원 접수 완료! ('+rec.no+')');
+    toast(mPos?('✅ 민원 접수 완료! ('+rec.no+')'):('✅ 접수 완료 ('+rec.no+') — 위치 미지정, 지도 표시 안 됨'));
     resetMForm();
   }catch{toast('⚠️ 저장 실패');}
   finally{$('photo-progress').classList.remove('on');}
@@ -591,10 +702,10 @@ function resetMForm(){
 
 async function submitH(){
   if(!$('h-addr').value.trim()){toast('주소 입력');return;}
-  if(!$('h-risktype').value){toast('위험요인 선택');return;}
+  if(!$('h-risktype').value.trim()){toast('위험요인 입력');return;}
   const id=uuid();
   const rec={id,recType:'hazard',hazardNo:nextHNo(),dong:$('h-dong').value,
-    addr:$('h-addr').value.trim(),addrPos:hPos||null,riskType:$('h-risktype').value,
+    addr:$('h-addr').value.trim(),addrPos:hPos||null,riskType:$('h-risktype').value.trim(),
     riskContent:$('h-riskcont').value.trim(),inspResult:$('h-insp').value.trim(),
     action:$('h-action').value.trim(),inspDate:$('h-inspdate').value,
     riskLevel:$('h-level').value,note:$('h-note').value.trim(),
@@ -603,7 +714,7 @@ async function submitH(){
   try{
     await saveRec(rec);
     if(tmpPhoto.hazard)await PHOTOS.child(id).child('hazard').set(tmpPhoto.hazard);
-    toast('✅ 사고예방 등록! ('+rec.hazardNo+')');
+    toast(hPos?('✅ 사고예방 등록! ('+rec.hazardNo+')'):('✅ 등록 완료 ('+rec.hazardNo+') — 위치 미지정, 지도 표시 안 됨'));
     resetHForm();
   }catch{toast('⚠️ 저장 실패');}
   finally{$('photo-progress').classList.remove('on');}

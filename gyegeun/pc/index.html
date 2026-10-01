@@ -180,7 +180,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v41</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v42</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -330,16 +330,6 @@ function buildBatch(rows){
 }
 const dupKey = r => `${r.date}|${r.veh}|${r.seong}|${r.site}|${r.weight}`;
 
-/* 야간조는 밤 10시~다음 날 새벽 6시. 계근기는 자정을 넘기면 다음 날 날짜를 찍지만,
-   새벽 1시 전에 계근한 전표는 전날 작업분으로 칩니다. 현장앱과 같은 규칙입니다. */
-const NIGHT_CUT = 1;
-function nightShift(date, t2){
-  if(!date || !t2) return date;
-  const h = parseInt(String(t2).slice(0,2),10);
-  if(isNaN(h) || h >= NIGHT_CUT) return date;
-  const d = new Date(date+'T00:00:00'); d.setDate(d.getDate()-1);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
 function buildDup(rows){
   DUP={};
   rows.forEach(r=>{ (DUP[dupKey(r)]=DUP[dupKey(r)]||[]).push(r.at||0); });
@@ -372,7 +362,7 @@ function flagsOf(r){
     const ws = BWS[r.batch] || [r.weight];
     if(c.w && c.w.length >= ws.length && !c.w.includes(r.weight))
       f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
-    const pd = nightShift(plausibleDate(c.ds || (c.d?[c.d]:[]), r.at), r.t2);
+    const pd = plausibleDate(c.ds || (c.d?[c.d]:[]), r.at);   // 전표에 찍힌 날짜 그대로
     if(pd && pd!==r.date)
       f.push(`사진 날짜와 다름 (사진: ${pd.slice(5).replace('-','/')}`
            + (c.t && c.t.length ? ` ${c.t.join('·')}` : '') + ')');

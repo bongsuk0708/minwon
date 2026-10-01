@@ -180,7 +180,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v37</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v40</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -303,7 +303,10 @@ const XL_SLOTS = new Set([
   '1286|재활용(다량)|자원순환공원','5635|재활용(다량)|자원순환공원',
   '5635|기타|자원순환공원',      '1286|기타|자원순환공원',
   '8666|대형|자원순환공원',      '8686|대형|자원순환공원',
-  '4968|대형|자원순환공원',      '4830|대형|자원순환공원',      '5635|대형|자원순환공원'
+  '4968|대형|자원순환공원',      '4830|대형|자원순환공원',      '5635|대형|자원순환공원',
+  /* 7507 전기 신차 — 엑셀에 칸을 만든 성상만 넣습니다.
+     다량·기타·대형 칸을 만들고 나면 그때 여기에 더합니다. */
+  '7507|생활|자원순환공원',      '7507|재활용|자원순환공원'
 ]);
 const slotKey = r => `${r.veh}|${r.seong}|${r.site||''}`;
 
@@ -326,6 +329,17 @@ function buildBatch(rows){
   BWS={}; rows.forEach(r=>{ if(r.batch) (BWS[r.batch]=BWS[r.batch]||[]).push(r.weight); });
 }
 const dupKey = r => `${r.date}|${r.veh}|${r.seong}|${r.site}|${r.weight}`;
+
+/* 야간조는 밤 10시~다음 날 새벽 6시. 계근기는 자정을 넘기면 다음 날 날짜를 찍지만,
+   새벽 1시 전에 계근한 전표는 전날 작업분으로 칩니다. 현장앱과 같은 규칙입니다. */
+const NIGHT_CUT = 1;
+function nightShift(date, t2){
+  if(!date || !t2) return date;
+  const h = parseInt(String(t2).slice(0,2),10);
+  if(isNaN(h) || h >= NIGHT_CUT) return date;
+  const d = new Date(date+'T00:00:00'); d.setDate(d.getDate()-1);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function buildDup(rows){
   DUP={};
   rows.forEach(r=>{ (DUP[dupKey(r)]=DUP[dupKey(r)]||[]).push(r.at||0); });
@@ -358,7 +372,7 @@ function flagsOf(r){
     const ws = BWS[r.batch] || [r.weight];
     if(c.w && c.w.length >= ws.length && !c.w.includes(r.weight))
       f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
-    const pd = plausibleDate(c.ds || (c.d?[c.d]:[]), r.at);
+    const pd = nightShift(plausibleDate(c.ds || (c.d?[c.d]:[]), r.at), r.t2);
     if(pd && pd!==r.date)
       f.push(`사진 날짜와 다름 (사진: ${pd.slice(5).replace('-','/')}`
            + (c.t && c.t.length ? ` ${c.t.join('·')}` : '') + ')');
@@ -374,7 +388,29 @@ function dupSets(rows){
   // 날짜·차량·성상·반입처·실중량이 똑같은 묶음
   const g={};
   rows.forEach(r=>{ const k=dupKey(r); (g[k]=g[k]||[]).push(r); });
-  return Object.values(g).filter(a=>a.length>1);
+  const out=[];
+  Object.values(g).filter(a=>a.length>1).forEach(a=>{
+    /* 전표번호가 있으면 그것만 봅니다 — 전표 한 장마다 계근기가 매기는 고유 번호입니다. */
+    if(a.every(r=>r.no)){
+      const bn={};
+      a.forEach(r=>{ (bn[r.no]=bn[r.no]||[]).push(r); });
+      Object.values(bn).forEach(s=>{ if(s.length>1) out.push(s); });
+      return;
+    }
+    /* 실중량이 같아도 1차·2차 중량이 다르면 서로 다른 전표입니다.
+       같은 차가 같은 날 같은 양을 두 번 나르는 일은 실제로 있습니다 — 그건 지우면 안 됩니다. */
+    const sub={};
+    a.forEach(r=>{ const k=(r.gross&&r.tare)?`${r.gross}|${r.tare}`:'?'; (sub[k]=sub[k]||[]).push(r); });
+    const keys=Object.keys(sub);
+    if(keys.length===1){ out.push(a); return; }       // 다 같거나, 다 모름
+    keys.forEach(k=>{ if(sub[k].length>1) out.push(sub[k]); });
+    // 사진으로 한 번, 손으로 또 한 번 넣은 것
+    if(sub['?'] && sub['?'].length===1 && keys.length===2){
+      const o=keys.find(k=>k!=='?');
+      if(sub[o].length===1) out.push([...sub[o], ...sub['?']]);
+    }
+  });
+  return out;
 }
 function drawPickBar(shown){
   if(!pickMode){ $('#pickbar').innerHTML=''; return; }
@@ -853,7 +889,8 @@ function render(){
     <tbody>${[...shown].reverse().map(r=>`<tr class="${fl[r.id]?'bad ':''}${pickSet.has(r.id)?'picked':''}"${fl[r.id]?` title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
       ${pickMode?`<td class="pk"><input type="checkbox" data-pk="${r.id}"${pickSet.has(r.id)?' checked':''}></td>`:''}
       <td class="num">${r.date.slice(5).replace('-','/')}
-        ${r.t1||r.t2?`<div class="tm num">${[r.t1,r.t2].filter(Boolean).join('~')}</div>`:''}</td>
+        ${r.t1||r.t2?`<div class="tm num">${[r.t1,r.t2].filter(Boolean).join('~')}</div>`:''}
+        ${r.no?`<div class="tm num">전표 ${r.no}</div>`:''}</td>
       <td style="color:var(--dim)">${joOf(r)}</td>
       <td class="veh num">${r.veh}</td>
       <td>${r.seong}</td>
@@ -1125,8 +1162,8 @@ $('#bCsv').onclick = ()=>{
    || String(a.site||'').localeCompare(String(b.site||''))
    || a.weight-b.weight);
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
-  const head='날짜,1차시각,2차시각,조,차량번호,성상,반입처,실중량';
-  const body=rows.map(r=>[r.date,r.t1||'',r.t2||'',joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
+  const head='날짜,전표번호,1차시각,2차시각,조,차량번호,성상,반입처,실중량';
+  const body=rows.map(r=>[r.date,r.no||'',r.t1||'',r.t2||'',joOf(r),r.veh,r.seong,r.site||'',r.weight].join(',')).join('\n');
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);

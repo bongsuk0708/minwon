@@ -180,7 +180,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v42</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v45</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -203,6 +203,7 @@ tr.picked{background:#FBEAE8}
     <button class="chip" id="bPick">골라서 지우기</button>
     <button class="chip" id="bOnlyBad" style="display:none">확인 필요만 보기</button>
     <button class="chip" id="bOkAll" style="display:none">지금 보이는 것 전부 확인함</button>
+    <button class="chip" id="bTrash" style="display:none">휴지통</button>
     <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
@@ -226,6 +227,7 @@ tr.picked{background:#FBEAE8}
   </div>
 
   <div id="msg"></div>
+  <div id="trash"></div>
   <div id="xlwarn"></div>
   <div id="pickbar"></div>
   <div id="chkbar"></div>
@@ -417,9 +419,14 @@ function drawPickBar(shown){
   </div>`;
   const shownIds = shown.map(r=>r.id);
   $('#pkDup').onclick = ()=>{
-    // 묶음마다 제일 먼저 저장된 1건만 남기고 나머지를 고릅니다
+    /* 묶음마다 1건만 남기고 나머지를 고릅니다.
+       남길 것은 "내용이 제일 많은" 건입니다 — 전표번호 > 계근 시각 > 1·2차 중량 순.
+       같으면 먼저 저장된 것을 남깁니다. 손으로 넣은 쪽을 남기고
+       판독된 쪽을 지우는 일이 없게 하려는 것입니다. */
+    const rich = r => (r.no?4:0) + ((r.t1&&r.t2)?2:0) + ((r.gross&&r.tare)?1:0);
     dupSets(shown).forEach(g=>{
-      g.slice().sort((a,b)=>(a.at||0)-(b.at||0)).slice(1).forEach(r=>pickSet.add(r.id));
+      g.slice().sort((a,b)=> rich(b)-rich(a) || (a.at||0)-(b.at||0))
+       .slice(1).forEach(r=>pickSet.add(r.id));
     });
     render();
   };
@@ -436,26 +443,19 @@ async function delPicked(){
   const days=[...new Set(rows.map(r=>r.date))].sort();
   if(!confirm(`전표 ${comma(ids.length)}건 · ${comma(sum)} kg 을 지웁니다.\n`
             + `해당 날짜: ${days.slice(0,6).join(', ')}${days.length>6?` 외 ${days.length-6}일`:''}\n\n`
-            + `되돌릴 수 없습니다. 계속할까요?`)) return;
+            + `휴지통에 남으니 잘못 지우면 되돌릴 수 있습니다. 계속할까요?`)) return;
   const patch={}; ids.forEach(id=>patch[id]=null);
   try{
+    await toTrash(rows);                 // 먼저 휴지통에 담고
     const res=await fetch(`${DB}/gyegeun/records.json`,{method:'PATCH',
       headers:{'Content-Type':'application/json'}, body:JSON.stringify(patch)});
     if(!res.ok) throw new Error(res.status);
-    // 아무 전표도 안 쓰는 사진은 같이 치웁니다
-    const gone=new Set(rows.map(r=>r.batch).filter(Boolean));
+    // 사진은 지우지 않습니다 — 되살릴 때 같이 돌아와야 하니까요
     all = all.filter(x=>!pickSet.has(x.id));
-    const still=new Set(all.map(x=>x.batch).filter(Boolean));
-    const orphan=[...gone].filter(b=>!still.has(b));
-    if(orphan.length){
-      const pp={}; orphan.forEach(b=>pp[b]=null);
-      fetch(`${DB}/gyegeun/photos.json`,{method:'PATCH',
-        headers:{'Content-Type':'application/json'}, body:JSON.stringify(pp)}).catch(()=>{});
-    }
     pickSet.clear();
     $('#st').textContent=`전표 ${comma(all.length)}건`;
     fillSelects(); render();
-    toast(`${comma(ids.length)}건 지웠습니다`,'good');
+    toast(`${comma(ids.length)}건 휴지통으로 보냈습니다`,'good');
   }catch(e){ toast('삭제하지 못했습니다 — 인터넷을 확인하세요','err'); }
 }
 
@@ -469,11 +469,16 @@ function drawXlWarn(){
     const m=$('#fMonth').value;
     if(m){
       const a=new Date(m+'-01T00:00:00').getTime(), z=a+45*86400000, y=a-45*86400000;
+      /* 최근 열흘 안에 저장된 것만 봅니다.
+         이 상자는 "방금 날짜를 잘못 눌렀나" 를 잡으려고 있는 것입니다.
+         이미 마감한 지난달 전표를 통째로 끌어오면 정작 봐야 할 목록을 덮어버립니다. */
+      const fresh = Date.now() - 10*86400000;
       near = all.filter(r=>{
         if(inRange(r.date)) return false;
+        if(!r.at || r.at < fresh) return false;
         const t=new Date(r.date+'T00:00:00').getTime();
         if(t<y||t>z) return false;
-        return true;                 // 달 밖이면 일단 보여 줍니다
+        return true;
       }).sort((x,y2)=> x.date.localeCompare(y2.date));
     }
   }
@@ -501,12 +506,12 @@ function drawXlWarn(){
     <h3 style="color:#7A5A16">⚠ 계근일이 저장 시각과 맞지 않는 전표 ${odd.length}건</h3>
     <p style="color:#7A5A16">계근일을 잘못 저장했을 수 있습니다. 사진을 눌러 전표의 계량일시를 보고, 다르면 고치세요.</p>
     <table><thead><tr><th>저장된 날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${odd.map(r=>`<tr>
+    <tbody>${odd.slice(0,20).map(r=>`<tr>
       <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
       <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
       <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
       <td style="text-align:right"><button class="mini warn" data-ed="${r.id}">수정 ●</button></td>
-    </tr>`).join('')}</tbody></table></div>` : '');
+    </tr>`).join('')}</tbody></table>${odd.length>20?`<p style="color:#7A5A16">… 외 ${comma(odd.length-20)}건. 위에서부터 고치시면 계속 올라옵니다.</p>`:''}</div>` : '');
 
   if(!bad.length){ $('#xlwarn').innerHTML = nearHtml; return; }
   const kinds=[...new Set(bad.map(slotKey))];
@@ -517,7 +522,7 @@ function drawXlWarn(){
        (${kinds.map(k=>k.split('|').join(' · ')).join('  /  ')})</p>
     <table>
       <thead><tr><th>날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-      <tbody>${bad.map(r=>`<tr>
+      <tbody>${bad.slice(0,20).map(r=>`<tr>
         <td class="num">${r.date.slice(5).replace('-','/')}</td>
         <td class="veh num">${r.veh}</td>
         <td><b>${r.seong}</b></td>
@@ -527,6 +532,7 @@ function drawXlWarn(){
         <td style="text-align:right"><button class="mini" data-ed="${r.id}">수정</button></td>
       </tr>`).join('')}</tbody>
     </table>
+    ${bad.length>20?`<p>… 외 ${comma(bad.length-20)}건. 위에서부터 고치시면 계속 올라옵니다.</p>`:''}
   </div>`;
 }
 const SITES = ['자원순환공원','강남자원회수시설','뉴그린','대일개발','리누','번영','케이텍'];
@@ -586,6 +592,7 @@ let all = [], picCache = {}, rots = {}, mode = 'month';
 let chk = {};          // batch -> {w:[읽은 실중량들], d:'읽은 날짜', at:ts}
 let okm = {};          // id -> true  (사람이 보고 '맞음'이라고 표시한 전표)
 let onlyBad = false;
+let trash = [], showTrash = false;
 let pickMode = false;          // 골라서 지우기
 let pickSet = new Set();       // 지울 전표 id
 
@@ -761,17 +768,21 @@ function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on
 async function load(){
   $('#st').textContent='불러오는 중';
   try{
-    const [rRes,mRes,cRes,oRes] = await Promise.all([
+    const [rRes,mRes,cRes,oRes,tRes] = await Promise.all([
       fetch(`${DB}/gyegeun/records.json`),
       fetch(`${DB}/gyegeun/rot.json`),
       fetch(`${DB}/gyegeun/chk.json`),
-      fetch(`${DB}/gyegeun/ok.json`)
+      fetch(`${DB}/gyegeun/ok.json`),
+      fetch(`${DB}/gyegeun/trash.json`)
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
     rots = (mRes.ok ? await mRes.json() : null) || {};
     chk  = (cRes.ok ? await cRes.json() : null) || {};
     okm  = (oRes.ok ? await oRes.json() : null) || {};
+    const td = (tRes.ok ? await tRes.json() : null) || {};
+    trash = Object.entries(td).map(([id,v])=>({id,...v}))
+                  .sort((a,b)=> (b.delAt||0)-(a.delAt||0));
     all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
     all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
     $('#msg').innerHTML='';
@@ -802,7 +813,41 @@ function picked(){
 }
 
 /* ---------- 그리기 ---------- */
+/* 휴지통에서 지금 화면 조건(달·날짜)에 맞는 것만 */
+function trashShown(){
+  return trash.filter(r=> inRange(r.date));
+}
+function drawTrash(){
+  const n = trash.length;
+  $('#bTrash').style.display = n ? '' : 'none';
+  $('#bTrash').textContent = showTrash ? `휴지통 닫기 (${comma(n)})` : `휴지통 (${comma(n)})`;
+  $('#bTrash').classList.toggle('go', showTrash);
+  if(!showTrash){ $('#trash').innerHTML=''; return; }
+  const rows = trashShown();
+  const when = t => t ? new Date(t).toLocaleString('ko-KR',
+      {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+  $('#trash').innerHTML = `<div class="xw" style="background:#F2F1EE;border-color:#D6D2CA">
+    <h3 style="color:#4A463F">🗑 지운 전표 ${comma(rows.length)}건${rows.length!==n?` (전체 ${comma(n)}건 중 이 달 것만)`:''}</h3>
+    <p style="color:#4A463F">지운 전표는 여기 남습니다. 사진도 같이 남아 있어
+      <b>되살리면 그대로 돌아옵니다.</b>
+      ${rows.length?`<button class="mini" id="trRestoreAll" style="margin-left:6px">보이는 것 전부 되살리기</button>`:''}
+      <button class="mini" id="trEmpty" style="margin-left:6px">30일 지난 것 비우기</button></p>
+    ${rows.length ? `<table>
+      <thead><tr><th>계근일</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>전표번호</th><th>지운 때</th><th>사진</th><th></th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
+        <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
+        <td class="num">${r.no||''}</td><td class="num">${when(r.delAt)}</td>
+        <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+        <td style="text-align:right"><button class="mini go" data-rs="${r.id}">되살리기</button></td>
+      </tr>`).join('')}</tbody></table>` : '<p style="color:var(--dim)">이 달에 지운 전표는 없습니다.</p>'}
+  </div>`;
+  const ra=$('#trRestoreAll'); if(ra) ra.onclick = restoreAll;
+  $('#trEmpty').onclick = emptyTrash;
+}
+
 function render(){
+  drawTrash();
   drawXlWarn();
   const rows = picked();
   const sum={}; SEONG.forEach(s=>sum[s]=0);
@@ -1024,13 +1069,86 @@ window.addEventListener('keydown', e=>{
 
 async function del(id){
   const r=all.find(x=>x.id===id); if(!r) return;
-  if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n이 전표를 지웁니다. 되돌릴 수 없습니다.`)) return;
+  if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n`
+            + `이 전표를 지웁니다.\n휴지통에 남으니 잘못 지우면 되돌릴 수 있습니다.`)) return;
   try{
+    await toTrash([r]);
     const res=await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'DELETE'});
     if(!res.ok) throw new Error();
-    all=all.filter(x=>x.id!==id); render(); toast('지웠습니다','good');
+    all=all.filter(x=>x.id!==id); render(); toast('휴지통으로 보냈습니다','good');
     $('#st').textContent=`전표 ${comma(all.length)}건`;
   }catch(e){ toast('삭제 실패','err'); }
+}
+
+/* ---------- 휴지통 ----------
+   지운 전표는 없애지 않고 휴지통으로 옮깁니다. 사진도 같이 남겨 둡니다.
+   잘못 지운 것을 되돌릴 수 있어야 하니까요. */
+async function toTrash(rows){
+  const put={}, now=Date.now();
+  rows.forEach(r=>{ const {id,...v}=r; put[id] = {...v, delAt: now}; });
+  const res = await fetch(`${DB}/gyegeun/trash.json`,{method:'PATCH',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(put)});
+  if(!res.ok) throw new Error('trash '+res.status);
+  rows.forEach(r=>trash.unshift({...r, delAt: now}));
+}
+async function restore(id){
+  const r = trash.find(x=>x.id===id); if(!r) return;
+  if(!confirm(`${r.date} · ${r.veh} · ${r.seong} · ${comma(r.weight)}kg\n\n이 전표를 되살립니다.`)) return;
+  const {id:_i, delAt, ...v} = r;
+  try{
+    const res = await fetch(`${DB}/gyegeun/records/${id}.json`,{method:'PUT',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(v)});
+    if(!res.ok) throw new Error();
+    fetch(`${DB}/gyegeun/trash/${id}.json`,{method:'DELETE'}).catch(()=>{});
+    trash = trash.filter(x=>x.id!==id);
+    all.push({id,...v});
+    all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
+    $('#st').textContent=`전표 ${comma(all.length)}건`;
+    fillSelects(); render(); toast('되살렸습니다','good');
+  }catch(e){ toast('되살리지 못했습니다','err'); }
+}
+async function restoreAll(){
+  const rows = trashShown();
+  if(!rows.length) return;
+  if(!confirm(`지금 보이는 ${comma(rows.length)}건을 모두 되살립니다.`)) return;
+  const put={}; rows.forEach(r=>{ const {id,delAt,...v}=r; put[id]=v; });
+  try{
+    const res=await fetch(`${DB}/gyegeun/records.json`,{method:'PATCH',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(put)});
+    if(!res.ok) throw new Error();
+    const d={}; rows.forEach(r=>d[r.id]=null);
+    fetch(`${DB}/gyegeun/trash.json`,{method:'PATCH',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)}).catch(()=>{});
+    const back=new Set(rows.map(r=>r.id));
+    trash = trash.filter(x=>!back.has(x.id));
+    rows.forEach(r=>{ const {delAt,...v}=r; all.push(v); });
+    all.sort((a,b)=> a.date.localeCompare(b.date) || a.at-b.at);
+    $('#st').textContent=`전표 ${comma(all.length)}건`;
+    fillSelects(); render(); toast(`${comma(rows.length)}건 되살렸습니다`,'good');
+  }catch(e){ toast('되살리지 못했습니다','err'); }
+}
+async function emptyTrash(){
+  const old = trash.filter(r=> !r.delAt || Date.now()-r.delAt > 30*86400000);
+  if(!old.length){ toast('지운 지 30일 넘은 것이 없습니다','err'); return; }
+  if(!confirm(`지운 지 30일이 넘은 ${comma(old.length)}건을 완전히 없앱니다.\n\n`
+            + `이건 정말로 되돌릴 수 없습니다. 계속할까요?`)) return;
+  const d={}, pics={};
+  old.forEach(r=>{ d[r.id]=null; if(r.batch) pics[r.batch]=null; });
+  try{
+    const res=await fetch(`${DB}/gyegeun/trash.json`,{method:'PATCH',
+      headers:{'Content-Type':'application/json'}, body:JSON.stringify(d)});
+    if(!res.ok) throw new Error();
+    // 아직 쓰이는 사진은 남깁니다
+    const still=new Set(all.map(x=>x.batch).filter(Boolean));
+    trash.filter(r=>!d[r.id]).forEach(r=>{ if(r.batch) still.add(r.batch); });
+    Object.keys(pics).forEach(b=>{ if(still.has(b)) delete pics[b]; });
+    if(Object.keys(pics).length)
+      fetch(`${DB}/gyegeun/photos.json`,{method:'PATCH',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(pics)}).catch(()=>{});
+    const gone=new Set(old.map(r=>r.id));
+    trash = trash.filter(x=>!gone.has(x.id));
+    render(); toast(`${comma(old.length)}건 완전히 없앴습니다`,'good');
+  }catch(e){ toast('비우지 못했습니다','err'); }
 }
 
 /* ---------- 이벤트 ---------- */
@@ -1040,6 +1158,9 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.ed)  edit(b.dataset.ed);
   if(b.dataset.del) del(b.dataset.del);
   if(b.dataset.ok)  markOk(b.dataset.ok);
+  if(b.dataset.rs)  restore(b.dataset.rs);
+  if(b.id==='bTrash'){ showTrash=!showTrash; render();
+                       if(showTrash) $('#trash').scrollIntoView({behavior:'smooth',block:'start'}); }
   if(b.dataset.mon){ mode='month'; $('#fMonth').value=b.dataset.mon;
                      $('#fDay').value=''; $('#bDayClear').style.display='none';
                      render(); window.scrollTo(0,0); }

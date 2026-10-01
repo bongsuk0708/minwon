@@ -279,7 +279,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v48 · 2026-10-01 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v50 · 2026-10-02 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -406,8 +406,8 @@ function label(iso){
 function defaultDay(){
   const j = (CARS[cfg.veh]||{}).j;
   const h = new Date().getHours();
-  // 야간조는 밤 10시~새벽 6시. 새벽 1시 전이면 아직 전날 작업분입니다.
-  if(j === '야간') return h < NIGHT_CUT ? yesterday() : today();
+  // 계근일은 전표에 찍힌 날짜를 따릅니다. 이건 사진을 못 읽었을 때 쓰는 기본값일 뿐입니다.
+  if(j === '야간') return today();
   return h < 9 ? yesterday() : today();
 }
 function drawDay(){
@@ -471,7 +471,7 @@ function drawSlips(){
         <div class="site">${s}</div>
         ${r.dup?'<div class="dtag2">이미 올림</div>':''}
         ${r.no?`<div class="from">전표 ${r.no}</div>`:''}
-        ${(r.date && r.date!==form.date)?`<div class="dtag2">${label(r.date)}</div>`:''}
+        ${(rowDate(r)!==form.date)?`<div class="dtag2">${label(rowDate(r))}</div>`:''}
         ${si>=0?`<div class="from">사진 ${si+1}</div>`:''}
         <button class="del" data-del="${i}" aria-label="이 줄 지우기">×</button>
       </div>
@@ -789,7 +789,7 @@ function markDups(rows){
   let n=0;
   rows.forEach(r=>{
     r.dup = !!((r.no || (r.g && r.t)) &&
-               alreadySent(r.date||form.date, cfg.veh, r.g, r.t, +r.w, r.no));
+               alreadySent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no));
     if(r.dup) n++;
   });
   return n;
@@ -810,13 +810,12 @@ function attachNos(rows, nos){
 /* 야간조는 밤 10시부터 다음 날 새벽 6시까지 일합니다.
    계근기는 자정을 넘기면 다음 날 날짜를 찍지만,
    새벽 1시 전에 계근한 전표는 전날 작업분으로 칩니다. */
-const NIGHT_CUT = 1;
-function nightShift(date, t2){
-  if(!date || !t2) return date;
-  const h = parseInt(String(t2).slice(0,2), 10);
-  if(isNaN(h) || h >= NIGHT_CUT) return date;
-  const d = new Date(date+'T00:00:00'); d.setDate(d.getDate()-1);
-  return ymd(d);
+/* 이 전표를 어느 날로 저장할지.
+   기사가 날짜를 손으로 고르셨으면 무조건 그 날입니다 — 전표를 직접 보신 분이 맞습니다.
+   안 고르셨으면 전표에 찍힌 계량일시 그대로 씁니다. 자정에서 자정까지가 하루입니다. */
+function rowDate(r){
+  if(form.dateFrom === '손') return form.date;
+  return r.slipDate || form.date;
 }
 
 /* 전표에 찍힌 계량일시를 읽습니다.
@@ -1039,8 +1038,10 @@ async function runOcr(dataUrl, sid, hard){
   attachTimes(fresh, pickTimes(text));
   attachNos(fresh, pickSlipNos(text));
   const sd0 = readSlipDate(text);
-  // 2차 계근이 새벽 1시 전이면 전날 작업분입니다 — 전표마다 따로 따집니다
-  if(sd0) fresh.forEach(r=>{ r.date = nightShift(sd0, r.t2); });
+  /* 전표에 찍힌 계량일시가 곧 계근일입니다.
+     읽은 날짜는 slipDate에만 담아 둡니다. 기사가 손으로 고른 날이 있으면
+     그쪽이 이깁니다 (아래 저장부). 전표를 직접 보신 분이 기계보다 낫습니다. */
+  if(sd0) fresh.forEach(r=>{ r.slipDate = sd0; });
   const dupN = markDups(fresh);
   fresh.forEach(r=> form.rows.push(r));
   form.cnt = form.rows.length;
@@ -1058,10 +1059,15 @@ async function runOcr(dataUrl, sid, hard){
   const chk = form.seong
       ? `숫자와 제품명이 전표와 맞는지 확인하세요 — 지금 성상은 ${form.seong}입니다.`
       : '숫자를 확인하고, 전표의 제품명을 보고 성상을 고르세요.';
-  const sd = (fresh.length && fresh[0].date) ? fresh[0].date : sd0;
-  const spanDays = [...new Set(fresh.map(r=>r.date).filter(Boolean))];
+  const sd = (fresh.length && fresh[0].slipDate) ? fresh[0].slipDate : sd0;
+  const spanDays = [...new Set(fresh.map(r=>r.slipDate).filter(Boolean))];
   let dmsg='', dact=[];
-  if(spanDays.length > 1){
+  if(form.dateFrom === '손' && sd && sd !== form.date){
+    // 기사가 손으로 고른 날이 있으면 그 날로 저장합니다. 바꾸고 싶으면 단추로.
+    dmsg = ` ⚠ 사진에는 ${label(sd)}로 보이는데 ${label(form.date)}로 고르셨습니다.`
+         + ` 고르신 ${label(form.date)}로 저장됩니다.`;
+    ocrDate = sd; dact = [{k:'date', t:`${label(sd)}로 바꾸기`}];
+  }else if(spanDays.length > 1){
     // 한 묶음이 새벽 1시를 걸쳤습니다 — 전표마다 날짜가 다릅니다
     dmsg = ` 계근일이 전표마다 다릅니다 (${spanDays.map(label).join(' · ')}). 그대로 저장됩니다.`;
     form.dateFrom = form.dateFrom || '사진';
@@ -1131,7 +1137,7 @@ $('#bSave').onclick = ()=>{
 
   // 이미 올린 전표가 섞여 있으면 한 번 짚어 줍니다
   const dups = rows.filter(r=> (r.no || (r.g && r.t)) &&
-                               alreadySent(r.date||form.date, cfg.veh, r.g, r.t, +r.w, r.no));
+                               alreadySent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no));
   if(dups.length){
     const go = confirm(
       `이미 올린 전표가 ${dups.length}장 섞여 있습니다.\n\n`
@@ -1172,7 +1178,7 @@ $('#bSave').onclick = ()=>{
   rows.forEach(r=>{
     const sid = r.shot || last;
     recs.push({
-      id:uid(), date: r.date || form.date, jo:(CARS[cfg.veh]||{}).j || '',
+      id:uid(), date: rowDate(r), jo:(CARS[cfg.veh]||{}).j || '',
       veh:cfg.veh, seong:form.seong,
       site: r.site || siteName(),
       weight:+r.w, gross:r.g||null, tare:r.t||null,

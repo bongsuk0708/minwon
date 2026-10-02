@@ -123,9 +123,9 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 .s-완료,.s-처리완료{background:#dcfce7;color:#16a34a;}
 .s-보류{background:#f1f5f9;color:var(--sub);}
 .risk-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700;}
-.r-High{background:#fee2e2;color:#dc2626;}
-.r-Medium{background:#fef9c3;color:#a16207;}
-.r-Low{background:#f1f5f9;color:var(--sub);}
+.r-High{background:#fecaca;color:#991b1b;}
+.r-Medium{background:#fee2e2;color:#dc2626;}
+.r-Low{background:#fef2f2;color:#ef4444;}
 .waste-tag{font-size:11px;font-weight:700;padding:2px 6px;border-radius:8px;}
 .waste-생활{background:#dcfce7;color:var(--green);}
 .waste-음식물{background:#fef9c3;color:var(--yellow);}
@@ -220,9 +220,9 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
       <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
       <div class="leg"><div class="leg-dot" style="background:#eab308"></div>음식물</div>
       <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
-      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고High</div>
-      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>사고Mid</div>
-      <div class="leg"><div class="leg-dot" style="background:#94a3b8"></div>사고Low</div>
+      <div class="leg"><div class="leg-dot" style="background:#b91c1c"></div>사고High</div>
+      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고Mid</div>
+      <div class="leg"><div class="leg-dot" style="background:#f87171"></div>사고Low</div>
     </div>
     <div id="map-container"></div>
   </div>
@@ -604,14 +604,14 @@ let fieldMap=null, fieldMapInited=false, fieldPins=[], fixedPins=[];
 
 function fieldPinColor(r){
   const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return (r.risk||r.riskLevel)==='High'?'#ef4444':(r.risk||r.riskLevel)==='Medium'?'#eab308':'#94a3b8';
+  if(isH) return (r.risk||r.riskLevel)==='High'?'#b91c1c':(r.risk||r.riskLevel)==='Medium'?'#ef4444':'#f87171';
   const w=r.waste||r.subtype||'';
   return w==='생활'?'#22c55e':w==='음식물'?'#eab308':'#3b82f6';
 }
 // 라벨용 진한 색 (흰 배경 위 가독성)
 function fieldPinColorDark(r){
   const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return (r.risk||r.riskLevel)==='High'?'#dc2626':(r.risk||r.riskLevel)==='Medium'?'#ca8a04':'#64748b';
+  if(isH) return (r.risk||r.riskLevel)==='High'?'#991b1b':(r.risk||r.riskLevel)==='Medium'?'#dc2626':'#ef4444';
   const w=r.waste||r.subtype||'';
   return w==='생활'?'#16a34a':w==='음식물'?'#ca8a04':'#2563eb';
 }

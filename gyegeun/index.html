@@ -279,7 +279,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v50 · 2026-10-02 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v51 · 2026-10-02 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -1263,7 +1263,7 @@ function inRange(d){
   if(fil==='today') return d===t;
   if(fil==='month') return d.slice(0,7)===t.slice(0,7);
   const lim=new Date(); lim.setDate(lim.getDate()-6);
-  return d >= lim.toISOString().slice(0,10);
+  return d >= ymd(lim);          // 세계시로 계산하면 오전 9시 전에 하루가 밀립니다
 }
 function drawList(){
   const list = recs.filter(r=>inRange(r.date)).sort((a,b)=>b.at-a.at);

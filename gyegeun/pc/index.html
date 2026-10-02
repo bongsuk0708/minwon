@@ -183,7 +183,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v46</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v47</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -466,55 +466,22 @@ function drawXlWarn(){
   // 화면 필터와 상관없이 이번 달 전체를 봅니다 — 걸러서 보다가 놓치면 안 되니까
   const bad = all.filter(r=> inRange(r.date) && !XL_SLOTS.has(slotKey(r)))
                  .sort((a,b)=> a.date.localeCompare(b.date) || a.veh.localeCompare(b.veh));
-  // 이번 달 밖인데 날짜를 잘못 저장했을 법한 것들 (앞뒤 45일 안)
-  let near=[];
-  if(mode==='month'){
-    const m=$('#fMonth').value;
-    if(m){
-      const a=new Date(m+'-01T00:00:00').getTime(), z=a+45*86400000, y=a-45*86400000;
-      /* 이 상자는 "요 며칠 사이 날짜를 잘못 눌렀나" 를 잡으려고 있는 것입니다.
-         그래서 계근일이 오늘에서 일주일 안인 것만 봅니다.
-         9월 18일 전표를 10월에 뒤늦게 넣는 건 잘못이 아니라 늦게 넣은 것뿐이고,
-         이미 마감한 지난달을 통째로 끌어오면 정작 봐야 할 목록을 덮어버립니다. */
-      const t0 = new Date(today()+'T00:00:00').getTime();
-      near = all.filter(r=>{
-        if(inRange(r.date)) return false;
-        const t=new Date(r.date+'T00:00:00').getTime();
-        if(t<y||t>z) return false;
-        return Math.abs(t - t0) <= 7*86400000;
-      }).sort((x,y2)=> x.date.localeCompare(y2.date));
-    }
+  /* 고른 달 밖에 있는 전표는 "몇 건 있습니다" 한 줄로만 알려 줍니다.
+     예전에는 날짜가 수상한 것을 표로 뽑아 줬는데, 지난달 전표를 늦게 넣는 일이 흔해서
+     맞는 자료까지 경고로 쏟아졌습니다. 진짜 날짜가 틀린 것은 그 달을 볼 때
+     전표마다 붙는 '확인 필요' 로 잡힙니다. 여기서 두 번 잡을 필요가 없습니다. */
+  let nearHtml = '';
+  if(mode==='month' && $('#fMonth').value){
+    const out = all.filter(r=>!inRange(r.date));
+    const cnt = {};
+    out.forEach(r=>{ const m=r.date.slice(0,7); cnt[m]=(cnt[m]||0)+1; });
+    const ms = Object.keys(cnt).sort().reverse().slice(0,3);
+    if(ms.length) nearHtml = `<div class="xw" style="background:#EEF4FB;border-color:#C7D8EC;padding:12px 16px">
+      <p style="color:#2C5A8A;margin:0">지금 <b>${$('#fMonth').value.replace('-','년 ')}월</b>만 보고 계십니다.
+        다른 달도 보시려면 눌러 주세요.
+        ${ms.map(m=>`<button class="mini" data-mon="${m}" style="margin-left:6px">${m.replace('-','년 ')}월 (${comma(cnt[m])}건)</button>`).join('')}</p>
+    </div>`;
   }
-  /* 달이 다르다고 다 잘못된 건 아닙니다.
-     찍은 날 바로(또는 다음 날 아침에) 저장한 건 정상이고, 고를 달만 다른 것뿐입니다.
-     날짜와 저장 시각이 동떨어진 것만 잘못 저장한 걸로 봅니다. */
-  function dateOdd(r){
-    if(!r.at) return true;                       // 저장 시각이 없으면 판단 못 함 — 일단 확인
-    const gap = Math.round((new Date(r.at).setHours(0,0,0,0)
-                          - new Date(r.date+'T00:00:00').getTime())/86400000);
-    return !(gap >= 0 && gap <= 2);              // 당일 ~ 이틀 뒤 저장은 정상
-  }
-  const odd  = near.filter(dateOdd);
-  const okm2 = near.filter(r=>!dateOdd(r));
-
-  const monList = [...new Set(okm2.map(r=>r.date.slice(0,7)))].sort();
-  const otherHtml = okm2.length ? `<div class="xw" style="background:#EEF4FB;border-color:#C7D8EC">
-    <h3 style="color:#2C5A8A">다른 달 전표 ${okm2.length}건</h3>
-    <p style="color:#2C5A8A">잘못된 것이 아닙니다. 지금 <b>${$('#fMonth').value.replace('-','년 ')}월</b>을 보고 계셔서
-      안 보이는 것뿐입니다. 아래 단추로 달을 바꾸면 표에 나옵니다.
-      ${monList.map(m=>`<button class="mini" data-mon="${m}" style="margin-left:6px">${m.replace('-','년 ')}월 보기 (${okm2.filter(r=>r.date.slice(0,7)===m).length}건)</button>`).join('')}</p>
-    </div>` : '';
-
-  const nearHtml = otherHtml + (odd.length ? `<div class="xw" style="background:#FFF8E9;border-color:#E7D3A8">
-    <h3 style="color:#7A5A16">⚠ 계근일이 저장 시각과 맞지 않는 전표 ${odd.length}건</h3>
-    <p style="color:#7A5A16">계근일을 잘못 저장했을 수 있습니다. 사진을 눌러 전표의 계량일시를 보고, 다르면 고치세요.</p>
-    <table><thead><tr><th>저장된 날짜</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${odd.slice(0,20).map(r=>`<tr>
-      <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
-      <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
-      <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
-      <td style="text-align:right"><button class="mini warn" data-ed="${r.id}">수정 ●</button></td>
-    </tr>`).join('')}</tbody></table>${odd.length>20?`<p style="color:#7A5A16">… 외 ${comma(odd.length-20)}건. 위에서부터 고치시면 계속 올라옵니다.</p>`:''}</div>` : '');
 
   if(!bad.length){ $('#xlwarn').innerHTML = nearHtml; return; }
   const kinds=[...new Set(bad.map(slotKey))];

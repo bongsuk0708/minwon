@@ -330,7 +330,7 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="form-row"><span class="form-label">사고예방 조치사항</span><textarea class="form-textarea" id="h-action" placeholder="조치사항"></textarea></div>
         <div class="form-2col">
           <div><span class="form-label">위험등급 *</span>
-            <select class="form-select" id="h-level"><option value="High">🔴 High</option><option value="Medium">🟡 Medium</option><option value="Low">⚫ Low</option></select>
+            <select class="form-select" id="h-level"><option value="High">🔴 High (높음)</option><option value="Medium">🔴 Medium (보통)</option><option value="Low">🔴 Low (낮음)</option></select>
           </div>
           <div><span class="form-label">비고</span><input class="form-input" id="h-note" type="text" placeholder="메모"></div>
         </div>
@@ -377,9 +377,9 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
       <div class="leg"><div class="leg-dot" style="background:#eab308"></div>음식물</div>
       <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
-      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고High</div>
-      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>사고Mid</div>
-      <div class="leg"><div class="leg-dot" style="background:#94a3b8"></div>사고Low</div>
+      <div class="leg"><div class="leg-dot" style="background:#b91c1c"></div>사고High</div>
+      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고Mid</div>
+      <div class="leg"><div class="leg-dot" style="background:#f87171"></div>사고Low</div>
     </div>
     <div id="map-container"></div>
   </div>
@@ -779,10 +779,10 @@ function exportExcel(){
   toast('📊 CSV 다운로드 완료 ('+data.length+'건)');
 }
 
-function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#ef4444':r.riskLevel==='Medium'?'#eab308':'#94a3b8';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#eab308':'#3b82f6';}
+function pinColor(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#b91c1c':r.riskLevel==='Medium'?'#ef4444':'#f87171';return r.subtype==='생활'?'#22c55e':r.subtype==='음식물'?'#eab308':'#3b82f6';}
 function pinLabel(r){if(r.recType==='hazard')return r.riskType||'위험';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식물':'재활용';}
 // 라벨용 진한 색 (흰 배경 위 가독성)
-function pinColorDark(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#dc2626':r.riskLevel==='Medium'?'#ca8a04':'#64748b';return r.subtype==='생활'?'#16a34a':r.subtype==='음식물'?'#ca8a04':'#2563eb';}
+function pinColorDark(r){if(r.recType==='hazard')return r.riskLevel==='High'?'#991b1b':r.riskLevel==='Medium'?'#dc2626':'#ef4444';return r.subtype==='생활'?'#16a34a':r.subtype==='음식물'?'#ca8a04':'#2563eb';}
 // 배지 안 2글자
 function pinBadge(r){if(r.recType==='hazard')return '사고';return r.subtype==='생활'?'생활':r.subtype==='음식물'?'음식':'재활';}
 function mkEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -842,7 +842,7 @@ function openDet(id){
   if(isH){
     body=`<div class="det-2col">
       <div class="det-row"><div class="det-label">관리번호</div><div class="det-val">${r.hazardNo||'-'}</div></div>
-      <div class="det-row"><div class="det-label">위험등급</div><div class="det-val" style="font-weight:800;color:${pinColor(r)}">${r.riskLevel}</div></div>
+      <div class="det-row"><div class="det-label">위험등급</div><div class="det-val" style="font-weight:800;color:${pinColorDark(r)}">${r.riskLevel}</div></div>
     </div>
     <div class="det-row"><div class="det-label">주소</div><div class="det-val">${r.addr}</div></div>
     <div class="det-2col">

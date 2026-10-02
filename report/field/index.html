@@ -646,16 +646,27 @@ function initFixedPins(){}
 function renderFieldMap(){
   if(!fieldMap)return;
   fieldPins.forEach(p=>p.setMap(null)); fieldPins=[];
-  allRecs.filter(r=>!r.del&&r.addrPos).forEach(r=>{
+  const list=allRecs.filter(r=>!r.del&&r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
+  if(!list.length)return;
+  const bounds=new kakao.maps.LatLngBounds();
+  list.forEach(r=>{
     const c=fieldPinColor(r);
-    const lbl=fieldPinLabel(r);
+    const pos=new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng);
+    bounds.extend(pos);
     const ov=new kakao.maps.CustomOverlay({
-      position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
+      position:pos,
       content:`<div class="mk-wrap" onclick="openDetail('${r.id}')"><span class="mk-lbl" style="border-color:${fieldPinColorDark(r)};color:${fieldPinColorDark(r)}">${mkAddr(r)}</span><span class="mk-badge" style="background:${c}">${fieldPinBadge(r)}</span></div>`,
       yAnchor:0.5,zIndex:2
     });
     ov.setMap(fieldMap); fieldPins.push(ov);
   });
+  // 모든 마커가 보이도록 자동 맞춤
+  if(list.length===1){
+    fieldMap.setCenter(new kakao.maps.LatLng(list[0].addrPos.lat,list[0].addrPos.lng));
+    fieldMap.setLevel(4);
+  }else{
+    fieldMap.setBounds(bounds,70,70,70,70);
+  }
 }
 
 /* ── Firebase 구독 ── */

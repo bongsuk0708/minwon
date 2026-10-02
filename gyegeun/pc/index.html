@@ -183,7 +183,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v47</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v48</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -553,10 +553,13 @@ const CARS = {
   '4830':{s:'',      d:'자원순환공원', f:'86마4830',  j:'주간'},
   '4968':{s:'',      d:'자원순환공원', f:'86마4968',  j:'주간'},
   '6110':{s:'',      d:'자원순환공원', f:'86모6110',  j:'야간'},
-  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'야간'}
+  '7507':{s:'',      d:'자원순환공원', f:'85노7507',  j:'주간'}
 };
 // 조가 저장되지 않은 옛 전표는 차량 기본값으로 봅니다
-const joOf = r => r.jo || (CARS[r.veh]||{}).j || '';
+/* 근무조는 차량에 딸린 것이지 전표에 딸린 것이 아닙니다.
+   그래서 아래 차량표를 먼저 봅니다 — 조가 바뀌면 지난 전표까지 한 번에 맞습니다.
+   차량표에 없는 차량만 전표에 저장된 값을 씁니다. */
+const joOf = r => (CARS[r.veh]||{}).j || r.jo || '';
 
 let all = [], picCache = {}, rots = {}, mode = 'month';
 let chk = {};          // batch -> {w:[읽은 실중량들], d:'읽은 날짜', at:ts}

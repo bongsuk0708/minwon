@@ -119,6 +119,9 @@ input,select,textarea{font-family:inherit;outline:none}
 #map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .leg{display:flex;align-items:center;gap:3px;font-size:12px;font-weight:600}
 .leg-dot{width:11px;height:11px;border-radius:50%}
+#map-stat{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:6px}
+#map-stat b{color:var(--blue)}
+#map-stat .miss{color:var(--red)}
 #map-container{width:100%;height:calc(100vh - 220px);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
 .map-pin{padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.3);cursor:pointer;position:relative;display:inline-block}
 .map-pin::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border-left:4px solid transparent;border-right:4px solid transparent;border-top-width:5px;border-top-style:solid}
@@ -381,6 +384,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고Mid</div>
       <div class="leg"><div class="leg-dot" style="background:#f87171"></div>사고Low</div>
     </div>
+    <div id="map-stat"></div>
     <div id="map-container"></div>
   </div>
 </div>
@@ -443,6 +447,14 @@ let fixedPins=[];
 
 // 주요 장소 (지도 고정 마커 + 동 구분 칩) — 하드코딩 좌표
 // short = 주소란에 입력되는 텍스트 (뒤에 추가 입력 가능)
+// 동만 선택했을 때 쓰는 동 중심 좌표
+const DONG_CENTER={
+  '잠실동':{lat:37.5085,lng:127.0885},
+  '삼전동':{lat:37.5055,lng:127.0925},
+  '잠실3동':{lat:37.5095,lng:127.0860},
+  '가락동':{lat:37.4950,lng:127.1180},
+};
+
 const FIXED_LOCS=[
   {name:'본동',      short:'본동 ',     dong:'잠실동', lat:37.5075, lng:127.0885},
   {name:'잠실현대',  short:'잠실현대 ', dong:'잠실동', lat:37.5090, lng:127.0872},
@@ -632,8 +644,16 @@ function onDongChange(form){
     if(form==='m') mPos={lat:loc.lat,lng:loc.lng};
     else hPos={lat:loc.lat,lng:loc.lng};
   } else {
+    // 동만 선택 — 동 중심 좌표를 임시로 넣어 지도에 반드시 찍히게 함
+    const dc = DONG_CENTER[val];
     addrEl.value = val+' ';
-    okEl.textContent = '';
+    if(dc){
+      if(form==='m') mPos={lat:dc.lat,lng:dc.lng};
+      else hPos={lat:dc.lat,lng:dc.lng};
+      okEl.textContent='📍 '+val+' 중심 — 🗺️지도로 정확히 찍어주세요';
+    }else{
+      okEl.textContent='';
+    }
   }
   addrEl.focus();
   var l=addrEl.value.length;
@@ -642,29 +662,33 @@ function onDongChange(form){
 
 function initFixedMarkers(){}
 
+// "잠실동 249-5" 처럼 구 이름이 없으면 붙여서 검색해야 찾아짐
+function geoTry(addr,done){
+  const g=getGeo();
+  const q1 = /송파|서울/.test(addr) ? addr : ('서울 송파구 '+addr);
+  g.addressSearch(q1,(res,st)=>{
+    if(st===kakao.maps.services.Status.OK){done({lat:+res[0].y,lng:+res[0].x});return;}
+    if(q1===addr){done(null);return;}
+    g.addressSearch(addr,(r2,s2)=>{
+      done(s2===kakao.maps.services.Status.OK?{lat:+r2[0].y,lng:+r2[0].x}:null);
+    });
+  });
+}
 // 주소검색 실패해도 이미 지정된 좌표(동 구분 선택/지도 찍기)는 지우지 않음
 function geoM(){
   const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
-  getGeo().addressSearch(a,(res,st)=>{
-    if(st===kakao.maps.services.Status.OK){
-      mPos={lat:+res[0].y,lng:+res[0].x};$('m-addr-ok').textContent='📍 위치 확인됨';
-    }else if(mPos){
-      $('m-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';
-    }else{
-      $('m-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';
-    }
+  geoTry(a,p=>{
+    if(p){mPos=p;$('m-addr-ok').textContent='📍 위치 확인됨';}
+    else if(mPos){$('m-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
+    else{$('m-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';}
   });
 }
 function geoH(){
   const a=$('h-addr').value.trim(); if(!a){toast('주소 입력');return;}
-  getGeo().addressSearch(a,(res,st)=>{
-    if(st===kakao.maps.services.Status.OK){
-      hPos={lat:+res[0].y,lng:+res[0].x};$('h-addr-ok').textContent='📍 위치 확인됨';
-    }else if(hPos){
-      $('h-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';
-    }else{
-      $('h-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';
-    }
+  geoTry(a,p=>{
+    if(p){hPos=p;$('h-addr-ok').textContent='📍 위치 확인됨';}
+    else if(hPos){$('h-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
+    else{$('h-addr-ok').textContent='❌ 주소 못 찾음 — 🗺️지도 버튼으로 직접 지정하세요';}
   });
 }
 
@@ -821,15 +845,31 @@ function initMap(){
 function renderMap(){
   if(!kakaoMap)return;
   mapPins.forEach(p=>p.setMap(null));mapPins=[];
-  recs.filter(r=>r.addrPos).forEach(r=>{
+  const list=recs.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
+  const miss=recs.length-list.length;
+  const st=$('map-stat');
+  if(st)st.innerHTML='지도 표시 <b>'+list.length+'건</b> / 전체 '+recs.length+'건'
+    +(miss?' · <span class="miss">위치 미지정 '+miss+'건</span>':'');
+  if(!list.length)return;
+  const bounds=new kakao.maps.LatLngBounds();
+  list.forEach(r=>{
     const c=pinColor(r);
+    const pos=new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng);
+    bounds.extend(pos);
     const ov=new kakao.maps.CustomOverlay({
-      position:new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng),
+      position:pos,
       content:`<div class="mk-wrap" onclick="openDet('${r.id}')"><span class="mk-lbl" style="border-color:${pinColorDark(r)};color:${pinColorDark(r)}">${mkAddr(r)}</span><span class="mk-badge" style="background:${c}">${pinBadge(r)}</span></div>`,
       yAnchor:0.5
     });
     ov.setMap(kakaoMap);mapPins.push(ov);
   });
+  // 모든 마커가 보이도록 자동 맞춤 (가락동처럼 멀리 있는 건도 화면에 들어옴)
+  if(list.length===1){
+    kakaoMap.setCenter(new kakao.maps.LatLng(list[0].addrPos.lat,list[0].addrPos.lng));
+    kakaoMap.setLevel(4);
+  }else{
+    kakaoMap.setBounds(bounds,70,70,70,70);
+  }
 }
 
 // ── 상세 모달 ──

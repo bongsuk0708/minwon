@@ -183,7 +183,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v49</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v50</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -195,7 +195,9 @@ tr.picked{background:#FBEAE8}
     <button class="chip" data-q="7">최근 7일</button>
     <button class="chip sel" data-q="month">이번 달</button>
     <input type="month" id="fMonth">
-    <input type="date" id="fDay" title="특정 날짜만 보기">
+    <input type="date" id="fDay" title="이 날짜부터">
+    <span id="dayTil" style="color:var(--dim);font-weight:700">~</span>
+    <input type="date" id="fDay2" title="이 날짜까지 — 비우면 하루만">
     <button class="chip" id="bDayClear" style="display:none">날짜 해제</button>
     <select id="fVeh"><option value="">전체 차량</option></select>
     <select id="fSeong"><option value="">전체 성상</option></select>
@@ -778,7 +780,13 @@ function fillSelects(){
 
 /* ---------- 기간 ---------- */
 function inRange(d){
-  if(mode==='day')   return d===$('#fDay').value;
+  if(mode==='day'){
+    // 끝 날짜를 비워두면 그 하루만, 넣으면 시작~끝 기간으로 봅니다
+    const a=$('#fDay').value, b=$('#fDay2').value;
+    if(!a && !b) return false;
+    if(a && b)   return (a<=b) ? (d>=a && d<=b) : (d>=b && d<=a);
+    return d === (a||b);
+  }
   if(mode==='today') return d===today();
   if(mode==='7'){ const l=new Date(); l.setDate(l.getDate()-6);
     return d >= `${l.getFullYear()}-${String(l.getMonth()+1).padStart(2,'0')}-${String(l.getDate()).padStart(2,'0')}`; }
@@ -1139,29 +1147,32 @@ document.body.addEventListener('click', e=>{
   if(b.id==='bTrash'){ showTrash=!showTrash; render();
                        if(showTrash) $('#trash').scrollIntoView({behavior:'smooth',block:'start'}); }
   if(b.dataset.mon){ mode='month'; $('#fMonth').value=b.dataset.mon;
-                     $('#fDay').value=''; $('#bDayClear').style.display='none';
+                     $('#fDay').value=''; $('#fDay2').value=''; $('#bDayClear').style.display='none';
                      render(); window.scrollTo(0,0); }
   if(b.id==='bPick'){ pickMode=!pickMode; if(!pickMode) pickSet.clear(); render(); }
   if(b.dataset.q){
     mode=b.dataset.q;
-    $('#fDay').value=''; $('#bDayClear').style.display='none';
+    $('#fDay').value=''; $('#fDay2').value=''; $('#bDayClear').style.display='none';
     document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x===b));
     render();
   }
   if(b.id==='bDayClear'){
-    $('#fDay').value=''; b.style.display='none'; mode='month';
+    $('#fDay').value=''; $('#fDay2').value=''; b.style.display='none'; mode='month';
     document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
     render();
   }
 });
-$('#fDay').onchange = e=>{
-  if(!e.target.value){ $('#bDayClear').click(); return; }
+function onDayPick(){
+  const a=$('#fDay').value, b=$('#fDay2').value;
+  if(!a && !b){ $('#bDayClear').click(); return; }
   mode='day'; $('#bDayClear').style.display='inline-block';
   document.querySelectorAll('[data-q]').forEach(x=>x.classList.remove('sel'));
   render();
-};
+}
+$('#fDay').onchange = onDayPick;
+$('#fDay2').onchange = onDayPick;
 $('#fMonth').onchange = ()=>{
-  mode='month'; $('#fDay').value=''; $('#bDayClear').style.display='none';
+  mode='month'; $('#fDay').value=''; $('#fDay2').value=''; $('#bDayClear').style.display='none';
   document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
   render();
 };
@@ -1255,7 +1266,12 @@ $('#bCsv').onclick = ()=>{
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download=`계근대장_${$('#fMonth').value||today().slice(0,7)}.csv`;
+  const a1=$('#fDay').value, b1=$('#fDay2').value;
+  const tag = mode==='day' ? (a1&&b1&&a1!==b1 ? `${a1}_${b1}` : (a1||b1))
+            : mode==='today' ? today()
+            : mode==='7' ? `최근7일_${today()}`
+            : ($('#fMonth').value||today().slice(0,7));
+  a.download=`계근대장_${tag}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
 };
 

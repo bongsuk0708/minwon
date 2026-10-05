@@ -165,6 +165,15 @@ input[type=number]{font-variant-numeric:tabular-nums}
 .oact{flex:1;min-width:130px;background:var(--card);border:1px solid var(--line);border-radius:10px;
   padding:11px 12px;font-size:14px;font-weight:800;color:var(--tx);cursor:pointer}
 #bSave.half{opacity:.55}
+#bSave:disabled{opacity:.45}
+.savedbox{margin-top:14px;border:2px solid #2E7D5B;background:#EAF6F0;border-radius:14px;padding:16px 16px 14px}
+.savedbox .t{font-size:21px;font-weight:800;color:#1E6347;letter-spacing:-.4px}
+.savedbox .d{margin-top:6px;font-size:16px;color:#20503E}
+.savedbox .d b{font-size:19px}
+.savedbox .s{margin-top:8px;font-size:14px;color:#4A7A66}
+.savedbox .s.ok{color:#1E6347;font-weight:700}
+.savednext{margin-top:12px;width:100%;padding:13px;border:0;border-radius:11px;
+  background:#2E7D5B;color:#fff;font-size:17px;font-weight:800}
 .empty{text-align:center;color:var(--dim);padding:52px 20px;font-size:15px}
 
 .toast{
@@ -245,6 +254,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <div class="lbl">실중량</div>
   <div id="fSlips"></div>
 
+  <div id="fSaved"></div>
   <div style="height:8px"></div>
 </section>
 
@@ -279,7 +289,7 @@ input[type=number]{font-variant-numeric:tabular-nums}
 
   <div class="lbl">앱</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v53 · 2026-10-02 · 계근 전표 입력 · 본에코</div>
+  <div class="hint">v54 · 2026-10-06 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -536,6 +546,7 @@ function addPhoto(file){
   rd.readAsDataURL(file);
 }
 $('#fFile').onchange = e=>{
+  $('#fSaved').innerHTML='';
   const f=e.target.files[0];
   if(f) addPhoto(f);
   e.target.value='';
@@ -775,14 +786,20 @@ function slipKey(date, veh, g, t, n){
    이것이 같으면 같은 전표이고, 이것이 다르면 실중량이 같아도 다른 전표입니다.
    그래서 전표번호가 있으면 그것만 봅니다. */
 function alreadySent(date, veh, g, t, n, no){
-  if(no) {
-    const hit = recs.find(r=> r.no && r.no===no && r.veh===veh && r.date===date);
+  const near = d => Math.abs(new Date(d+'T00:00:00') - new Date(date+'T00:00:00')) <= 20*86400000;
+  // 1) 전표번호가 같으면 같은 전표입니다. 날짜를 잘못 골라 다시 저장한 것도 여기서 잡힙니다.
+  if(no){
+    const hit = recs.find(r=> r.no && r.no===no && r.veh===veh && near(r.date));
     if(hit) return hit;
-    // 전표번호를 둘 다 읽었는데 같은 것이 없으면 중복이 아닙니다
-    if(recs.some(r=> r.no && r.veh===veh && r.date===date)) return null;
   }
+  // 2) 날짜·차량·1차·2차·실중량이 모두 같아도 같은 전표입니다.
+  //    다만 양쪽 다 전표번호가 있는데 서로 다르면 진짜로 두 번 나른 것이니 빼 줍니다.
   const k = slipKey(date, veh, g, t, n);
-  return recs.find(r=> !r.no && slipKey(r.date, r.veh, r.gross, r.tare, r.weight) === k);
+  return recs.find(r=>{
+    if(slipKey(r.date, r.veh, r.gross, r.tare, r.weight) !== k) return false;
+    if(no && r.no && r.no !== no) return false;
+    return true;
+  });
 }
 // 판독으로 들어온 줄 중에 이미 올린 것이 있는지 표시합니다
 function markDups(rows){
@@ -1189,12 +1206,42 @@ $('#bSave').onclick = ()=>{
   });
   saveAll();
   const keep={date:form.date};
-  toast(`${label(form.date)} · 전표 ${rows.length}장 저장`, 'good');
+  const sum = rows.reduce((a,r)=>a+(+r.w||0),0);
   initForm();
-  Object.assign(form, keep); drawDay();
+  Object.assign(form, keep);
+  drawDay(); drawCnt(); drawSlips();   // 아래 독의 날짜도 같이 맞춰 줍니다
   push();
   drawList();
+  // 토스트는 금방 사라져서 저장됐는지 못 미더워하십니다. 눈에 남는 카드로 알려 줍니다.
+  showSaved(rows.length, sum);
 };
+
+/* 저장이 됐다는 것을 확실히 보여 줍니다.
+   기사님이 "안 된 것 같아서" 한 번 더 누르시는 일을 없애려는 것입니다. */
+function showSaved(n, sum){
+  savedUntil = Date.now() + 2000;          // 2초간 저장 단추를 막습니다
+  $('#bSave').disabled = true;
+  setTimeout(()=>{ $('#bSave').disabled = false; }, 2000);
+  $('#fSaved').innerHTML =
+    `<div class="savedbox">
+       <div class="t">✓ 저장했습니다</div>
+       <div class="d">${label(form.date)} · 전표 <b>${n}</b>장 · <b>${comma(sum)}</b> kg</div>
+       <div class="s" id="savedNet">사무실로 보내는 중…</div>
+       <button class="savednext" id="bSavedNext">다음 전표 찍기</button>
+     </div>`;
+  $('#fSaved').scrollIntoView({behavior:'smooth', block:'center'});
+  $('#bSavedNext').onclick = ()=>{ $('#fSaved').innerHTML=''; $('#fFile').click(); };
+  drawSavedNet();
+}
+function drawSavedNet(){
+  const el=$('#savedNet'); if(!el) return;
+  const q=pending().length;
+  if(!cfg.db)        el.textContent='이 폰에 저장했습니다 (서버 주소 없음)';
+  else if(!online()) el.textContent='오프라인 — 인터넷이 되면 저절로 보냅니다';
+  else if(q)         el.textContent=`사무실로 보내는 중… (남은 ${q}건)`;
+  else { el.textContent='사무실까지 들어갔습니다'; el.classList.add('ok'); }
+}
+let savedUntil = 0;
 
 /* ================= 전송 ================= */
 function pending(){ return recs.filter(r=>!r.sent); }
@@ -1207,6 +1254,7 @@ function drawNet(){
   else if(q){ el.className='net'; el.textContent=`대기 ${q}`; }
   else { el.className='net on'; el.textContent='전송됨'; }
   $('#sQ').textContent=q;
+  drawSavedNet();
 }
 
 async function push(){

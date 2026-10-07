@@ -67,7 +67,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .map-btn{padding:9px 10px;background:#0d9488;color:#fff;border-radius:8px;font-size:12.5px;font-weight:700;white-space:nowrap}
 .map-btn:active{background:#0f766e}
 /* 지도에서 위치 지정 */
-#mappick-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:250;align-items:center;justify-content:center;padding:12px}
+#mappick-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;align-items:center;justify-content:center;padding:12px}
 #mappick-bg.on{display:flex}
 #mappick{background:#fff;border-radius:16px;width:100%;max-width:520px;overflow:hidden;display:flex;flex-direction:column;max-height:92vh}
 #mappick-hdr{padding:13px 15px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
@@ -163,6 +163,49 @@ input,select,textarea{font-family:inherit;outline:none}
 #photo-progress{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
 #photo-progress.on{display:flex}
 #photo-progress div{background:#fff;border-radius:12px;padding:20px 28px;text-align:center;font-weight:700;font-size:15px}
+/* 사진 교체/삭제 */
+.photo-empty{width:100px;height:100px;border:2px dashed var(--line);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:21px;color:var(--sub);cursor:pointer;background:var(--bg)}
+.photo-empty span{font-size:10px;font-weight:600;line-height:1.3;text-align:center}
+.photo-acts{display:flex;gap:4px;align-items:center}
+.photo-acts a{text-decoration:none}
+.pa-btn{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:none}
+.pa-edit{background:#dbeafe;color:var(--blue)}
+.pa-dl{background:#dcfce7;color:var(--green)}
+.pa-del{background:#fee2e2;color:var(--red)}
+/* 목록 툴바 */
+.tb-btns{display:flex;gap:6px}
+#print-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:#475569;color:#fff;cursor:pointer;border:none;margin-bottom:8px}
+#print-btn:hover{background:#334155}
+
+/* ── PC 와이드 화면 ── */
+@media(min-width:900px){
+  body{max-width:1240px;padding-bottom:30px}
+  .pane{padding:18px 22px}
+  #map-container{height:calc(100vh - 235px);min-height:600px}
+  #form-minwon,#form-hazard{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  #form-minwon>.submit-btn,#form-hazard>.submit-btn{grid-column:1/-1}
+  #rec-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px}
+  #modal{max-width:780px}
+  #mappick{max-width:920px}
+  #mappick-map{height:66vh}
+  #hdr h1{font-size:17px}
+  .tab{font-size:14px;padding:11px 0}
+}
+
+/* ── 인쇄 ── */
+#print-area{display:none}
+@media print{
+  body{max-width:none!important;padding:0!important;background:#fff!important}
+  #login-screen,#app,#modal-bg,#mappick-bg,#toast,#photo-progress{display:none!important}
+  #print-area{display:block!important}
+  .pr-title{font-size:15pt;font-weight:800;margin-bottom:3mm}
+  .pr-sub{font-size:8.5pt;color:#333;margin-bottom:3mm}
+  table.pr{width:100%;border-collapse:collapse;font-size:8.5pt}
+  table.pr th,table.pr td{border:1px solid #777;padding:1.5mm 1.8mm;text-align:left;vertical-align:top;word-break:break-all}
+  table.pr th{background:#e8e8e8;font-weight:800}
+  table.pr tr{page-break-inside:avoid}
+  @page{size:A4 landscape;margin:11mm}
+}
 </style>
 </head>
 <body>
@@ -369,7 +412,10 @@ input,select,textarea{font-family:inherit;outline:none}
     </div>
     <div id="list-toolbar">
       <span id="list-count"></span>
-      <button id="excel-btn" onclick="exportExcel()">📊 엑셀 내보내기</button>
+      <div class="tb-btns">
+        <button id="print-btn" onclick="printList()">🖨 인쇄</button>
+        <button id="excel-btn" onclick="exportExcel()">📊 엑셀 내보내기</button>
+      </div>
     </div>
     <div id="rec-list"></div>
   </div>
@@ -424,6 +470,9 @@ input,select,textarea{font-family:inherit;outline:none}
 
 <div id="toast"></div>
 
+<!-- 인쇄 전용 영역 -->
+<div id="print-area"></div>
+
 <script>
 const FB={
   apiKey:'AIzaSyCrJaARREMDXFfhicjUwWFyqkyTbVMRsYk',
@@ -465,7 +514,7 @@ const FIXED_LOCS=[
   {name:'롯데월드',  short:'롯데월드 ', dong:'잠실동', lat:37.5111, lng:127.0980},
   {name:'자전거포',  short:'자전거포 ', dong:'잠실동', lat:37.5070, lng:127.0890},
   {name:'삼전현대',  short:'삼전현대 ', dong:'삼전동', lat:37.5062, lng:127.0921},
-  {name:'가락시장',  short:'가락시장 ', dong:'가락동', lat:37.4926, lng:127.1214},
+  {name:'가락시장',  short:'가락시장 ', dong:'가락동', lat:37.4925, lng:127.1095},
 ];
 
 const $=id=>document.getElementById(id);
@@ -570,27 +619,35 @@ let geocoder=null;
 function getGeo(){if(!geocoder)geocoder=new kakao.maps.services.Geocoder();return geocoder;}
 
 // ── 지도에서 위치 지정 ──
-let pickMap=null, pickMarker=null, pickPos=null, pickForm='m';
+let pickMap=null, pickMarker=null, pickPos=null, pickForm='m', pickRecId=null, pickMoved=false;
+let mPosManual=false, hPosManual=false;   // 지도로 찍은 좌표는 주소검색이 덮어쓰지 않도록
 
-function openMapPick(form){
-  pickForm=form;
+function openMapPick(form,recId){
+  pickForm=form; pickRecId=recId||null; pickMoved=false;
   $('mappick-bg').classList.add('on');
-  const cur = (form==='m') ? mPos : hPos;
+  let cur=null;
+  if(form==='rec'){ const r=recs.find(x=>x.id===recId); if(r&&r.addrPos)cur=r.addrPos; }
+  else cur = (form==='m') ? mPos : hPos;
   const center = cur ? new kakao.maps.LatLng(cur.lat,cur.lng) : new kakao.maps.LatLng(37.504,127.090);
-  setTimeout(function(){
+
+  function build(){
     if(!pickMap){
       pickMap=new kakao.maps.Map($('mappick-map'),{center:center,level:4});
-      kakao.maps.event.addListener(pickMap,'click',function(e){setPickMarker(e.latLng);});
-    }else{
-      pickMap.relayout(); pickMap.setCenter(center);
+      kakao.maps.event.addListener(pickMap,'click',function(e){ pickMoved=true; setPickMarker(e.latLng); });
     }
+    // 모달이 열린 직후 크기가 0일 수 있어 반드시 relayout — 안 하면 탭 좌표가 안 먹음
+    pickMap.relayout();
+    pickMap.setCenter(center);
+    pickMap.setLevel(4);
     if(cur){ setPickMarker(new kakao.maps.LatLng(cur.lat,cur.lng)); }
     else{
       pickPos=null;
       if(pickMarker){pickMarker.setMap(null);pickMarker=null;}
-      const inf=$('mappick-info'); inf.textContent='지도를 눌러 위치를 지정하세요'; inf.classList.remove('set');
+      setPickInfo('지도를 눌러 위치를 지정하세요',false);
     }
-  },120);
+  }
+  setTimeout(build,80);
+  setTimeout(function(){ if(pickMap){pickMap.relayout();pickMap.setCenter(center);} },350);
 }
 
 function setPickMarker(latlng){
@@ -601,28 +658,38 @@ function setPickMarker(latlng){
     kakao.maps.event.addListener(pickMarker,'dragend',function(){
       const p=pickMarker.getPosition();
       pickPos={lat:p.getLat(),lng:p.getLng()};
-      showPickInfo();
+      pickMoved=true; refreshPickInfo();
     });
   }else{
     pickMarker.setPosition(latlng);
   }
-  showPickInfo();
+  refreshPickInfo();
 }
 
-function showPickInfo(){
-  const inf=$('mappick-info');
-  inf.textContent='📍 위치 지정됨 — 마커를 끌어서 미세조정 가능';
-  inf.classList.add('set');
+function refreshPickInfo(){
+  if(!pickPos){setPickInfo('지도를 눌러 위치를 지정하세요',false);return;}
+  const c=pickPos.lat.toFixed(5)+', '+pickPos.lng.toFixed(5);
+  setPickInfo((pickMoved?'📍 새 위치 ':'📍 현재 위치 ')+c+(pickMoved?'':' — 지도를 눌러 변경'), pickMoved);
+}
+function setPickInfo(txt,isSet){
+  const inf=$('mappick-info'); inf.textContent=txt;
+  if(isSet)inf.classList.add('set'); else inf.classList.remove('set');
 }
 
 function confirmMapPick(){
   if(!pickPos){toast('지도를 눌러 위치를 먼저 지정하세요');return;}
+  if(pickForm==='rec'){
+    RECS.child(pickRecId).update({addrPos:{lat:pickPos.lat,lng:pickPos.lng},updatedAt:nowStr()})
+      .then(function(){ closeMapPick(); closeMod(); toast('✅ 위치 수정 완료'); })
+      .catch(function(){ toast('⚠️ 저장 실패'); });
+    return;
+  }
   if(pickForm==='m'){
-    mPos={lat:pickPos.lat,lng:pickPos.lng};
-    $('m-addr-ok').textContent='📍 지도에서 지정한 위치';
+    mPos={lat:pickPos.lat,lng:pickPos.lng}; mPosManual=true;
+    $('m-addr-ok').textContent='📍 지도에서 지정 ('+pickPos.lat.toFixed(5)+', '+pickPos.lng.toFixed(5)+')';
   }else{
-    hPos={lat:pickPos.lat,lng:pickPos.lng};
-    $('h-addr-ok').textContent='📍 지도에서 지정한 위치';
+    hPos={lat:pickPos.lat,lng:pickPos.lng}; hPosManual=true;
+    $('h-addr-ok').textContent='📍 지도에서 지정 ('+pickPos.lat.toFixed(5)+', '+pickPos.lng.toFixed(5)+')';
   }
   closeMapPick();
   toast('✅ 위치 저장됨');
@@ -637,6 +704,7 @@ function onDongChange(form){
   if(!val) return;
   const addrEl = form==='m' ? $('m-addr') : $('h-addr');
   const okEl   = form==='m' ? $('m-addr-ok') : $('h-addr-ok');
+  if(form==='m') mPosManual=false; else hPosManual=false;  // 목록에서 새로 고르면 수동 지정 해제
   const loc = FIXED_LOCS.find(function(l){return l.name===val;});
   if(loc){
     addrEl.value = loc.short;
@@ -677,6 +745,7 @@ function geoTry(addr,done){
 // 주소검색 실패해도 이미 지정된 좌표(동 구분 선택/지도 찍기)는 지우지 않음
 function geoM(){
   const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
+  if(mPosManual){$('m-addr-ok').textContent='📍 지도에서 찍은 좌표 유지 (덮어쓰지 않음)';toast('지도로 지정한 위치를 그대로 씁니다');return;}
   geoTry(a,p=>{
     if(p){mPos=p;$('m-addr-ok').textContent='📍 위치 확인됨';}
     else if(mPos){$('m-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
@@ -685,6 +754,7 @@ function geoM(){
 }
 function geoH(){
   const a=$('h-addr').value.trim(); if(!a){toast('주소 입력');return;}
+  if(hPosManual){$('h-addr-ok').textContent='📍 지도에서 찍은 좌표 유지 (덮어쓰지 않음)';toast('지도로 지정한 위치를 그대로 씁니다');return;}
   geoTry(a,p=>{
     if(p){hPos=p;$('h-addr-ok').textContent='📍 위치 확인됨';}
     else if(hPos){$('h-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
@@ -872,6 +942,17 @@ function renderMap(){
   }
 }
 
+// 저장된 건의 지도 좌표를 상세창에서 고칠 수 있게
+function posEditRow(r){
+  const has = r.addrPos && r.addrPos.lat && r.addrPos.lng;
+  const txt = has ? ('📍 '+(+r.addrPos.lat).toFixed(5)+', '+(+r.addrPos.lng).toFixed(5))
+                  : '❌ 위치 미지정 — 지도에 표시되지 않음';
+  return `<div class="det-row"><div class="det-label">지도 위치</div>
+    <div class="det-val" style="font-weight:700;color:${has?'var(--green)':'var(--red)'}">${txt}</div>
+    <button class="map-btn" style="margin-top:7px;width:100%;padding:11px" onclick="openMapPick('rec','${r.id}')">🗺️ 지도에서 위치 수정</button>
+  </div>`;
+}
+
 // ── 상세 모달 ──
 function openDet(id){
   const r=recs.find(x=>x.id===id); if(!r)return;
@@ -897,14 +978,9 @@ function openDet(id){
       <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
     </div>
     <div class="det-row"><div class="det-label">비고</div><div class="det-val">${r.note||'-'}</div></div>
-    <div class="det-row"><div class="det-label">현장 사진</div>
+    ${posEditRow(r)}
+    <div class="det-row"><div class="det-label">현장 사진 (교체·삭제 가능)</div>
       <div id="det-photo-area">🔄 사진 로딩 중…</div>
-      <div style="margin-top:8px">
-        <span class="form-label">사진 추가/교체</span>
-        <div class="photo-btn" onclick="$('det-hph').click()" style="width:60px;height:60px;font-size:18px">📷</div>
-        <input type="file" id="det-hph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-hth','hazard')">
-        <img id="det-hth" style="display:none">
-      </div>
     </div>`;
   } else {
     body=`<div class="det-2col">
@@ -938,23 +1014,9 @@ function openDet(id){
       <div class="det-row"><div class="det-label">관리대상</div><div class="det-val">${r.mgmtLevel||'-'}</div></div>
       <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
     </div>
-    <div class="det-row"><div class="det-label">전후 사진</div>
+    ${posEditRow(r)}
+    <div class="det-row"><div class="det-label">전후 사진 (교체·삭제 가능)</div>
       <div id="det-photo-area">🔄 사진 로딩 중…</div>
-      <div style="margin-top:8px">
-        <span class="form-label">사진 추가/교체</span>
-        <div class="photo-section">
-          <div class="photo-box"><label>처리 전</label>
-            <div class="photo-btn" onclick="$('det-bph').click()" style="width:55px;height:55px;font-size:17px">📷</div>
-            <input type="file" id="det-bph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-bth','before')">
-            <img id="det-bth" style="display:none">
-          </div>
-          <div class="photo-box"><label>처리 후</label>
-            <div class="photo-btn" onclick="$('det-aph').click()" style="width:55px;height:55px;font-size:17px">📷</div>
-            <input type="file" id="det-aph" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'det-ath','after')">
-            <img id="det-ath" style="display:none">
-          </div>
-        </div>
-      </div>
     </div>`;
   }
   $('modal-body').innerHTML=body;
@@ -963,6 +1025,11 @@ function openDet(id){
 
   // 사진 Firebase에서 로드
   loadPhotos(id, isH);
+}
+
+function photoSlots(isH){
+  return isH?[{key:'hazard',label:'현장'}]
+            :[{key:'before',label:'처리 전'},{key:'after',label:'처리 후'}];
 }
 
 function loadPhotos(id, isH){
@@ -976,18 +1043,91 @@ function loadPhotos(id, isH){
     }
     const area=$('det-photo-area');
     if(!area)return;
-    const photos=isH?[{key:'hazard',label:'현장'}]:[{key:'before',label:'처리 전'},{key:'after',label:'처리 후'}];
-    const items=photos.filter(ph=>p[ph.key]);
-    if(!items.length){area.innerHTML='<span style="font-size:12px;color:#94a3b8">등록된 사진 없음</span>';return;}
-    area.innerHTML=`<div class="photo-gallery">${items.map(ph=>`
-      <div class="photo-item">
-        <span class="photo-label">${ph.label}</span>
-        <img src="${p[ph.key]}" onclick="window.open(this.src)" title="클릭하면 크게 보기">
-        <a href="${p[ph.key]}" download="${ph.label}_${id.slice(0,8)}.jpg">
-          <button class="dl-btn">⬇ 다운로드</button>
-        </a>
-      </div>`).join('')}</div>`;
+    area.innerHTML='<div class="photo-gallery">'+photoSlots(isH).map(function(ph){
+      const src=p[ph.key];
+      const fid='fi-'+ph.key;
+      return '<div class="photo-item">'
+        +'<span class="photo-label">'+ph.label+'</span>'
+        +(src
+          ? '<img src="'+src+'" onclick="window.open(this.src)" title="클릭하면 크게 보기">'
+          : '<div class="photo-empty" onclick="$(\''+fid+'\').click()">📷<span>사진 없음<br>눌러서 추가</span></div>')
+        +'<div class="photo-acts">'
+          +'<button class="pa-btn pa-edit" onclick="$(\''+fid+'\').click()">'+(src?'🔄 교체':'📷 추가')+'</button>'
+          +(src
+            ? '<a href="'+src+'" download="'+ph.label+'_'+id.slice(0,8)+'.jpg"><button class="pa-btn pa-dl">⬇</button></a>'
+              +'<button class="pa-btn pa-del" onclick="delPhoto(\''+id+'\',\''+ph.key+'\',\''+ph.label+'\')">🗑</button>'
+            : '')
+        +'</div>'
+        +'<input type="file" id="'+fid+'" accept="image/*" capture="environment" style="display:none" onchange="onDetPhoto(this,\''+ph.key+'\')">'
+        +'</div>';
+    }).join('')+'</div>';
   });
+}
+
+// 상세창에서 사진 교체/추가 — 저장 후 갤러리 바로 갱신
+async function onDetPhoto(input,field){
+  const f=input.files[0]; if(!f)return;
+  if(!curDetailId){input.value='';return;}
+  const id=curDetailId;
+  $('photo-progress').classList.add('on');
+  try{
+    const b64=await compressPhoto(f);
+    await PHOTOS.child(id).child(field).set(b64);
+    toast('✅ 사진 저장 완료');
+    const r=recs.find(x=>x.id===id);
+    loadPhotos(id, !!(r&&r.recType==='hazard'));
+  }catch(e){
+    toast('⚠️ 사진 저장 실패');
+  }finally{
+    $('photo-progress').classList.remove('on');
+    input.value='';
+  }
+}
+
+function delPhoto(id,field,label){
+  if(!confirm(label+' 사진을 삭제할까요?'))return;
+  PHOTOS.child(id).child(field).remove().then(function(){
+    const k=field==='before'?'rp_b_':field==='after'?'rp_a_':'rp_h_';
+    try{localStorage.removeItem(k+id);}catch(e){}
+    toast('🗑 사진 삭제됨');
+    const r=recs.find(x=>x.id===id);
+    loadPhotos(id, !!(r&&r.recType==='hazard'));
+  }).catch(function(){ toast('⚠️ 삭제 실패'); });
+}
+
+// ── 목록 인쇄 ──
+function printList(){
+  const data=filteredRecs();
+  if(!data.length){toast('인쇄할 항목이 없습니다');return;}
+  const f=$('flt-from').value, t=$('flt-to').value;
+  const period=(f||t)?((f||'처음')+' ~ '+(t||'오늘')):'전체 기간';
+  const fltName=(curFlt==='all')?'전체':(curFlt==='hazard'?'사고예방':curFlt);
+  const rows=data.map(function(r){
+    const isH=r.recType==='hazard';
+    return '<tr>'
+      +'<td>'+mkEsc(isH?r.hazardNo:r.no)+'</td>'
+      +'<td>'+mkEsc(isH?(r.inspDate||''):(r.date||''))+'</td>'
+      +'<td>'+mkEsc(isH?'사고예방':(r.subtype||''))+'</td>'
+      +'<td>'+mkEsc(r.addr||'')+'</td>'
+      +'<td>'+mkEsc(isH?(r.riskType||''):(r.category||''))+'</td>'
+      +'<td>'+mkEsc(isH?(r.riskContent||''):(r.content||''))+'</td>'
+      +'<td>'+mkEsc(isH?(r.action||''):(r.actionNote||''))+'</td>'
+      +'<td>'+mkEsc(isH?(r.riskLevel||''):(r.status||''))+'</td>'
+      +'<td>'+mkEsc(r.staff||'')+'</td>'
+      +'</tr>';
+  }).join('');
+  $('print-area').innerHTML=
+    '<div class="pr-title">민원 · 사고예방 관리대장</div>'
+    +'<div class="pr-sub">구분: '+mkEsc(fltName)+' &nbsp;|&nbsp; 기간: '+mkEsc(period)
+    +' &nbsp;|&nbsp; 총 '+data.length+'건 &nbsp;|&nbsp; 출력일: '+today()
+    +' &nbsp;|&nbsp; 출력자: '+mkEsc(staff)+'</div>'
+    +'<table class="pr"><thead><tr>'
+    +'<th style="width:7%">번호</th><th style="width:8%">일자</th><th style="width:7%">구분</th>'
+    +'<th style="width:16%">주소</th><th style="width:11%">내용구분/위험요인</th>'
+    +'<th style="width:20%">상세내용</th><th style="width:17%">조치내용</th>'
+    +'<th style="width:7%">상태/등급</th><th style="width:7%">담당자</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+  window.print();
 }
 
 function chSt(id,st){

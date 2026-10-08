@@ -183,7 +183,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v50</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v51</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -208,6 +208,8 @@ tr.picked{background:#FBEAE8}
     <button class="chip" id="bPick">골라서 지우기</button>
     <button class="chip" id="bOnlyBad" style="display:none">확인 필요만 보기</button>
     <button class="chip" id="bOkAll" style="display:none">지금 보이는 것 전부 확인함</button>
+    <button class="chip" id="bPicDl">사진 내려받기</button>
+    <button class="chip" id="bPicPurge">오래된 사진 비우기</button>
     <button class="chip" id="bTrash">휴지통</button>
     <button class="chip" id="bToggle">전표 직접 입력</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
@@ -234,6 +236,7 @@ tr.picked{background:#FBEAE8}
   <div id="msg"></div>
   <div id="trash"></div>
   <div id="xlwarn"></div>
+  <div id="picbar"></div>
   <div id="pickbar"></div>
   <div id="chkbar"></div>
 
@@ -1065,6 +1068,140 @@ async function del(id){
   }catch(e){ toast('삭제 실패','err'); }
 }
 
+/* ---------- 사진 내려받기 · 오래된 사진 비우기 ----------
+   사진은 Realtime Database 에 글자로 들어가 있어 자리를 많이 차지합니다.
+   한 장에 280KB 쯤이라 한 달에 300MB씩 쌓이고, 무료 한도 1GB 를 서너 달이면 채웁니다.
+   그래서 PC 로 받아 둔 뒤 오래된 것은 지웁니다. 전표 기록은 건드리지 않습니다. */
+
+/* 압축 파일(zip)을 직접 만듭니다. 사진(JPEG)은 이미 압축돼 있어 묶기만 합니다. */
+const CRCT = (()=>{ const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; }
+  return t; })();
+function crc32(u8){ let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c = CRCT[(c^u8[i])&0xFF] ^ (c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+function zipOf(files){                 // [{name, data:Uint8Array}]
+  const enc=new TextEncoder(); const parts=[]; const dir=[]; let off=0;
+  const u16=v=>[v&255,(v>>8)&255];
+  const u32=v=>[v&255,(v>>8)&255,(v>>16)&255,(v>>24)&255];
+  for(const f of files){
+    const nm=enc.encode(f.name), c=crc32(f.data), n=f.data.length;
+    const lh=new Uint8Array([...u32(0x04034b50),...u16(20),...u16(0x0800),...u16(0),
+      ...u16(0),...u16(0),...u32(c),...u32(n),...u32(n),...u16(nm.length),...u16(0)]);
+    parts.push(lh, nm, f.data);
+    dir.push({nm,c,n,off});
+    off += lh.length + nm.length + n;
+  }
+  const cd=[]; let cdlen=0;
+  for(const d of dir){
+    const h=new Uint8Array([...u32(0x02014b50),...u16(20),...u16(20),...u16(0x0800),...u16(0),
+      ...u16(0),...u16(0),...u32(d.c),...u32(d.n),...u32(d.n),...u16(d.nm.length),
+      ...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(d.off)]);
+    cd.push(h, d.nm); cdlen += h.length + d.nm.length;
+  }
+  const end=new Uint8Array([...u32(0x06054b50),...u16(0),...u16(0),
+    ...u16(dir.length),...u16(dir.length),...u32(cdlen),...u32(off),...u16(0)]);
+  return new Blob([...parts,...cd,end],{type:'application/zip'});
+}
+function dataUrlBytes(u){
+  const b=atob(String(u).split(',')[1]||'');
+  const a=new Uint8Array(b.length);
+  for(let i=0;i<b.length;i++) a[i]=b.charCodeAt(i);
+  return a;
+}
+const safe = t => String(t||'').replace(/[\\/:*?"<>|]/g,'_');
+
+/* 지금 보고 있는 기간의 사진을 zip 한 개로 받습니다 */
+async function downloadPics(){
+  const rows = picked().filter(r=>r.batch);
+  const bats = [...new Set(rows.map(r=>r.batch))];
+  if(!bats.length){ toast('이 기간에 사진이 없습니다','err'); return; }
+  if(bats.length>250 && !confirm(
+      `사진이 ${comma(bats.length)}장입니다. 한 번에 받으면 오래 걸리고 멈출 수 있습니다.\n\n`
+      + `날짜를 나눠서 받으시는 편이 안전합니다. 그래도 계속할까요?`)) return;
+  const bar=$('#picbar');
+  const files=[], list=[]; let done=0, bytes=0;
+  for(const b of bats){
+    bar.innerHTML = `<div class="chkbar"><span>사진 모으는 중 ${done}/${bats.length}</span>
+      <div class="bar"><i style="width:${Math.round(done/bats.length*100)}%"></i></div></div>`;
+    try{
+      if(!picCache[b]){
+        const res=await fetch(`${DB}/gyegeun/photos/${b}.json`);
+        picCache[b]=await res.json();
+      }
+      if(picCache[b]){
+        // 한 사진에 전표가 여러 장 붙어 있을 수 있어 그 묶음을 다 적습니다
+        const rs = rows.filter(x=>x.batch===b);
+        const r  = rs[0];
+        const ws = rs.map(x=>x.weight).join('+');
+        const nos= [...new Set(rs.map(x=>x.no).filter(Boolean))].join('-');
+        // 차량번호 폴더 안에 넣습니다 — PC 에서 차량별로 바로 갈라져 보입니다
+        const nm = `${safe(r.veh)}호/${r.date}_${safe(r.veh)}_${safe(r.seong)}_${ws}kg`
+                 + (nos?`_전표${safe(nos)}`:'') + `_${b.slice(-4)}.jpg`;
+        const u8 = dataUrlBytes(picCache[b]);
+        files.push({name:nm, data:u8}); bytes += u8.length;
+        rs.forEach(x=>list.push([x.date, x.veh, x.seong, x.site||'', x.weight,
+                                 x.no||'', x.t1||'', x.t2||'', nm]));
+      }
+    }catch(e){}
+    done++;
+  }
+  bar.innerHTML='';
+  if(!files.length){ toast('사진을 못 받았습니다','err'); return; }
+  // 어떤 사진이 어느 전표인지 적은 목록도 같이 넣습니다
+  list.sort((a,b)=> String(a[0]).localeCompare(String(b[0])) || String(a[1]).localeCompare(String(b[1])));
+  const head='날짜,차량번호,성상,반입처,실중량,전표번호,1차시각,2차시각,사진파일';
+  const csv='\ufeff'+head+'\n'+list.map(r=>r.join(',')).join('\n');
+  files.push({name:'_사진목록.csv', data:new TextEncoder().encode(csv)});
+  const blob = zipOf(files);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`계근사진_${picTag()}.zip`;
+  document.body.appendChild(a);          // 붙여야 파일 이름이 제대로 붙습니다
+  a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
+  toast(`사진 ${comma(files.length)}장 (${(bytes/1048576).toFixed(1)}MB) 받았습니다`,'good');
+}
+function picTag(){
+  const a=$('#fDay').value, b=$('#fDay2').value;
+  if(mode==='day') return (a&&b&&a!==b) ? `${a}_${b}` : (a||b);
+  if(mode==='today') return today();
+  if(mode==='7') return `최근7일_${today()}`;
+  return $('#fMonth').value || today().slice(0,7);
+}
+
+/* 두 달 지난 사진을 지웁니다. 전표 기록은 그대로 둡니다. */
+async function purgePics(){
+  const cut = new Date(); cut.setMonth(cut.getMonth()-2);
+  const cutS = `${cut.getFullYear()}-${String(cut.getMonth()+1).padStart(2,'0')}-${String(cut.getDate()).padStart(2,'0')}`;
+  const old = [...new Set(all.filter(r=>r.batch && r.date < cutS).map(r=>r.batch))];
+  const keep = new Set(all.filter(r=>r.batch && r.date >= cutS).map(r=>r.batch));
+  trash.forEach(r=>{ if(r.batch) keep.add(r.batch); });     // 휴지통 것은 남깁니다
+  const gone = old.filter(b=>!keep.has(b));
+  if(!gone.length){ toast(`${cutS} 이전 사진이 없습니다`,'err'); return; }
+  if(!confirm(
+      `${cutS} 이전 사진 ${comma(gone.length)}장을 지웁니다.\n`
+      + `약 ${(gone.length*0.28).toFixed(0)}MB 가 비워집니다.\n\n`
+      + `전표 기록(날짜·차량·성상·중량)은 그대로 남습니다. 사진만 지웁니다.\n`
+      + `되돌릴 수 없습니다. PC로 먼저 받아 두셨습니까?`)) return;
+  const bar=$('#picbar');
+  try{
+    for(let i=0;i<gone.length;i+=200){
+      const chunk=gone.slice(i,i+200); const p={};
+      chunk.forEach(b=>p[b]=null);
+      bar.innerHTML = `<div class="chkbar"><span>지우는 중 ${i}/${gone.length}</span>
+        <div class="bar"><i style="width:${Math.round(i/gone.length*100)}%"></i></div></div>`;
+      const res=await fetch(`${DB}/gyegeun/photos.json`,{method:'PATCH',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
+      if(!res.ok) throw new Error(res.status);
+      chunk.forEach(b=>delete picCache[b]);
+    }
+    bar.innerHTML='';
+    toast(`사진 ${comma(gone.length)}장 지웠습니다`,'good');
+    render();
+  }catch(e){ bar.innerHTML=''; toast('지우지 못했습니다 — 인터넷을 확인하세요','err'); }
+}
+
 /* ---------- 휴지통 ----------
    지운 전표는 없애지 않고 휴지통으로 옮깁니다. 사진도 같이 남겨 둡니다.
    잘못 지운 것을 되돌릴 수 있어야 하니까요. */
@@ -1144,6 +1281,8 @@ document.body.addEventListener('click', e=>{
   if(b.dataset.del) del(b.dataset.del);
   if(b.dataset.ok)  markOk(b.dataset.ok);
   if(b.dataset.rs)  restore(b.dataset.rs);
+  if(b.id==='bPicDl')    downloadPics();
+  if(b.id==='bPicPurge') purgePics();
   if(b.id==='bTrash'){ showTrash=!showTrash; render();
                        if(showTrash) $('#trash').scrollIntoView({behavior:'smooth',block:'start'}); }
   if(b.dataset.mon){ mode='month'; $('#fMonth').value=b.dataset.mon;

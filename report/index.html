@@ -264,10 +264,11 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="">동/위치 선택</option>
             <option value="삼전동">삼전동</option>
             <option value="잠실본동">잠실본동</option>
+            <option value="주공5단지">주공5단지</option>
+            <option value="트리지움">트리지움</option>
+            <option value="레이크">레이크</option>
             <option value="잠실현대">잠실현대</option>
             <option value="우성4차">우성4차</option>
-            <option value="레이크">레이크</option>
-            <option value="트리지움">트리지움</option>
             <option value="석촌호수">석촌호수</option>
             <option value="롯데월드">롯데월드</option>
             <option value="자전거포">자전거포</option>
@@ -346,10 +347,11 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="">동/위치 선택</option>
             <option value="삼전동">삼전동</option>
             <option value="잠실본동">잠실본동</option>
+            <option value="주공5단지">주공5단지</option>
+            <option value="트리지움">트리지움</option>
+            <option value="레이크">레이크</option>
             <option value="잠실현대">잠실현대</option>
             <option value="우성4차">우성4차</option>
-            <option value="레이크">레이크</option>
-            <option value="트리지움">트리지움</option>
             <option value="석촌호수">석촌호수</option>
             <option value="롯데월드">롯데월드</option>
             <option value="자전거포">자전거포</option>
@@ -496,26 +498,63 @@ let tmpPhoto={before:null,after:null,hazard:null};
 let fltFrom='',fltTo='';
 let fixedPins=[];
 
-// 주요 장소 (지도 고정 마커 + 동 구분 칩) — 하드코딩 좌표
-// short = 주소란에 입력되는 텍스트 (뒤에 추가 입력 가능)
-// 동만 선택했을 때 쓰는 동 중심 좌표
-const DONG_CENTER={
-  '잠실동':{lat:37.5085,lng:127.0885},
-  '삼전동':{lat:37.5055,lng:127.0925},
-  '잠실3동':{lat:37.5095,lng:127.0860},
-  '가락동':{lat:37.4950,lng:127.1180},
+// ── 아파트 동별 실제 좌표 (수거관리 앱 APT_FIX — 카카오 지도에서 검증한 116개) ──
+const APT_FIX={
+  'jugong5':{center:{lat:37.5152476,lng:127.0947017},dongs:{'501':{lat:37.5170221,lng:127.0916324},'502':{lat:37.5163678,lng:127.0918658},'503':{lat:37.5157134,lng:127.0921466},'504':{lat:37.5150609,lng:127.0923811},'505':{lat:37.5144228,lng:127.0926088},'506':{lat:37.5137811,lng:127.092841},'507':{lat:37.5131466,lng:127.0930631},'508':{lat:37.5175622,lng:127.0934282},'509':{lat:37.5168742,lng:127.0929229},'510':{lat:37.5171965,lng:127.0943305},'511':{lat:37.5156493,lng:127.0934609},'512':{lat:37.5152766,lng:127.0941968},'513':{lat:37.5149995,lng:127.0936875},'514':{lat:37.5143605,lng:127.093914},'515':{lat:37.5137054,lng:127.0940716},'516':{lat:37.5159719,lng:127.0945008},'517':{lat:37.5155396,lng:127.0955047},'518':{lat:37.5147311,lng:127.0947051},'519':{lat:37.514622,lng:127.095973},'520':{lat:37.513678,lng:127.0967115},'521':{lat:37.5127988,lng:127.0953881},'522':{lat:37.5130165,lng:127.0969584},'523':{lat:37.51796,lng:127.095018},'524':{lat:37.517346,lng:127.0955489},'525':{lat:37.5167239,lng:127.0960639},'526':{lat:37.5161036,lng:127.0965936},'527':{lat:37.5154805,lng:127.097155},'528':{lat:37.514762,lng:127.0977456},'529':{lat:37.5141047,lng:127.0981972},'530':{lat:37.5134495,lng:127.0984373}}},
+  'trigium':{center:{lat:37.509767,lng:127.0894345},dongs:{'301':{lat:37.5110771,lng:127.0871179},'302':{lat:37.5104745,lng:127.086831},'303':{lat:37.5102357,lng:127.0869291},'304':{lat:37.5106427,lng:127.0872712},'305':{lat:37.511083,lng:127.0876665},'306':{lat:37.5110707,lng:127.0883451},'307':{lat:37.5106801,lng:127.0877836},'308':{lat:37.5101885,lng:127.0873374},'309':{lat:37.5097592,lng:127.086699},'310':{lat:37.5092471,lng:127.0871248},'311':{lat:37.5095334,lng:127.087469},'312':{lat:37.5101466,lng:127.0880171},'313':{lat:37.5106355,lng:127.0884622},'314':{lat:37.510754,lng:127.0890007},'315':{lat:37.5102165,lng:127.0884934},'316':{lat:37.5096771,lng:127.0880098},'317':{lat:37.509132,lng:127.0881075},'318':{lat:37.5087637,lng:127.087778},'319':{lat:37.5084028,lng:127.0884709},'320':{lat:37.5087485,lng:127.0887744},'321':{lat:37.508148,lng:127.0893335},'322':{lat:37.5085316,lng:127.0896744},'323':{lat:37.5089881,lng:127.0900912},'324':{lat:37.5094059,lng:127.0904932},'325':{lat:37.5096418,lng:127.0907039},'326':{lat:37.5095711,lng:127.0911834},'327':{lat:37.509057,lng:127.0907122},'328':{lat:37.5085411,lng:127.0902479},'329':{lat:37.5079716,lng:127.090306},'330':{lat:37.508265,lng:127.0907282},'331':{lat:37.5087773,lng:127.0911948},'332':{lat:37.5093058,lng:127.0916649},'333':{lat:37.5098659,lng:127.092144},'334':{lat:37.5102864,lng:127.0924634},'335':{lat:37.5108514,lng:127.0923533},'336':{lat:37.5101221,lng:127.0916828},'337':{lat:37.5101532,lng:127.0911467},'338':{lat:37.5105953,lng:127.0915578},'339':{lat:37.5108951,lng:127.0918263},'340':{lat:37.5112372,lng:127.0921852}}},
+  'lake':{center:{lat:37.5085583,lng:127.0947243},dongs:{'101':{lat:37.5079444,lng:127.0917593},'102':{lat:37.508072,lng:127.0922017},'103':{lat:37.5079617,lng:127.0926461},'104':{lat:37.508571,lng:127.0922815},'105':{lat:37.5086265,lng:127.0928425},'106':{lat:37.5092112,lng:127.0928229},'107':{lat:37.5092324,lng:127.0933579},'108':{lat:37.509828,lng:127.0933835},'109':{lat:37.5098375,lng:127.0938767},'110':{lat:37.5075279,lng:127.0932156},'111':{lat:37.507981,lng:127.0932693},'112':{lat:37.5081167,lng:127.0936823},'113':{lat:37.5086169,lng:127.09358},'114':{lat:37.5087318,lng:127.0941173},'115':{lat:37.5092246,lng:127.0941033},'116':{lat:37.50929,lng:127.0946225},'117':{lat:37.509791,lng:127.0945835},'118':{lat:37.5097832,lng:127.0952463},'119':{lat:37.5097413,lng:127.0958118},'120':{lat:37.5097076,lng:127.0962551},'121':{lat:37.5092705,lng:127.0953339},'122':{lat:37.5091098,lng:127.0957069},'123':{lat:37.5089967,lng:127.096296},'124':{lat:37.5084005,lng:127.0959662},'125':{lat:37.5078081,lng:127.0954044},'126':{lat:37.5077121,lng:127.0960433},'127':{lat:37.507295,lng:127.0948077},'128':{lat:37.5072172,lng:127.0952668},'129':{lat:37.5071483,lng:127.0957259},'130':{lat:37.507046,lng:127.0963376},'131':{lat:37.507023,lng:127.0968794},'132':{lat:37.5077339,lng:127.096938},'133':{lat:37.508351,lng:127.096975},'134':{lat:37.5090178,lng:127.0970188},'135':{lat:37.5096133,lng:127.0969924}}},
+  'woosung4':{center:{lat:37.5027159,lng:127.0829229},dongs:{'101':{lat:37.5032969,lng:127.0833971},'102':{lat:37.5035182,lng:127.0826102},'103':{lat:37.502957,lng:127.0824264},'105':{lat:37.5026375,lng:127.0831837},'106':{lat:37.5023434,lng:127.0824675},'107':{lat:37.5020349,lng:127.0829433},'108':{lat:37.5022237,lng:127.0834321}}},
+  'jshyundai':{center:{lat:37.5040437,lng:127.0852395},dongs:{'101':{lat:37.5037208,lng:127.085258},'102':{lat:37.5043045,lng:127.0855165},'103':{lat:37.5041058,lng:127.084944}}},
+  'sjhyundai':{center:{lat:37.5001459,lng:127.0884984},dongs:{'101':{lat:37.5001459,lng:127.0884984}}},
 };
 
+// 단지 이름 인식 (수거관리 앱과 동일 규칙)
+const APT_MATCH=[
+  {key:'jugong5',  name:'주공5단지', re:/^(잠실\s*)?(주공(\s*5(\s*단지)?)?|5\s*단지)/},
+  {key:'trigium',  name:'트리지움',  re:/^(잠실\s*)?(트리지움|트리지음|트리)/},
+  {key:'lake',     name:'레이크',    re:/^(잠실\s*)?(레이크(\s*[펠팰]리스)?|레팰|레이크팰|레이크펠)/},
+  {key:'jshyundai',name:'잠실현대',  re:/^(잠실\s*현대(\s*아파트)?)/},
+  {key:'woosung4', name:'우성4차',   re:/^(잠실\s*)?(우성\s*4\s*차|우성4|우성)/},
+  {key:'sjhyundai',name:'삼전현대',  re:/^(삼전\s*현대(\s*아파트)?)/},
+];
+
+// 주소 글자에서 단지+동을 읽어 정확한 좌표를 돌려줌 ("트리지움 301" → 301동 실제 위치)
+function aptPosFromAddr(txt){
+  const t=String(txt||'').trim();
+  if(!t)return null;
+  for(var i=0;i<APT_MATCH.length;i++){
+    const a=APT_MATCH[i], m=t.match(a.re);
+    if(!m)continue;
+    const T=APT_FIX[a.key]; if(!T)continue;
+    if(T.dongs){
+      // 단지명이 동 번호 앞자리를 먹는 경우가 있어(주공5 ← 523) 글자 전체에서 동 번호를 찾음
+      var cands=[], mm;
+      var re1=/(?:^|[^0-9])(\d{3})(?![0-9])/g;        // 독립된 세 자리 우선
+      while((mm=re1.exec(t))!==null) cands.push(mm[1]);
+      var re2=/\d{3}/g;
+      while((mm=re2.exec(t))!==null) cands.push(mm[0]);
+      for(var j=0;j<cands.length;j++){
+        var d=T.dongs[cands[j]];
+        if(d) return{lat:d.lat,lng:d.lng,label:a.name+' '+cands[j]+'동'};
+      }
+    }
+    if(T.center)return{lat:T.center.lat,lng:T.center.lng,label:a.name+' 단지중심'};
+  }
+  return null;
+}
+
+// 주요 장소 — 아파트는 APT_FIX 검증 중심좌표 사용
 const FIXED_LOCS=[
-  {name:'잠실본동',  short:'잠실본동 ', dong:'잠실동', lat:37.5075, lng:127.0885},
-  {name:'잠실현대',  short:'잠실현대 ', dong:'잠실동', lat:37.5090, lng:127.0872},
-  {name:'우성4차',   short:'우성4차 ',  dong:'잠실동', lat:37.5082, lng:127.0867},
-  {name:'레이크',    short:'레이크 ',   dong:'잠실동', addr:'서울 송파구 잠실로 88',   lat:37.5083, lng:127.0899},
-  {name:'트리지움',  short:'트리지움 ', dong:'잠실동', addr:'서울 송파구 잠실로 62',   lat:37.5095, lng:127.0855},
+  {name:'잠실본동',  short:'잠실본동 ', dong:'잠실동', lat:37.5075,    lng:127.0885},
+  {name:'주공5단지', short:'주공 ',     dong:'잠실동', lat:37.5152476, lng:127.0947017, apt:'jugong5'},
+  {name:'트리지움',  short:'트리지움 ', dong:'잠실동', lat:37.509767,  lng:127.0894345, apt:'trigium'},
+  {name:'레이크',    short:'레이크 ',   dong:'잠실동', lat:37.5085583, lng:127.0947243, apt:'lake'},
+  {name:'잠실현대',  short:'잠실현대 ', dong:'잠실동', lat:37.5040437, lng:127.0852395, apt:'jshyundai'},
+  {name:'우성4차',   short:'우성4차 ',  dong:'잠실동', lat:37.5027159, lng:127.0829229, apt:'woosung4'},
+  {name:'삼전현대',  short:'삼전현대 ', dong:'삼전동', lat:37.5001459, lng:127.0884984, apt:'sjhyundai'},
   {name:'석촌호수',  short:'석촌호수 ', dong:'잠실동', lat:37.5090, lng:127.1010},
   {name:'롯데월드',  short:'롯데월드 ', dong:'잠실동', addr:'서울 송파구 올림픽로 240', lat:37.5111, lng:127.0980},
   {name:'자전거포',  short:'자전거포 ', dong:'잠실동', lat:37.5070, lng:127.0890},
-  {name:'삼전현대',  short:'삼전현대 ', dong:'삼전동', lat:37.5062, lng:127.0921},
   {name:'가락시장',  short:'가락시장 ', dong:'가락동', addr:'서울 송파구 양재대로 932', lat:37.4925, lng:127.1095},
 ];
 
@@ -777,7 +816,9 @@ function onDongChange(form){
   const loc = FIXED_LOCS.find(function(l){return l.name===val;});
   if(loc){
     addrEl.value = loc.short;
-    okEl.textContent = '📍 '+loc.name+' 위치 확인됨';
+    okEl.innerHTML = loc.apt
+      ? ('📍 '+loc.name+' 단지중심 — <b>동 번호를 이어서 적으면</b> 그 동 위치로 바뀝니다')
+      : ('📍 '+loc.name+' 위치 확인됨');
     if(form==='m') mPos={lat:loc.lat,lng:loc.lng};
     else hPos={lat:loc.lat,lng:loc.lng};
   } else {
@@ -802,21 +843,34 @@ function initFixedMarkers(){}
 // 위치가 안 잡혀 있으면 주소 확인 안내를 띄움
 const ADDR_WARN='<span class="warn">⚠️ 주소 확인 해주세요 — 📍확인 또는 🗺️지도로 위치를 지정해야 지도에 표시됩니다</span>';
 function addrHint(form){
-  const el = (form==='m') ? $('m-addr-ok') : $('h-addr-ok');
-  const pos = (form==='m') ? mPos : hPos;
+  const el  = (form==='m') ? $('m-addr-ok') : $('h-addr-ok');
+  const txt = (form==='m') ? $('m-addr').value : $('h-addr').value;
   const manual = (form==='m') ? mPosManual : hPosManual;
-  if(pos&&manual)return;                 // 지도로 직접 찍은 건 그대로 둠
+  if(manual)return;                      // 지도로 직접 찍은 건 그대로 둠
+  // 단지명 + 동 번호가 보이면 검증된 동 좌표를 즉시 적용
+  const ap=aptPosFromAddr(txt);
+  if(ap){
+    if(form==='m') mPos={lat:ap.lat,lng:ap.lng}; else hPos={lat:ap.lat,lng:ap.lng};
+    el.innerHTML='📍 '+ap.label+' 위치 확인됨';
+    return;
+  }
+  const pos = (form==='m') ? mPos : hPos;
   if(!pos){ el.innerHTML=ADDR_WARN; }
 }
 
 // "잠실동 249-5" 처럼 구 이름이 없으면 붙여서 검색해야 찾아짐
 function geoTry(addr,done){
+  // 1순위: 검증된 아파트 동 좌표표
+  const ap=aptPosFromAddr(addr);
+  if(ap){ done({lat:ap.lat,lng:ap.lng,label:ap.label}); return; }
   const g=getGeo();
-  const q1 = /송파|서울/.test(addr) ? addr : ('서울 송파구 '+addr);
+  // 잠실본동 241-3 → 서울 송파구 잠실동 241-3 (카카오는 지번으로 찾음)
+  let a2=String(addr).replace(/^\s*(잠실본동|본동|본)\s*/,'잠실동 ');
+  const q1 = /송파|서울/.test(a2) ? a2 : ('서울 송파구 '+a2);
   g.addressSearch(q1,(res,st)=>{
     if(st===kakao.maps.services.Status.OK){done({lat:+res[0].y,lng:+res[0].x});return;}
-    if(q1===addr){done(null);return;}
-    g.addressSearch(addr,(r2,s2)=>{
+    if(q1===a2){done(null);return;}
+    g.addressSearch(a2,(r2,s2)=>{
       done(s2===kakao.maps.services.Status.OK?{lat:+r2[0].y,lng:+r2[0].x}:null);
     });
   });
@@ -826,7 +880,7 @@ function geoM(){
   const a=$('m-addr').value.trim(); if(!a){toast('주소 입력');return;}
   if(mPosManual){$('m-addr-ok').textContent='📍 지도에서 찍은 좌표 유지 (덮어쓰지 않음)';toast('지도로 지정한 위치를 그대로 씁니다');return;}
   geoTry(a,p=>{
-    if(p){mPos=p;$('m-addr-ok').textContent='📍 위치 확인됨';}
+    if(p){mPos={lat:p.lat,lng:p.lng};$('m-addr-ok').textContent='📍 '+(p.label||'위치')+' 확인됨';}
     else if(mPos){$('m-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
     else{$('m-addr-ok').innerHTML=ADDR_WARN;}
   });
@@ -835,7 +889,7 @@ function geoH(){
   const a=$('h-addr').value.trim(); if(!a){toast('주소 입력');return;}
   if(hPosManual){$('h-addr-ok').textContent='📍 지도에서 찍은 좌표 유지 (덮어쓰지 않음)';toast('지도로 지정한 위치를 그대로 씁니다');return;}
   geoTry(a,p=>{
-    if(p){hPos=p;$('h-addr-ok').textContent='📍 위치 확인됨';}
+    if(p){hPos={lat:p.lat,lng:p.lng};$('h-addr-ok').textContent='📍 '+(p.label||'위치')+' 확인됨';}
     else if(hPos){$('h-addr-ok').textContent='📍 선택한 장소 좌표 사용 중 (지도 표시됨)';}
     else{$('h-addr-ok').innerHTML=ADDR_WARN;}
   });

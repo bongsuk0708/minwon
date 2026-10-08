@@ -86,6 +86,7 @@ tfoot td{background:var(--card2);font-weight:800;border-top:1px solid var(--line
 .mini:hover{color:var(--tx);border-color:var(--acc)}
 .mini.x:hover{color:var(--bad);border-color:var(--bad)}
 .mini.pic{color:var(--acc);border-color:rgba(160,99,26,.35);background:var(--accbg);font-weight:600}
+.picgone{font-size:12px;color:var(--dim);border:1px dashed var(--bd);border-radius:6px;padding:2px 7px;white-space:nowrap;cursor:help}
 
 /* ---------- 일괄 입력 ---------- */
 .entry{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:22px;display:none}
@@ -183,7 +184,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v51</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v53</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -503,7 +504,7 @@ function drawXlWarn(){
         <td><b>${r.seong}</b></td>
         <td>${r.site||''}</td>
         <td class="r b num">${comma(r.weight)}</td>
-        <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+        <td>${picCell(r)}</td>
         <td style="text-align:right"><button class="mini" data-ed="${r.id}">수정</button></td>
       </tr>`).join('')}</tbody>
     </table>
@@ -568,6 +569,8 @@ const joOf = r => (CARS[r.veh]||{}).j || r.jo || '';
 
 let all = [], picCache = {}, rots = {}, mode = 'month';
 let chk = {};          // batch -> {w:[읽은 실중량들], d:'읽은 날짜', at:ts}
+let pgone = {};        // batch -> '사진만 지운 날' (숫자 기록은 그대로 남습니다)
+let picGot = false;    // 이 화면에서 사진을 PC로 받아 두었는지
 let okm = {};          // id -> true  (사람이 보고 '맞음'이라고 표시한 전표)
 let onlyBad = false;
 let trash = [], showTrash = false;
@@ -749,18 +752,20 @@ function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on
 async function load(){
   $('#st').textContent='불러오는 중';
   try{
-    const [rRes,mRes,cRes,oRes,tRes] = await Promise.all([
+    const [rRes,mRes,cRes,oRes,tRes,gRes] = await Promise.all([
       fetch(`${DB}/gyegeun/records.json`),
       fetch(`${DB}/gyegeun/rot.json`),
       fetch(`${DB}/gyegeun/chk.json`),
       fetch(`${DB}/gyegeun/ok.json`),
-      fetch(`${DB}/gyegeun/trash.json`)
+      fetch(`${DB}/gyegeun/trash.json`),
+      fetch(`${DB}/gyegeun/picgone.json`)
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
     rots = (mRes.ok ? await mRes.json() : null) || {};
     chk  = (cRes.ok ? await cRes.json() : null) || {};
     okm  = (oRes.ok ? await oRes.json() : null) || {};
+    pgone= (gRes.ok ? await gRes.json() : null) || {};
     const td = (tRes.ok ? await tRes.json() : null) || {};
     trash = Object.entries(td).map(([id,v])=>({id,...v}))
                   .sort((a,b)=> (b.delAt||0)-(a.delAt||0));
@@ -826,7 +831,7 @@ function drawTrash(){
         <td class="num">${r.date}</td><td class="veh num">${r.veh}</td><td>${r.seong}</td>
         <td>${r.site||''}</td><td class="r b num">${comma(r.weight)}</td>
         <td class="num">${r.no||''}</td><td class="num">${when(r.delAt)}</td>
-        <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+        <td>${picCell(r)}</td>
         <td style="text-align:right"><button class="mini go" data-rs="${r.id}">되살리기</button></td>
       </tr>`).join('')}</tbody></table>` : '<p style="color:var(--dim)">이 달에 지운 전표는 없습니다.</p>'}
   </div>`;
@@ -919,20 +924,27 @@ function render(){
       <td>${r.seong}</td>
       <td>${r.site||''}</td>
       <td class="r b num">${comma(r.weight)}</td>
-      <td>${r.batch?`<button class="mini pic" data-pic="${r.batch}">보기</button>`:'<span style="color:var(--dim)">없음</span>'}</td>
+      <td>${picCell(r)}</td>
       <td style="text-align:right;white-space:nowrap">
         <button class="mini${fl[r.id]?' warn':''}" data-ed="${r.id}">${fl[r.id]?'수정 ●':'수정'}</button>
         <button class="mini x" data-del="${r.id}">삭제</button>
       </td>
     </tr>${fl[r.id]?`<tr class="why"><td colspan="${pickMode?9:8}"><div class="rs">
       <span>⚠ <b>${fl[r.id].join('</b> · <b>')}</b></span>
-      ${r.batch?`<button class="mini pic" data-pic="${r.batch}">사진으로 확인</button>`:''}
+      ${r.batch&&!pgone[r.batch]?`<button class="mini pic" data-pic="${r.batch}">사진으로 확인</button>`:''}
       <button class="okbtn" data-ok="${r.id}">맞음 · 확인함</button>
     </div></td></tr>`:''}`).join('')}</tbody>
   </table>` : `<div class="empty">${q?`'${q}' 에 해당하는 전표가 없습니다.`:'해당 기간에 전표가 없습니다.'}</div>`;
 }
 
 /* ---------- 사진 뷰어 ---------- */
+/* 사진칸 — 사진이 지워진 전표는 「사진 지움」으로 보여 줍니다. 숫자는 그대로 있습니다. */
+function picCell(r){
+  if(!r.batch) return '<span style="color:var(--dim)">없음</span>';
+  if(pgone[r.batch]) return `<span class="picgone" title="${pgone[r.batch]} 에 사진만 지웠습니다. 날짜·차량·성상·중량·전표번호는 그대로 남아 있습니다.">사진 지움</span>`;
+  return `<button class="mini pic" data-pic="${r.batch}">보기</button>`;
+}
+
 async function markOk(id){
   const r = all.find(x=>x.id===id); if(!r) return;
   okm[id]=true; render();
@@ -961,6 +973,7 @@ function fit(){
   vw.zoom=1; vw.x=0; vw.y=0; apply();
 }
 async function showPic(batch){
+  if(pgone[batch]){ toast(`${pgone[batch]} 에 사진만 지운 전표입니다 — 숫자 기록은 그대로 있습니다`,'err'); return; }
   vw={batch, rot:rots[batch]||0, zoom:1, x:0, y:0, base:1};
   $('#vCap').textContent='사진 불러오는 중';
   $('#vImg').src=''; $('#viewer').classList.add('on');
@@ -1114,13 +1127,15 @@ const safe = t => String(t||'').replace(/[\\/:*?"<>|]/g,'_');
 /* 지금 보고 있는 기간의 사진을 zip 한 개로 받습니다 */
 async function downloadPics(){
   const rows = picked().filter(r=>r.batch);
-  const bats = [...new Set(rows.map(r=>r.batch))];
-  if(!bats.length){ toast('이 기간에 사진이 없습니다','err'); return; }
+  const bats = [...new Set(rows.map(r=>r.batch))].filter(b=>!pgone[b]);
+  const cut  = [...new Set(rows.map(r=>r.batch))].filter(b=>pgone[b]).length;   // 이미 사진만 지운 것
+  if(!bats.length){ toast(cut?`이 기간 사진 ${comma(cut)}장은 이미 지워졌습니다`:'이 기간에 사진이 없습니다','err'); return; }
   if(bats.length>250 && !confirm(
       `사진이 ${comma(bats.length)}장입니다. 한 번에 받으면 오래 걸리고 멈출 수 있습니다.\n\n`
       + `날짜를 나눠서 받으시는 편이 안전합니다. 그래도 계속할까요?`)) return;
   const bar=$('#picbar');
   const files=[], list=[]; let done=0, bytes=0;
+  let gone=0, failed=0;      // 서버에 사진이 없는 것 / 받다가 실패한 것
   for(const b of bats){
     bar.innerHTML = `<div class="chkbar"><span>사진 모으는 중 ${done}/${bats.length}</span>
       <div class="bar"><i style="width:${Math.round(done/bats.length*100)}%"></i></div></div>`;
@@ -1143,7 +1158,8 @@ async function downloadPics(){
         rs.forEach(x=>list.push([x.date, x.veh, x.seong, x.site||'', x.weight,
                                  x.no||'', x.t1||'', x.t2||'', nm]));
       }
-    }catch(e){}
+      else gone++;                       // 전표에는 사진 표시가 있는데 서버에 없는 것
+    }catch(e){ failed++; }
     done++;
   }
   bar.innerHTML='';
@@ -1153,6 +1169,7 @@ async function downloadPics(){
   const head='날짜,차량번호,성상,반입처,실중량,전표번호,1차시각,2차시각,사진파일';
   const csv='\ufeff'+head+'\n'+list.map(r=>r.join(',')).join('\n');
   files.push({name:'_사진목록.csv', data:new TextEncoder().encode(csv)});
+  picGot = true;                         // 이번 화면에서 받아 둔 것이 있습니다
   const blob = zipOf(files);
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -1160,7 +1177,16 @@ async function downloadPics(){
   document.body.appendChild(a);          // 붙여야 파일 이름이 제대로 붙습니다
   a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
-  toast(`사진 ${comma(files.length)}장 (${(bytes/1048576).toFixed(1)}MB) 받았습니다`,'good');
+  const msg = `사진 ${comma(files.length-1)}장 · ${(bytes/1048576).toFixed(1)}MB 받았습니다.`
+    + (gone   ? `  서버에 사진이 없는 것 ${comma(gone)}장.` : '')
+    + (failed ? `  못 받은 것 ${comma(failed)}장 — 다시 눌러 보세요.` : '')
+    + (cut    ? `  예전에 사진만 지운 것 ${comma(cut)}장.` : '');
+  $('#picbar').innerHTML = `<div class="xw" style="background:#EEF4FB;border-color:#C7D8EC;padding:12px 16px">
+     <p style="color:#2C5A8A;margin:0">${msg}<br>
+     이 기간 전표 ${comma(picked().length)}건 중 사진이 붙은 것 ${comma(bats.length)}장이었습니다.
+     ${gone?'<br><b>사진이 없는 것</b>은 예전에 지워졌거나 기사님 폰에서 올라오다 끊긴 것입니다. 숫자 기록은 그대로 있습니다.':''}
+     </p></div>`;
+  toast(msg,'good');
 }
 function picTag(){
   const a=$('#fDay').value, b=$('#fDay2').value;
@@ -1177,13 +1203,17 @@ async function purgePics(){
   const old = [...new Set(all.filter(r=>r.batch && r.date < cutS).map(r=>r.batch))];
   const keep = new Set(all.filter(r=>r.batch && r.date >= cutS).map(r=>r.batch));
   trash.forEach(r=>{ if(r.batch) keep.add(r.batch); });     // 휴지통 것은 남깁니다
-  const gone = old.filter(b=>!keep.has(b));
-  if(!gone.length){ toast(`${cutS} 이전 사진이 없습니다`,'err'); return; }
+  const gone = old.filter(b=>!keep.has(b) && !pgone[b]);    // 이미 지운 것은 건너뜁니다
+  if(!gone.length){ toast(`${cutS} 이전에 지울 사진이 없습니다`,'err'); return; }
+  const n = all.filter(r=>r.batch && gone.includes(r.batch)).length;
   if(!confirm(
       `${cutS} 이전 사진 ${comma(gone.length)}장을 지웁니다.\n`
       + `약 ${(gone.length*0.28).toFixed(0)}MB 가 비워집니다.\n\n`
-      + `전표 기록(날짜·차량·성상·중량)은 그대로 남습니다. 사진만 지웁니다.\n`
-      + `되돌릴 수 없습니다. PC로 먼저 받아 두셨습니까?`)) return;
+      + `■ 남는 것 — 전표 ${comma(n)}건의 날짜·차량·성상·반입처·1차·2차·실중량·전표번호·계근시각.\n`
+      + `   한 건도 지우지 않습니다. 엑셀·조회·집계 모두 그대로입니다.\n`
+      + `■ 없어지는 것 — 전표 사진(그림)뿐입니다. 사진칸에 「사진 지움」으로 표시됩니다.\n\n`
+      + (picGot ? `사진은 방금 PC로 받아 두셨습니다.\n` : `⚠ 이 화면에서 아직 사진을 받지 않으셨습니다.\n   먼저 「사진 내려받기」로 PC에 받아 두시는 편이 안전합니다.\n`)
+      + `사진은 되돌릴 수 없습니다. 지울까요?`)) return;
   const bar=$('#picbar');
   try{
     for(let i=0;i<gone.length;i+=200){
@@ -1194,10 +1224,17 @@ async function purgePics(){
       const res=await fetch(`${DB}/gyegeun/photos.json`,{method:'PATCH',
         headers:{'Content-Type':'application/json'}, body:JSON.stringify(p)});
       if(!res.ok) throw new Error(res.status);
-      chunk.forEach(b=>delete picCache[b]);
+      // 지웠다는 표시만 남깁니다 — 한 건에 30바이트쯤이라 용량에 영향이 없습니다
+      const mk={}; chunk.forEach(b=>mk[b]=today());
+      await fetch(`${DB}/gyegeun/picgone.json`,{method:'PATCH',
+        headers:{'Content-Type':'application/json'}, body:JSON.stringify(mk)});
+      chunk.forEach(b=>{ delete picCache[b]; pgone[b]=today(); });
     }
     bar.innerHTML='';
-    toast(`사진 ${comma(gone.length)}장 지웠습니다`,'good');
+    toast(`사진 ${comma(gone.length)}장 지웠습니다 — 전표 기록은 그대로입니다`,'good');
+    $('#picbar').innerHTML = `<div class="xw" style="background:#EEF4FB;border-color:#C7D8EC;padding:12px 16px">
+       <p style="color:#2C5A8A;margin:0">사진 ${comma(gone.length)}장(약 ${(gone.length*0.28).toFixed(0)}MB)을 지웠습니다.
+       전표 ${comma(n)}건의 숫자 기록은 그대로 남아 있고, 사진칸만 「사진 지움」으로 바뀝니다.</p></div>`;
     render();
   }catch(e){ bar.innerHTML=''; toast('지우지 못했습니다 — 인터넷을 확인하세요','err'); }
 }

@@ -153,6 +153,26 @@ tr.picked{background:#FBEAE8}
 .xw table{background:#fff;border-color:#E4B4AE}
 .xw th{background:#F8DDD9;color:#8A4238;border-color:#E4B4AE}
 .xw td{border-color:#F0D2CD}
+.period{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-6px 0 18px;padding:10px 14px;
+  border:1px solid #C7D8EC;background:#EEF4FB;border-radius:11px;font-size:13.5px;color:#2C5A8A}
+.period b{font-size:15px;color:#1B3F63}
+.period .x{margin-left:auto}
+/* 차량 × 일자 */
+#gridBox{max-height:60vh;margin-bottom:26px}
+#byGrid table{font-size:12.5px;white-space:nowrap}
+#byGrid th,#byGrid td{padding:6px 9px}
+#byGrid thead th{position:sticky;top:0;z-index:3}
+#byGrid .vh{position:sticky;left:0;z-index:2;background:var(--card);font-weight:700;
+  box-shadow:1px 0 0 var(--line);cursor:pointer}
+#byGrid thead .vh{z-index:4;background:var(--card2)}
+#byGrid tfoot .vh{z-index:4;background:var(--card2)}
+#byGrid tfoot td{position:sticky;bottom:0;z-index:2;background:var(--card2);box-shadow:0 -1px 0 var(--line)}
+#byGrid td.d{cursor:pointer}
+#byGrid td.d:hover{background:var(--accbg)}
+#byGrid td.on{background:var(--acc);color:#fff;font-weight:800}
+#byGrid tfoot td.gap{color:#C8402F;font-weight:700;background:#FDF2F0}
+#byGrid td.z{color:var(--dim)}
+#byGrid .sun{color:#C8402F}
 .msg{padding:14px 16px;border-radius:11px;border:1px solid var(--line);background:var(--card);margin-bottom:18px;font-size:14px}
 .msg.err{border-color:rgba(200,64,47,.4);background:#FDF2F0;color:var(--bad)}
 
@@ -184,7 +204,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v54</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v55</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -234,12 +254,16 @@ tr.picked{background:#FBEAE8}
     </div>
   </div>
 
+  <div id="period"></div>
   <div id="msg"></div>
   <div id="trash"></div>
   <div id="xlwarn"></div>
   <div id="picbar"></div>
   <div id="pickbar"></div>
   <div id="chkbar"></div>
+
+  <h2 id="gridH" style="margin:2px 0 10px">차량별 일자 <span style="font-weight:400;font-size:12.5px;color:var(--dim)">— 칸을 누르면 그 차량·그 날짜 전표만 보입니다. 바닥줄이 빨간 「없음」인 날은 전표가 한 장도 없는 날입니다.</span></h2>
+  <div class="scrollbox" id="gridBox"><div id="byGrid"></div></div>
 
   <div class="cols">
     <div class="colL">
@@ -253,8 +277,9 @@ tr.picked{background:#FBEAE8}
     </div>
 
     <div class="colR">
+      <div id="focusbar"></div>
       <div class="listbox">
-        <div class="colhead"><h2>전표 목록</h2><span class="n" id="lCnt"></span></div>
+      <div class="colhead"><h2>전표 목록</h2><span class="n" id="lCnt"></span></div>
         <div class="listwrap" id="list"></div>
       </div>
     </div>
@@ -573,6 +598,7 @@ let pgone = {};        // batch -> '사진만 지운 날' (숫자 기록은 그�
 let picGot = false;    // 이 화면에서 사진을 PC로 받아 두었는지
 let okm = {};          // id -> true  (사람이 보고 '맞음'이라고 표시한 전표)
 let onlyBad = false;
+let focus = null;      // 차량×일자 표에서 고른 칸 — 목록만 좁힙니다
 let trash = [], showTrash = false;
 let pickMode = false;          // 골라서 지우기
 let pickSet = new Set();       // 지울 전표 id
@@ -839,6 +865,73 @@ function drawTrash(){
   $('#trEmpty').onclick = emptyTrash;
 }
 
+/* 지금 보고 있는 기간을 글로 적어 둡니다 — 달인지 날짜 범위인지 헷갈리지 않게 */
+function drawPeriod(){
+  const v=$('#fVeh').value, g=$('#fSeong').value, j=$('#fJo').value;
+  const f=[v?`${v}호`:'', g, j].filter(Boolean).join(' · ');
+  let t, note='';
+  if(mode==='day'){
+    const a=$('#fDay').value, b=$('#fDay2').value;
+    t = (a&&b&&a!==b) ? `${a} ~ ${b}` : (a||b||'날짜 없음');
+    note = '날짜로 보는 중입니다. 위의 달 선택은 쉬고 있습니다.';
+  }
+  else if(mode==='today'){ t = `오늘 ${today()}`; }
+  else if(mode==='7')    { t = '최근 7일'; }
+  else { const m=($('#fMonth').value||today().slice(0,7)).split('-');
+         t = `${m[0]}년 ${Number(m[1])}월 한 달`; }
+  $('#fMonth').style.opacity = (mode==='day') ? .45 : 1;
+  $('#period').className='period';
+  $('#period').innerHTML = `지금 보는 기간 &nbsp;<b>${t}</b>${f?` &nbsp;·&nbsp; ${f}`:''}
+    ${note?`<span style="color:#5C7EA3">${note}</span>`:''}
+    ${(mode==='day'||v||g||j)?'<button class="mini x" id="bAllClear">전부 해제</button>':''}`;
+}
+
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+/* 보고 있는 기간의 날짜를 하루도 빠짐없이 뽑습니다 —
+   전표가 하나도 없는 날이 빈칸으로 드러나야 빠진 날을 찾을 수 있습니다. */
+function periodDays(rows){
+  const had = [...new Set(rows.map(r=>r.date))].sort();
+  let a,b;
+  if(mode==='day'){ const x=$('#fDay').value, y=$('#fDay2').value;
+    if(x&&y){ a = x<y?x:y; b = x<y?y:x; } else { a=b=(x||y); } }
+  else if(mode==='today'){ a=b=today(); }
+  else if(mode==='7'){ const l=new Date(); l.setDate(l.getDate()-6); a=ymd(l); b=today(); }
+  else { const m=$('#fMonth').value||today().slice(0,7); const [y,mo]=m.split('-').map(Number);
+         a=`${m}-01`; b=ymd(new Date(y,mo,0)); }
+  if(!a||!b) return had;
+  const out=[], d=new Date(a+'T00:00:00'), e=new Date(b+'T00:00:00');
+  while(d<=e && out.length<70){ out.push(ymd(d)); d.setDate(d.getDate()+1); }
+  return out.length ? out : had;
+}
+
+/* 차량 × 일자 — 한 차량이 어느 날 얼마를 실었는지 한눈에 봅니다 */
+function drawGrid(rows){
+  if(!rows.length){ $('#byGrid').innerHTML='<div class="empty">해당 기간에 기록이 없습니다.</div>';
+                    $('#gridH').style.display='none'; return; }
+  $('#gridH').style.display='';
+  const ds=periodDays(rows);
+  const vs=[...new Set(rows.map(r=>r.veh))].sort();
+  const m={}, vt={}, dt={};
+  rows.forEach(r=>{ m[r.veh+'|'+r.date]=(m[r.veh+'|'+r.date]||0)+r.weight;
+                    vt[r.veh]=(vt[r.veh]||0)+r.weight; dt[r.date]=(dt[r.date]||0)+r.weight; });
+  const tot = rows.reduce((a,r)=>a+r.weight,0);
+  const hd = d=>{ const [y,mo,dd]=d.split('-'); const w=new Date(+y,+mo-1,+dd).getDay();
+    return `<th class="r${w===0?' sun':''}">${Number(mo)}/${Number(dd)}</th>`; };
+  $('#byGrid').innerHTML = `<table>
+    <thead><tr><th class="vh">차량</th>${ds.map(hd).join('')}<th class="r">합계</th></tr></thead>
+    <tbody>${vs.map(v=>`<tr>
+      <td class="vh num" data-gv="${v}" title="${v}호만 보기">${v}</td>
+      ${ds.map(d=>{ const w=m[v+'|'+d];
+        const on = focus && focus.veh===v && focus.date===d;
+        return w ? `<td class="r num d${on?' on':''}" data-gv="${v}" data-gd="${d}">${comma(w)}</td>`
+                 : `<td class="r z">·</td>`; }).join('')}
+      <td class="r b num">${comma(vt[v])}</td></tr>`).join('')}</tbody>
+    <tfoot><tr><td class="vh">합계</td>${ds.map(d=> dt[d]
+        ? `<td class="r num" data-gd="${d}">${comma(dt[d])}</td>`
+        : `<td class="r gap">없음</td>`).join('')}<td class="r b num">${comma(tot)}</td></tr></tfoot>
+  </table>`;
+}
+
 function render(){
   drawTrash();
   drawXlWarn();
@@ -884,6 +977,9 @@ function render(){
     <tfoot><tr><td>합계</td>${use.map(s=>`<td class="r num">${comma(sum[s])}</td>`).join('')}<td class="r num">${comma(total)}</td></tr></tfoot>
   </table>` : '';
 
+  drawPeriod();
+  drawGrid(rows);
+
   // 평소 범위·중복은 그 달 전체를 기준으로 봅니다 (검색·필터에 흔들리지 않게)
   const month = all.filter(r=>inRange(r.date));
   buildBand(month); buildDup(month); buildBatch(month);
@@ -899,6 +995,10 @@ function render(){
         String(r.veh).includes(q) || (r.seong||'').includes(q) || joOf(r).includes(q) ||
         (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q) ||
         (fl[r.id]||[]).some(f=>f.includes(q)));
+  if(focus){
+    if(focus.veh)  shown = shown.filter(r=>r.veh===focus.veh);
+    if(focus.date) shown = shown.filter(r=>r.date===focus.date);
+  }
   const nBad=Object.keys(fl).length;
   $('#fQ').placeholder = nBad ? '차량번호 검색 · "수정" 입력 시 확인 필요만' : '차량번호 검색';
   $('#bOnlyBad').style.display = nBad ? '' : 'none';
@@ -908,6 +1008,10 @@ function render(){
   if(onlyBad) shown = shown.filter(r=>fl[r.id]);
 
   const shownSum = shown.reduce((a,r)=>a+r.weight,0);
+  $('#focusbar').innerHTML = focus ? `<div class="period" style="margin:0 0 12px">
+     표에서 고른 칸 &nbsp;<b>${focus.veh?focus.veh+'호':'전체 차량'}${focus.date?' · '+focus.date.slice(5).replace('-','/'):''}</b>
+     &nbsp;— 아래 목록만 이 칸으로 좁혔습니다.
+     <button class="mini x" id="bFocusClear">풀기</button></div>` : '';
   $('#lCnt').innerHTML = shown.length
       ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg`
         + (nBad&&!onlyBad?`<span class="flag">확인 필요 ${nBad}</span>`:'') : '';
@@ -1351,13 +1455,30 @@ document.body.addEventListener('click', e=>{
     document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x===b));
     render();
   }
+  if(b.id==='bFocusClear'){ focus=null; render(); return; }
+  if(b.id==='bAllClear'){
+    $('#fVeh').value=''; $('#fSeong').value=''; $('#fJo').value='';
+    $('#bDayClear').click(); return;
+  }
   if(b.id==='bDayClear'){
     $('#fDay').value=''; $('#fDay2').value=''; b.style.display='none'; mode='month';
     document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
     render();
   }
 });
+/* 차량 × 일자 칸을 누르면 오른쪽 전표 목록만 그 칸으로 좁힙니다.
+   기간이나 차량 선택은 건드리지 않으니 표는 그대로 남아 있습니다. */
+document.addEventListener('click', e=>{
+  const td = e.target.closest('#byGrid [data-gv],#byGrid [data-gd]');
+  if(!td) return;
+  const f = {veh: td.dataset.gv||'', date: td.dataset.gd||''};
+  focus = (focus && focus.veh===f.veh && focus.date===f.date) ? null : f;   // 한 번 더 누르면 풉니다
+  render();
+  document.querySelector('.colR').scrollIntoView({behavior:'smooth',block:'start'});
+});
+
 function onDayPick(){
+  focus=null;
   const a=$('#fDay').value, b=$('#fDay2').value;
   if(!a && !b){ $('#bDayClear').click(); return; }
   mode='day'; $('#bDayClear').style.display='inline-block';
@@ -1367,13 +1488,13 @@ function onDayPick(){
 $('#fDay').onchange = onDayPick;
 $('#fDay2').onchange = onDayPick;
 $('#fMonth').onchange = ()=>{
-  mode='month'; $('#fDay').value=''; $('#fDay2').value=''; $('#bDayClear').style.display='none';
+  focus=null; mode='month'; $('#fDay').value=''; $('#fDay2').value=''; $('#bDayClear').style.display='none';
   document.querySelectorAll('[data-q]').forEach(x=>x.classList.toggle('sel',x.dataset.q==='month'));
   render();
 };
-$('#fVeh').onchange = render;
-$('#fSeong').onchange = render;
-$('#fJo').onchange = render;
+$('#fVeh').onchange = ()=>{ focus=null; render(); };
+$('#fSeong').onchange = ()=>{ focus=null; render(); };
+$('#fJo').onchange = ()=>{ focus=null; render(); };
 /* ---------- 사진 대조 실행 ---------- */
 function chkBar(done,total,msg){
   if(total===null){ $('#chkbar').innerHTML=''; return; }

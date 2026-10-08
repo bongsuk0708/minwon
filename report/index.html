@@ -172,11 +172,39 @@ input,select,textarea{font-family:inherit;outline:none}
 .pa-edit{background:#dbeafe;color:var(--blue)}
 .pa-dl{background:#dcfce7;color:var(--green)}
 .pa-del{background:#fee2e2;color:var(--red)}
+/* 추가 사진 */
+.extra-wrap{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.extra-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.extra-add{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;background:#dbeafe;color:var(--blue);border:none;cursor:pointer}
+.extra-add:hover{background:#bfdbfe}
+.extra-list{display:flex;flex-wrap:wrap;gap:8px}
+.extra-item{position:relative}
+.extra-item img{width:70px;height:70px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);cursor:pointer;display:block}
+.extra-del{position:absolute;top:-6px;right:-6px;width:21px;height:21px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;border:2px solid #fff;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}
+.extra-empty{font-size:11.5px;color:var(--sub)}
+/* 사진 크게 보기 */
+#imgview-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:500;flex-direction:column}
+#imgview-bg.on{display:flex}
+#imgview-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(0,0,0,.55);flex-shrink:0}
+#imgview-name{font-size:13px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#imgview-bar a{text-decoration:none}
+#imgview-btns{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.iv-btn{padding:9px 15px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;border:none}
+.iv-btn.dl{background:#16a34a;color:#fff}
+.iv-btn.dl:hover{background:#15803d}
+.iv-btn.cl{background:rgba(255,255,255,.18);color:#fff}
+.iv-btn.cl:hover{background:rgba(255,255,255,.3)}
+#imgview-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:14px}
+#imgview-img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;border-radius:6px;background:#fff}
+#imgview-img.zoom{max-width:none;max-height:none;cursor:zoom-out}
+#imgview-tip{text-align:center;font-size:11.5px;color:#94a3b8;padding:0 0 10px}
 /* 목록 툴바 */
 .loc-mgr-btn{float:right;font-size:10px;padding:2px 8px;border-radius:5px;background:#e0f2fe;color:var(--blue);font-weight:700;border:none;cursor:pointer}
 .addr-preview .warn{color:var(--red);font-weight:800}
 .act-btn.mod{background:#dbeafe;color:var(--blue)}
-.tb-btns{display:flex;gap:6px}
+.tb-btns{display:flex;gap:6px;align-items:center}
+#print-split{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:var(--sub);cursor:pointer;margin-bottom:8px;white-space:nowrap}
+#print-split input{cursor:pointer;margin:0}
 #print-btn{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:#475569;color:#fff;cursor:pointer;border:none;margin-bottom:8px}
 #print-btn:hover{background:#334155}
 
@@ -199,7 +227,7 @@ input,select,textarea{font-family:inherit;outline:none}
 #print-area{display:none}
 @media print{
   body{max-width:none!important;padding:0!important;background:#fff!important}
-  #login-screen,#app,#modal-bg,#mappick-bg,#toast,#photo-progress{display:none!important}
+  #login-screen,#app,#modal-bg,#mappick-bg,#imgview-bg,#toast,#photo-progress{display:none!important}
   #print-area{display:block!important}
   .pr-title{font-size:15pt;font-weight:800;margin-bottom:3mm}
   .pr-sub{font-size:8.5pt;color:#333;margin-bottom:3mm}
@@ -207,6 +235,11 @@ input,select,textarea{font-family:inherit;outline:none}
   table.pr th,table.pr td{border:1px solid #777;padding:1.5mm 1.8mm;text-align:left;vertical-align:top;word-break:break-all}
   table.pr th{background:#e8e8e8;font-weight:800}
   table.pr tr{page-break-inside:avoid}
+  table.pr thead{display:table-header-group}
+  .pr-group{margin-bottom:6mm}
+  .pr-break{page-break-before:always}
+  .pr-gh{font-size:11pt;font-weight:800;margin:0 0 1.5mm;padding:1.5mm 2.5mm;background:#ddd;border:1px solid #777}
+  .pr-gh span{font-weight:700;font-size:9pt;color:#333;float:right}
   @page{size:A4 landscape;margin:11mm}
 }
 </style>
@@ -327,6 +360,12 @@ input,select,textarea{font-family:inherit;outline:none}
             <input type="file" id="m-after" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'m-after-th','after')">
           </div>
         </div>
+        <div class="extra-wrap">
+          <div class="extra-hdr"><span class="form-label" style="margin:0">추가 사진 (여러 장 가능)</span>
+            <button class="extra-add" onclick="$('m-extra').click()">＋ 사진 첨부</button></div>
+          <input type="file" id="m-extra" accept="image/*" multiple style="display:none" onchange="onExtraPick(this,'m')">
+          <div class="extra-list" id="m-extra-list"></div>
+        </div>
       </div>
       <button class="submit-btn minwon" onclick="submitM()">✅ 민원 접수 저장</button>
     </div>
@@ -393,6 +432,12 @@ input,select,textarea{font-family:inherit;outline:none}
             <input type="file" id="h-photo" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
           </div>
         </div>
+        <div class="extra-wrap">
+          <div class="extra-hdr"><span class="form-label" style="margin:0">추가 사진 (여러 장 가능)</span>
+            <button class="extra-add" onclick="$('h-extra').click()">＋ 사진 첨부</button></div>
+          <input type="file" id="h-extra" accept="image/*" multiple style="display:none" onchange="onExtraPick(this,'h')">
+          <div class="extra-list" id="h-extra-list"></div>
+        </div>
       </div>
       <button class="submit-btn hazard" onclick="submitH()">✅ 사고예방 등록</button>
     </div>
@@ -416,6 +461,7 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="list-toolbar">
       <span id="list-count"></span>
       <div class="tb-btns">
+        <label id="print-split" title="체크하면 생활·음식물·재활용·사고예방이 각각 새 장에 인쇄됩니다"><input type="checkbox" id="print-split-cb"> 구분별 쪽 나눔</label>
         <button id="print-btn" onclick="printList()">🖨 인쇄</button>
         <button id="excel-btn" onclick="exportExcel()">📊 엑셀 내보내기</button>
       </div>
@@ -473,6 +519,19 @@ input,select,textarea{font-family:inherit;outline:none}
 
 <div id="toast"></div>
 
+<!-- 사진 크게 보기 -->
+<div id="imgview-bg" onclick="closeImg(event)">
+  <div id="imgview-bar">
+    <span id="imgview-name"></span>
+    <div id="imgview-btns">
+      <a id="imgview-dl" href="#" download><button class="iv-btn dl">⬇ 다운로드</button></a>
+      <button class="iv-btn cl" id="imgview-close" onclick="closeImg()">✕ 닫기</button>
+    </div>
+  </div>
+  <div id="imgview-wrap"><img id="imgview-img" onclick="toggleZoom()"></div>
+  <div id="imgview-tip">사진을 누르면 원본 크기로 확대 · 바깥을 누르거나 ESC로 닫기</div>
+</div>
+
 <!-- 인쇄 전용 영역 -->
 <div id="print-area"></div>
 
@@ -494,7 +553,7 @@ const LOCS=db.ref('report/locs');     // 장소 좌표 보정값 (모든 기기 
 
 let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
 let mSub='',mPos=null,hPos=null,curDetailId=null;
-let tmpPhoto={before:null,after:null,hazard:null};
+let tmpPhoto={before:null,after:null,hazard:null,extraM:[],extraH:[]};
 let fltFrom='',fltTo='';
 let fixedPins=[];
 
@@ -612,6 +671,7 @@ function startApp(){
   $('staff-name').textContent=staff;
   $('m-date').value=today(); $('m-time').value=now_t(); $('h-inspdate').value=today();
   connectFB();
+  renderExtra('m'); renderExtra('h');
   if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 }
 
@@ -912,6 +972,9 @@ async function submitM(){
     await saveRec(rec);
     if(tmpPhoto.before)await PHOTOS.child(id).child('before').set(tmpPhoto.before);
     if(tmpPhoto.after)await PHOTOS.child(id).child('after').set(tmpPhoto.after);
+    for(var ei=0;ei<tmpPhoto.extraM.length;ei++){
+      await PHOTOS.child(id).child('extra').child('e'+Date.now()+'_'+ei).set(tmpPhoto.extraM[ei]);
+    }
     toast(mPos?('✅ 민원 접수 완료! ('+rec.no+')'):('✅ 접수 완료 ('+rec.no+') — 위치 미지정, 지도 표시 안 됨'));
     resetMForm();
   }catch{toast('⚠️ 저장 실패');}
@@ -922,10 +985,11 @@ function resetMForm(){
   $('m-channel').value='';$('m-category').value='';$('m-status').value='접수';$('m-mgmt').value='일반';
   $('m-date').value=today();$('m-time').value=now_t();
   $('m-before-th').style.display='none';$('m-after-th').style.display='none';
-  $('m-before').value='';$('m-after').value='';
+  $('m-before').value='';$('m-after').value='';$('m-extra').value='';
   if(mPill){mPill.classList.remove('on');mPill=null;}mSub='';mPos=null;mPosManual=false;$('m-addr-ok').innerHTML=ADDR_WARN;
   $('m-dong-sel').value='';
-  tmpPhoto={before:null,after:null,hazard:null};
+  tmpPhoto={before:null,after:null,hazard:null,extraM:[],extraH:[]};
+  renderExtra('m'); renderExtra('h');
 }
 
 async function submitH(){
@@ -943,6 +1007,9 @@ async function submitH(){
   try{
     await saveRec(rec);
     if(tmpPhoto.hazard)await PHOTOS.child(id).child('hazard').set(tmpPhoto.hazard);
+    for(var ei=0;ei<tmpPhoto.extraH.length;ei++){
+      await PHOTOS.child(id).child('extra').child('e'+Date.now()+'_'+ei).set(tmpPhoto.extraH[ei]);
+    }
     toast(hPos?('✅ 사고예방 등록! ('+rec.hazardNo+')'):('✅ 등록 완료 ('+rec.hazardNo+') — 위치 미지정, 지도 표시 안 됨'));
     resetHForm();
   }catch{toast('⚠️ 저장 실패');}
@@ -951,10 +1018,11 @@ async function submitH(){
 function resetHForm(){
   ['h-addr','h-riskcont','h-insp','h-action','h-note'].forEach(i=>$(i).value='');
   $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
-  $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';
+  $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';$('h-extra').value='';
   hPos=null;hPosManual=false;$('h-addr-ok').innerHTML=ADDR_WARN;
   $('h-dong-sel').value='';
-  tmpPhoto={before:null,after:null,hazard:null};
+  tmpPhoto={before:null,after:null,hazard:null,extraM:[],extraH:[]};
+  renderExtra('m'); renderExtra('h');
 }
 
 // ── 목록 ──
@@ -1178,13 +1246,14 @@ function loadPhotos(id, isH){
     }
     const area=$('det-photo-area');
     if(!area)return;
-    area.innerHTML='<div class="photo-gallery">'+photoSlots(isH).map(function(ph){
+    // 기본 슬롯 (처리 전/후, 현장)
+    var html='<div class="photo-gallery">'+photoSlots(isH).map(function(ph){
       const src=p[ph.key];
       const fid='fi-'+ph.key;
       return '<div class="photo-item">'
         +'<span class="photo-label">'+ph.label+'</span>'
         +(src
-          ? '<img src="'+src+'" onclick="window.open(this.src)" title="클릭하면 크게 보기">'
+          ? '<img src="'+src+'" data-fn="'+ph.label+'_'+id.slice(0,8)+'" onclick="openImg(this)" title="클릭하면 크게 보기">'
           : '<div class="photo-empty" onclick="$(\''+fid+'\').click()">📷<span>사진 없음<br>눌러서 추가</span></div>')
         +'<div class="photo-acts">'
           +'<button class="pa-btn pa-edit" onclick="$(\''+fid+'\').click()">'+(src?'🔄 교체':'📷 추가')+'</button>'
@@ -1196,7 +1265,56 @@ function loadPhotos(id, isH){
         +'<input type="file" id="'+fid+'" accept="image/*" capture="environment" style="display:none" onchange="onDetPhoto(this,\''+ph.key+'\')">'
         +'</div>';
     }).join('')+'</div>';
+
+    // 추가 사진
+    const ex=p.extra||{};
+    const keys=Object.keys(ex);
+    html+='<div class="extra-wrap">'
+      +'<div class="extra-hdr"><span class="form-label" style="margin:0">추가 사진 '+(keys.length?('('+keys.length+'장)'):'')+'</span>'
+      +'<button class="extra-add" onclick="$(\'det-extra\').click()">＋ 사진 첨부</button></div>'
+      +'<input type="file" id="det-extra" accept="image/*" multiple style="display:none" onchange="onDetExtra(this)">'
+      +'<div class="extra-list">';
+    if(!keys.length){
+      html+='<span class="extra-empty">첨부된 추가 사진 없음</span>';
+    }else{
+      html+=keys.map(function(k,i){
+        const fn='추가사진'+(i+1)+'_'+id.slice(0,8);
+        return '<div class="extra-item">'
+          +'<img src="'+ex[k]+'" data-fn="'+fn+'" onclick="openImg(this)" title="클릭하면 크게 보기">'
+          +'<button class="extra-del" onclick="delExtraPhoto(\''+id+'\',\''+k+'\')" title="삭제">✕</button>'
+          +'</div>';
+      }).join('');
+    }
+    html+='</div></div>';
+    area.innerHTML=html;
   });
+}
+
+// 상세창 추가 사진 업로드
+async function onDetExtra(input){
+  const fs=Array.from(input.files||[]); if(!fs.length)return;
+  if(!curDetailId){input.value='';return;}
+  const id=curDetailId;
+  $('photo-progress').classList.add('on');
+  try{
+    for(var i=0;i<fs.length;i++){
+      const b64=await compressPhoto(fs[i]);
+      await PHOTOS.child(id).child('extra').child('e'+Date.now()+'_'+i).set(b64);
+    }
+    toast('✅ '+fs.length+'장 추가 저장됨');
+    const r=recs.find(x=>x.id===id);
+    loadPhotos(id, !!(r&&r.recType==='hazard'));
+  }catch(e){ toast('⚠️ 사진 저장 실패'); }
+  finally{ $('photo-progress').classList.remove('on'); input.value=''; }
+}
+
+function delExtraPhoto(id,key){
+  if(!confirm('이 추가 사진을 삭제할까요?'))return;
+  PHOTOS.child(id).child('extra').child(key).remove().then(function(){
+    toast('🗑 사진 삭제됨');
+    const r=recs.find(x=>x.id===id);
+    loadPhotos(id, !!(r&&r.recType==='hazard'));
+  }).catch(function(){ toast('⚠️ 삭제 실패'); });
 }
 
 // 상세창에서 사진 교체/추가 — 저장 후 갤러리 바로 갱신
@@ -1229,6 +1347,58 @@ function delPhoto(id,field,label){
     loadPhotos(id, !!(r&&r.recType==='hazard'));
   }).catch(function(){ toast('⚠️ 삭제 실패'); });
 }
+
+// ── 접수폼 추가 사진 ──
+function extraArr(form){ return form==='m' ? tmpPhoto.extraM : tmpPhoto.extraH; }
+async function onExtraPick(input,form){
+  const fs=Array.from(input.files||[]); if(!fs.length)return;
+  const arr=extraArr(form);
+  if(arr.length+fs.length>10){toast('추가 사진은 10장까지입니다');input.value='';return;}
+  $('photo-progress').classList.add('on');
+  try{
+    for(var i=0;i<fs.length;i++){ arr.push(await compressPhoto(fs[i])); }
+    renderExtra(form);
+    toast('📷 '+fs.length+'장 추가됨');
+  }catch(e){ toast('⚠️ 사진 처리 실패'); }
+  finally{ $('photo-progress').classList.remove('on'); input.value=''; }
+}
+function renderExtra(form){
+  const el=$(form==='m'?'m-extra-list':'h-extra-list'); if(!el)return;
+  const arr=extraArr(form);
+  if(!arr.length){ el.innerHTML='<span class="extra-empty">첨부된 추가 사진 없음</span>'; return; }
+  el.innerHTML=arr.map(function(src,i){
+    return '<div class="extra-item">'
+      +'<img src="'+src+'" data-fn="추가사진'+(i+1)+'" onclick="openImg(this)" title="클릭하면 크게 보기">'
+      +'<button class="extra-del" onclick="delExtra(\''+form+'\','+i+')" title="삭제">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function delExtra(form,i){
+  extraArr(form).splice(i,1);
+  renderExtra(form);
+}
+
+// ── 사진 크게 보기 / 다운로드 ──
+function openImg(imgEl){
+  const src=imgEl.src;
+  const fn=(imgEl.dataset.fn||'photo')+'.jpg';
+  $('imgview-img').src=src;
+  $('imgview-img').classList.remove('zoom');
+  const a=$('imgview-dl'); a.href=src; a.setAttribute('download',fn);
+  $('imgview-name').textContent=fn;
+  $('imgview-bg').classList.add('on');
+}
+function closeImg(e){
+  if(e&&e.target&&e.target.id!=='imgview-bg')return;   // 안쪽 클릭은 무시
+  $('imgview-bg').classList.remove('on');
+  $('imgview-img').src='';
+}
+function toggleZoom(){ $('imgview-img').classList.toggle('zoom'); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&$('imgview-bg').classList.contains('on')){
+    $('imgview-bg').classList.remove('on'); $('imgview-img').src='';
+  }
+});
 
 // ── 저장된 건 수정 ──
 function openEdit(id){
@@ -1334,18 +1504,49 @@ function saveEdit(id){
   }).catch(function(){ toast('⚠️ 저장 실패'); });
 }
 
-// ── 목록 인쇄 ──
+// ── 목록 인쇄 (구분별로 묶어서) ──
+const PRINT_ORDER=['생활','음식물','재활용','사고예방'];
+function printGroupKey(r){ return r.recType==='hazard' ? '사고예방' : (r.subtype||'기타'); }
+function printRowDate(r){ return (r.recType==='hazard' ? r.inspDate : r.date) || ''; }
+
 function printList(){
   const data=filteredRecs();
   if(!data.length){toast('인쇄할 항목이 없습니다');return;}
+  const splitEl=$('print-split-cb');
+  const split=!!(splitEl&&splitEl.checked);
   const f=$('flt-from').value, t=$('flt-to').value;
   const period=(f||t)?((f||'처음')+' ~ '+(t||'오늘')):'전체 기간';
   const fltName=(curFlt==='all')?'전체':(curFlt==='hazard'?'사고예방':curFlt);
-  const rows=data.map(function(r){
+
+  // 구분별로 묶기
+  const groups={};
+  data.forEach(function(r){ const k=printGroupKey(r); (groups[k]=groups[k]||[]).push(r); });
+  const keys=Object.keys(groups).sort(function(a,b){
+    var ia=PRINT_ORDER.indexOf(a), ib=PRINT_ORDER.indexOf(b);
+    if(ia<0)ia=99; if(ib<0)ib=99;
+    return (ia-ib) || a.localeCompare(b);
+  });
+  // 묶음 안에서는 날짜순 → 번호순
+  keys.forEach(function(k){
+    groups[k].sort(function(x,y){
+      const c=printRowDate(x).localeCompare(printRowDate(y));
+      if(c)return c;
+      return String(x.no||x.hazardNo||'').localeCompare(String(y.no||y.hazardNo||''),undefined,{numeric:true});
+    });
+  });
+
+  const head='<thead><tr>'
+    +'<th style="width:7%">번호</th><th style="width:8%">일자</th><th style="width:7%">구분</th>'
+    +'<th style="width:16%">주소</th><th style="width:11%">내용구분/위험요인</th>'
+    +'<th style="width:20%">상세내용</th><th style="width:17%">조치내용</th>'
+    +'<th style="width:7%">상태/등급</th><th style="width:7%">담당자</th>'
+    +'</tr></thead>';
+
+  function rowHtml(r){
     const isH=r.recType==='hazard';
     return '<tr>'
       +'<td>'+mkEsc(isH?r.hazardNo:r.no)+'</td>'
-      +'<td>'+mkEsc(isH?(r.inspDate||''):(r.date||''))+'</td>'
+      +'<td>'+mkEsc(printRowDate(r))+'</td>'
       +'<td>'+mkEsc(isH?'사고예방':(r.subtype||''))+'</td>'
       +'<td>'+mkEsc(r.addr||'')+'</td>'
       +'<td>'+mkEsc(isH?(r.riskType||''):(r.category||''))+'</td>'
@@ -1354,18 +1555,24 @@ function printList(){
       +'<td>'+mkEsc(isH?(r.riskLevel||''):(r.status||''))+'</td>'
       +'<td>'+mkEsc(r.staff||'')+'</td>'
       +'</tr>';
-  }).join('');
+  }
+
+  var body='';
+  keys.forEach(function(k,gi){
+    const rows=groups[k].map(rowHtml).join('');
+    body+='<div class="pr-group'+((split&&gi>0)?' pr-break':'')+'">'
+       +  '<div class="pr-gh">'+mkEsc(k)+'<span>'+groups[k].length+'건</span></div>'
+       +  '<table class="pr">'+head+'<tbody>'+rows+'</tbody></table>'
+       +'</div>';
+  });
+
+  const tally=keys.map(function(k){return k+' '+groups[k].length;}).join(' · ');
   $('print-area').innerHTML=
     '<div class="pr-title">민원 · 사고예방 관리대장</div>'
     +'<div class="pr-sub">구분: '+mkEsc(fltName)+' &nbsp;|&nbsp; 기간: '+mkEsc(period)
-    +' &nbsp;|&nbsp; 총 '+data.length+'건 &nbsp;|&nbsp; 출력일: '+today()
+    +' &nbsp;|&nbsp; 총 '+data.length+'건 ('+mkEsc(tally)+') &nbsp;|&nbsp; 출력일: '+today()
     +' &nbsp;|&nbsp; 출력자: '+mkEsc(staff)+'</div>'
-    +'<table class="pr"><thead><tr>'
-    +'<th style="width:7%">번호</th><th style="width:8%">일자</th><th style="width:7%">구분</th>'
-    +'<th style="width:16%">주소</th><th style="width:11%">내용구분/위험요인</th>'
-    +'<th style="width:20%">상세내용</th><th style="width:17%">조치내용</th>'
-    +'<th style="width:7%">상태/등급</th><th style="width:7%">담당자</th>'
-    +'</tr></thead><tbody>'+rows+'</tbody></table>';
+    +body;
   window.print();
 }
 

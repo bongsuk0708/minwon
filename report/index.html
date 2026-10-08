@@ -510,13 +510,13 @@ const FIXED_LOCS=[
   {name:'잠실본동',  short:'잠실본동 ', dong:'잠실동', lat:37.5075, lng:127.0885},
   {name:'잠실현대',  short:'잠실현대 ', dong:'잠실동', lat:37.5090, lng:127.0872},
   {name:'우성4차',   short:'우성4차 ',  dong:'잠실동', lat:37.5082, lng:127.0867},
-  {name:'레이크',    short:'레이크 ',   dong:'잠실동', lat:37.5083, lng:127.0899},
-  {name:'트리지움',  short:'트리지움 ', dong:'잠실동', lat:37.5095, lng:127.0855},
+  {name:'레이크',    short:'레이크 ',   dong:'잠실동', addr:'서울 송파구 잠실로 88',   lat:37.5083, lng:127.0899},
+  {name:'트리지움',  short:'트리지움 ', dong:'잠실동', addr:'서울 송파구 잠실로 62',   lat:37.5095, lng:127.0855},
   {name:'석촌호수',  short:'석촌호수 ', dong:'잠실동', lat:37.5090, lng:127.1010},
-  {name:'롯데월드',  short:'롯데월드 ', dong:'잠실동', lat:37.5111, lng:127.0980},
+  {name:'롯데월드',  short:'롯데월드 ', dong:'잠실동', addr:'서울 송파구 올림픽로 240', lat:37.5111, lng:127.0980},
   {name:'자전거포',  short:'자전거포 ', dong:'잠실동', lat:37.5070, lng:127.0890},
   {name:'삼전현대',  short:'삼전현대 ', dong:'삼전동', lat:37.5062, lng:127.0921},
-  {name:'가락시장',  short:'가락시장 ', dong:'가락동', lat:37.4925, lng:127.1095},
+  {name:'가락시장',  short:'가락시장 ', dong:'가락동', addr:'서울 송파구 양재대로 932', lat:37.4925, lng:127.1095},
 ];
 
 const $=id=>document.getElementById(id);
@@ -586,12 +586,35 @@ function connectFB(){
     netBar('ok','✅ 연결됨 ('+recs.length+'건)');
   },()=>{netBar('err','⚠️ 오프라인');});
 
-  // 저장된 장소 좌표 보정값 적용
+  // 저장된 장소 좌표 보정값 적용 (사용자가 지도로 찍은 값이 항상 최우선)
   LOCS.on('value',snap=>{
-    const o=snap.val()||{};
+    locOverrides=snap.val()||{};
     FIXED_LOCS.forEach(function(l){
-      const v=o[l.name];
-      if(v&&v.lat&&v.lng){ l.lat=+v.lat; l.lng=+v.lng; }
+      const v=locOverrides[l.name];
+      if(v&&v.lat&&v.lng){ l.lat=+v.lat; l.lng=+v.lng; l.src='fix'; }
+    });
+    resolveLocAddrs();
+  });
+}
+
+// ── 장소 좌표: 공식 주소를 카카오로 정확히 변환 ──
+// 우선순위: ① 사용자가 지도로 찍은 값 ② 공식 주소 변환값 ③ 기본 좌표
+let locOverrides={};
+function resolveLocAddrs(){
+  if(!window.kakao||!kakao.maps||!kakao.maps.services)return;
+  FIXED_LOCS.forEach(function(l){
+    if(!l.addr) return;
+    if(locOverrides[l.name]) return;              // 직접 고친 건 건드리지 않음
+    const ck='rp_loc_'+l.name;
+    try{
+      const c=JSON.parse(localStorage.getItem(ck)||'null');
+      if(c&&c.lat&&c.lng){ l.lat=c.lat; l.lng=c.lng; l.src='addr'; return; }
+    }catch(e){}
+    getGeo().addressSearch(l.addr,function(res,st){
+      if(st===kakao.maps.services.Status.OK){
+        l.lat=+res[0].y; l.lng=+res[0].x; l.src='addr';
+        try{localStorage.setItem(ck,JSON.stringify({lat:l.lat,lng:l.lng}));}catch(e){}
+      }
     });
   });
 }
@@ -604,8 +627,13 @@ function openLocMgr(){
     +'위치가 틀린 장소는 <b>지도에서 수정</b>을 눌러 지도를 탭해 고치면 됩니다.<br>'
     +'저장하면 모든 기기에 바로 반영되고, 이후 접수할 때 그 좌표가 쓰입니다.</div>'
     +FIXED_LOCS.map(function(l){
+      var tag, col;
+      if(l.src==='fix'){ tag='✅ 직접 수정됨'; col='var(--green)'; }
+      else if(l.src==='addr'){ tag='📮 '+l.addr; col='var(--blue)'; }
+      else { tag='⚠️ 기본 좌표 — 확인 필요'; col='var(--red)'; }
       return '<div class="det-row" style="display:flex;align-items:center;gap:8px;justify-content:space-between">'
         +'<div><div style="font-weight:800;font-size:14px">'+l.name+'</div>'
+        +'<div style="font-size:11px;color:'+col+';font-weight:700">'+tag+'</div>'
         +'<div style="font-size:11px;color:var(--sub)">'+l.dong+' · '+l.lat.toFixed(5)+', '+l.lng.toFixed(5)+'</div></div>'
         +'<button class="map-btn" style="flex-shrink:0" onclick="openMapPick(\'loc\',\''+l.name+'\')">🗺️ 지도에서 수정</button>'
         +'</div>';
@@ -719,7 +747,8 @@ function confirmMapPick(){
     const name=pickRecId, np={lat:pickPos.lat,lng:pickPos.lng};
     LOCS.child(name).set(np).then(function(){
       const l=FIXED_LOCS.find(x=>x.name===name);
-      if(l){l.lat=np.lat;l.lng=np.lng;}
+      if(l){l.lat=np.lat;l.lng=np.lng;l.src='fix';}
+      locOverrides[name]=np;
       closeMapPick(); openLocMgr(); toast('✅ '+name+' 위치 저장됨');
     }).catch(function(){ toast('⚠️ 저장 실패'); });
     return;

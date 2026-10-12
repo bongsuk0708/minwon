@@ -178,6 +178,19 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 .mk-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;cursor:pointer;}
 .mk-lbl{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);border:1.5px solid;line-height:1.45;}
 .mk-badge{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;border:3px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.35);}
+#imgview-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:500;flex-direction:column;}
+#imgview-bg.on{display:flex;}
+#imgview-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(0,0,0,.55);flex-shrink:0;}
+#imgview-name{font-size:13px;font-weight:700;color:#e2e8f0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#imgview-bar a{text-decoration:none;}
+#imgview-btns{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.iv-btn{padding:9px 15px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;border:none;}
+.iv-btn.dl{background:#16a34a;color:#fff;}
+.iv-btn.cl{background:rgba(255,255,255,.18);color:#fff;}
+#imgview-wrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:14px;}
+#imgview-img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;border-radius:6px;background:#fff;}
+#imgview-img.zoom{max-width:none;max-height:none;cursor:zoom-out;}
+#imgview-tip{text-align:center;font-size:11.5px;color:#94a3b8;padding:0 0 10px;}
 </style>
 </head>
 <body>
@@ -433,15 +446,38 @@ function loadPhotos(id,isH){
     }
     const keys=isH?['hazard','after']:['before','after'];
     const lbls={before:'접수 전',after:'처리 후',hazard:'위험 현장'};
-    const photos=keys.filter(k=>p[k]);
-    if(!photos.length){area.innerHTML='<p style="font-size:12px;color:var(--sub);padding:8px 0;">사진 없음</p>';return;}
-    area.innerHTML=`<div class="photo-grid">${photos.map(k=>`
+    var items=keys.filter(k=>p[k]).map(function(k){ return {src:p[k],label:lbls[k]}; });
+    // 사무실에서 올린 추가 사진도 함께 표시
+    const ex=p.extra||{};
+    Object.keys(ex).forEach(function(k,i){ items.push({src:ex[k],label:'추가 '+(i+1)}); });
+    if(!items.length){area.innerHTML='<p style="font-size:12px;color:var(--sub);padding:8px 0;">사진 없음</p>';return;}
+    area.innerHTML=`<div class="photo-grid">${items.map(function(it){return `
       <div>
-        <p style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;">${lbls[k]}</p>
-        <img src="${p[k]}" onclick="window.open(this.src)" title="클릭하면 크게 보기">
-      </div>`).join('')}</div>`;
+        <p style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;">${it.label}</p>
+        <img src="${it.src}" data-fn="${it.label}_${id.slice(0,8)}" onclick="openImg(this)" title="눌러서 크게 보기">
+      </div>`;}).join('')}</div>`;
   });
 }
+
+/* ── 사진 크게 보기 / 저장 ── */
+function openImg(imgEl){
+  const src=imgEl.src, fn=(imgEl.dataset.fn||'photo')+'.jpg';
+  document.getElementById('imgview-img').src=src;
+  document.getElementById('imgview-img').classList.remove('zoom');
+  const a=document.getElementById('imgview-dl'); a.href=src; a.setAttribute('download',fn);
+  document.getElementById('imgview-name').textContent=fn;
+  document.getElementById('imgview-bg').classList.add('on');
+}
+function closeImg(e){
+  if(e&&e.target&&e.target.id!=='imgview-bg')return;
+  document.getElementById('imgview-bg').classList.remove('on');
+  document.getElementById('imgview-img').src='';
+}
+function toggleZoom(){ document.getElementById('imgview-img').classList.toggle('zoom'); }
+document.addEventListener('keydown',function(e){
+  const bg=document.getElementById('imgview-bg');
+  if(e.key==='Escape'&&bg&&bg.classList.contains('on')){ bg.classList.remove('on'); document.getElementById('imgview-img').src=''; }
+});
 
 /* ── 현장 업데이트 ── */
 function openFieldUpdate(id){
@@ -685,5 +721,16 @@ if('serviceWorker' in navigator){
 
 window.addEventListener('DOMContentLoaded',()=>{ initStaff(); });
 </script>
+<div id="imgview-bg" onclick="closeImg(event)">
+  <div id="imgview-bar">
+    <span id="imgview-name"></span>
+    <div id="imgview-btns">
+      <a id="imgview-dl" href="#" download><button class="iv-btn dl">⬇ 저장</button></a>
+      <button class="iv-btn cl" onclick="closeImg()">✕ 닫기</button>
+    </div>
+  </div>
+  <div id="imgview-wrap"><img id="imgview-img" onclick="toggleZoom()"></div>
+  <div id="imgview-tip">사진을 누르면 원본 크기로 확대 · 바깥을 누르면 닫힘</div>
+</div>
 </body>
 </html>

@@ -96,6 +96,13 @@ input[type=number]{font-variant-numeric:tabular-nums}
   border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13px;color:var(--tx)
 }
 /* ---------- 전표 사진 여러 장 ---------- */
+.nvbar{position:fixed;left:0;right:0;top:0;z-index:60;background:#1E6347;color:#fff;
+  padding:9px 12px;font-size:13.5px;font-weight:600;line-height:1.3;
+  display:flex;align-items:center;gap:9px;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.nvbar button{margin-left:auto;flex:none;white-space:nowrap;background:#fff;color:#1E6347;
+  border:0;border-radius:8px;padding:7px 12px;font-size:13.5px;font-weight:800}
+.nvbar.on{background:#A0631A;justify-content:center}
+body.nv{padding-top:44px}
 .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px}
 .shots .pic{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;
   background:var(--card);aspect-ratio:3/4}
@@ -288,12 +295,16 @@ input[type=number]{font-variant-numeric:tabular-nums}
   <button class="btn" id="bSync">지금 전송</button>
 
   <div class="lbl">앱</div>
+  <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
+  <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint">v55 · 2026-10-12 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v56 · 2026-10-12 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
 </main>
+
+<div id="newver"></div>
 
 <div class="dock" id="dock">
   <div class="sum"><span id="dCnt">전표 0장</span><b id="dSum" class="num">0 kg</b></div>
@@ -1299,6 +1310,8 @@ async function push(){
     }catch(e){ break; }
   }
   saveAll(); drawNet(); drawList();
+  // 다 보냈고 새 버전이 기다리고 있으면 이때 바꿉니다 — 잃을 것이 없는 순간입니다
+  if(newVer && !appBusy()) setTimeout(()=>{ if(newVer && !appBusy()) applyNew(); }, 2500);
   if(done) toast(`${done}건 전송 완료`,'good');
   else if(list.length) toast('전송 실패 — 나중에 다시 시도합니다','err');
 }
@@ -1402,12 +1415,68 @@ document.querySelector('nav').onclick = e=>{
   if(b.dataset.p==='li') drawList();
 };
 
-/* ================= 서비스워커 ================= */
+/* ================= 서비스워커 · 저절로 최신으로 ================= */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+/* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
+   다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
+const APP_VER = 'v56';
+let newVer = null;
+
+function appBusy(){
+  return !!(form.shots.length || form.rows.length || pending().length);
+}
+async function checkVer(quiet){
+  if(!navigator.onLine) return false;
+  try{
+    const r = await fetch('index.html?v='+Date.now(), {cache:'no-store'});
+    if(!r.ok) return false;
+    const m = (await r.text()).match(/id="verLine"[^>]*>(v\d+)/);
+    if(!m) return false;
+    if(m[1] === APP_VER){ if(!quiet) toast('이미 최신입니다','good'); return false; }
+    newVer = m[1];
+    if(appBusy()) drawNewVer();     // 지금 바꾸면 하던 일이 날아갑니다
+    else applyNew();
+    return true;
+  }catch(e){ return false; }
+}
+function drawNewVer(){
+  if(!newVer){ $('#newver').innerHTML=''; document.body.classList.remove('nv'); return; }
+  document.body.classList.add('nv');
+  $('#newver').innerHTML =
+    `<div class="nvbar">새 버전이 나왔습니다 — 저장이 끝나면 저절로 바뀝니다
+       <button id="bNvNow">지금 바꾸기</button></div>`;
+  $('#bNvNow').onclick = ()=>{
+    if(appBusy() && !confirm('아직 저장하지 않은 전표나 사진이 있습니다.\n지금 바꾸면 없어집니다. 그래도 바꿀까요?')) return;
+    applyNew();
+  };
+}
+async function applyNew(){
+  if(!navigator.onLine){ toast('인터넷이 되면 바꿉니다','err'); return; }
+  document.body.classList.add('nv');
+  $('#newver').innerHTML = '<div class="nvbar on">최신으로 바꾸는 중입니다… 잠시만요</div>';
+  try{ const ks=await caches.keys(); await Promise.all(ks.map(k=>caches.delete(k))); }catch(e){}
+  try{ const rs=await navigator.serviceWorker.getRegistrations();
+       await Promise.all(rs.map(r=>r.update())); }catch(e){}
+  setTimeout(()=>location.replace(location.pathname + '?r=' + Date.now()), 600);
+}
+$('#bFresh').onclick = async ()=>{
+  if(!navigator.onLine){ toast('오프라인입니다 — 인터넷이 된 뒤에 눌러 주세요','err'); return; }
+  if(appBusy() && !confirm('아직 저장하지 않은 전표나 사진이 있습니다.\n지금 새로고침하면 없어집니다. 그래도 할까요?')) return;
+  $('#bFresh').disabled=true; $('#bFresh').textContent='맞추는 중…';
+  const had = await checkVer(false);
+  if(!had){ await applyNew(); }          // 버전이 같아도 눌렀으면 새로 받아 옵니다
+  $('#bFresh').disabled=false; $('#bFresh').textContent='새로고침 (최신으로 맞추기)';
+};
+/* 앱을 다시 켤 때·화면을 다시 볼 때·인터넷이 돌아올 때, 그리고 30분마다 살펴봅니다 */
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkVer(true); });
+window.addEventListener('online', ()=> checkVer(true));
+setTimeout(()=>checkVer(true), 4000);
+setInterval(()=>checkVer(true), 30*60*1000);
 
 /* ================= 시작 ================= */
 drawVeh(); drawFil(); initForm(); drawList(); drawNet();

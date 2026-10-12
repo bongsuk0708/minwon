@@ -1,6 +1,6 @@
 // 계근 전표 입력 - 서비스워커
 // 네트워크 우선. 수정한 화면이 바로 반영되고, 오프라인일 때만 저장본을 씁니다.
-const CACHE = 'gyegeun-v55';
+const CACHE = 'gyegeun-v56';
 const SHELL = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e=>{
@@ -20,11 +20,14 @@ self.addEventListener('fetch', e=>{
   if(req.method !== 'GET') return;                       // 전송(PUT)은 건드리지 않음
   if(!req.url.startsWith(self.location.origin)) return;  // 서버 요청은 그대로 통과
 
+  // 버전 확인용 요청(index.html?v=...)은 저장해 두지 않습니다 — 캐시가 지저분해집니다
+  const keep = !new URL(req.url).search;
+
   e.respondWith(
     fetch(req)
       .then(res=>{
-        const copy = res.clone();
-        caches.open(CACHE).then(c=>c.put(req, copy)).catch(()=>{});
+        if(keep){ const copy = res.clone();
+          caches.open(CACHE).then(c=>c.put(req, copy)).catch(()=>{}); }
         return res;
       })
       .catch(()=> caches.match(req).then(hit=> hit || caches.match('./index.html')))

@@ -204,7 +204,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v55</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v56</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -880,8 +880,11 @@ function drawPeriod(){
   else { const m=($('#fMonth').value||today().slice(0,7)).split('-');
          t = `${m[0]}년 ${Number(m[1])}월 한 달`; }
   $('#fMonth').style.opacity = (mode==='day') ? .45 : 1;
+  // 전표번호나 계근시각은 있는데 사진이 안 붙은 것 — 현장에서 사진을 지우고 저장한 건입니다
+  const np = picked().filter(r=>!r.batch && (r.no||r.t1||r.t2)).length;
   $('#period').className='period';
   $('#period').innerHTML = `지금 보는 기간 &nbsp;<b>${t}</b>${f?` &nbsp;·&nbsp; ${f}`:''}
+    ${np?`<button class="mini${focus&&focus.nopic?' warn':''}" id="bNoPic">사진 없는 전표 ${comma(np)}장${focus&&focus.nopic?' — 보는 중':''}</button>`:''}
     ${note?`<span style="color:#5C7EA3">${note}</span>`:''}
     ${(mode==='day'||v||g||j)?'<button class="mini x" id="bAllClear">전부 해제</button>':''}`;
 }
@@ -996,8 +999,9 @@ function render(){
         (r.site||'').includes(q) || String(r.weight).includes(q) || (r.date||'').includes(q) ||
         (fl[r.id]||[]).some(f=>f.includes(q)));
   if(focus){
-    if(focus.veh)  shown = shown.filter(r=>r.veh===focus.veh);
-    if(focus.date) shown = shown.filter(r=>r.date===focus.date);
+    if(focus.nopic) shown = shown.filter(r=>!r.batch && (r.no||r.t1||r.t2));
+    if(focus.veh)   shown = shown.filter(r=>r.veh===focus.veh);
+    if(focus.date)  shown = shown.filter(r=>r.date===focus.date);
   }
   const nBad=Object.keys(fl).length;
   $('#fQ').placeholder = nBad ? '차량번호 검색 · "수정" 입력 시 확인 필요만' : '차량번호 검색';
@@ -1008,10 +1012,14 @@ function render(){
   if(onlyBad) shown = shown.filter(r=>fl[r.id]);
 
   const shownSum = shown.reduce((a,r)=>a+r.weight,0);
-  $('#focusbar').innerHTML = focus ? `<div class="period" style="margin:0 0 12px">
-     표에서 고른 칸 &nbsp;<b>${focus.veh?focus.veh+'호':'전체 차량'}${focus.date?' · '+focus.date.slice(5).replace('-','/'):''}</b>
-     &nbsp;— 아래 목록만 이 칸으로 좁혔습니다.
-     <button class="mini x" id="bFocusClear">풀기</button></div>` : '';
+  $('#focusbar').innerHTML = !focus ? '' : focus.nopic
+    ? `<div class="period" style="margin:0 0 12px;background:#FDF2F0;border-color:#E4B4AE;color:#8A4238">
+       <b>사진 없이 올라온 전표</b> &nbsp;— 숫자는 그대로입니다. 전표번호로 종이 전표를 찾아 맞춰 보세요.
+       <button class="mini x" id="bFocusClear">풀기</button></div>`
+    : `<div class="period" style="margin:0 0 12px">
+       표에서 고른 칸 &nbsp;<b>${focus.veh?focus.veh+'호':'전체 차량'}${focus.date?' · '+focus.date.slice(5).replace('-','/'):''}</b>
+       &nbsp;— 아래 목록만 이 칸으로 좁혔습니다.
+       <button class="mini x" id="bFocusClear">풀기</button></div>`;
   $('#lCnt').innerHTML = shown.length
       ? `${q?'검색 ':''}${comma(shown.length)}장 · ${comma(shownSum)} kg`
         + (nBad&&!onlyBad?`<span class="flag">확인 필요 ${nBad}</span>`:'') : '';
@@ -1044,7 +1052,9 @@ function render(){
 /* ---------- 사진 뷰어 ---------- */
 /* 사진칸 — 사진이 지워진 전표는 「사진 지움」으로 보여 줍니다. 숫자는 그대로 있습니다. */
 function picCell(r){
-  if(!r.batch) return '<span style="color:var(--dim)">없음</span>';
+  if(!r.batch) return (r.no||r.t1||r.t2)
+    ? '<span class="picgone" style="border-color:#E4B4AE;color:#A32E22" title="전표번호·시각은 읽혔는데 사진이 안 올라왔습니다. 현장에서 사진을 지우고 저장하면 이렇게 됩니다. 숫자는 그대로입니다.">사진 없이 올라옴</span>'
+    : '<span style="color:var(--dim)" title="직접 입력한 전표입니다">없음</span>';
   if(pgone[r.batch]) return `<span class="picgone" title="${pgone[r.batch]} 에 사진만 지웠습니다. 날짜·차량·성상·중량·전표번호는 그대로 남아 있습니다.">사진 지움</span>`;
   return `<button class="mini pic" data-pic="${r.batch}">보기</button>`;
 }
@@ -1456,6 +1466,8 @@ document.body.addEventListener('click', e=>{
     render();
   }
   if(b.id==='bFocusClear'){ focus=null; render(); return; }
+  if(b.id==='bNoPic'){ focus = (focus&&focus.nopic) ? null : {nopic:true}; render();
+                       document.querySelector('.colR').scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(b.id==='bAllClear'){
     $('#fVeh').value=''; $('#fSeong').value=''; $('#fJo').value='';
     $('#bDayClear').click(); return;

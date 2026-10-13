@@ -1204,7 +1204,7 @@ function openDet(id){
       <div class="det-row"><div class="det-label">내용구분</div><div class="det-val">${r.category||'-'}</div></div>
     </div>
     <div class="det-row"><div class="det-label">민원내용</div><div class="det-val">${r.content||'-'}</div></div>
-    <div class="det-row"><div class="det-label">방문 확인결과</div><div class="det-val">${r.inspResult||'-'}</div></div>
+    <div class="det-row"><div class="det-label">방문 확인결과</div><div class="det-val">${r.inspResult||r.visitResult||'-'}</div></div>
     <div class="det-row"><div class="det-label">조치내용</div><div class="det-val">${r.actionNote||'-'}</div></div>
     <div class="det-row"><div class="det-label">처리 상태 변경</div>
       <div class="status-btn-row">
@@ -1447,7 +1447,7 @@ function openEdit(id){
       <div><span class="form-label">민원 내용 구분 *</span><input class="form-input" id="e-category" value="${E(r.category)}"></div>
     </div>
     <div class="form-row"><span class="form-label">세부 민원내용</span><textarea class="form-textarea" id="e-content">${E(r.content)}</textarea></div>
-    <div class="form-row"><span class="form-label">방문 확인결과</span><textarea class="form-textarea" id="e-insp">${E(r.inspResult)}</textarea></div>
+    <div class="form-row"><span class="form-label">방문 확인결과</span><textarea class="form-textarea" id="e-insp">${E(r.inspResult||r.visitResult)}</textarea></div>
     <div class="form-row"><span class="form-label">조치 내용 및 비고</span><textarea class="form-textarea" id="e-action">${E(r.actionNote)}</textarea></div>
     <div class="form-2col">
       <div><span class="form-label">처리 상태</span>
@@ -1492,6 +1492,7 @@ function saveEdit(id){
     u.category=$('e-category').value.trim();
     u.content=$('e-content').value.trim();
     u.inspResult=$('e-insp').value.trim();
+    u.visitResult=u.inspResult;
     u.actionNote=$('e-action').value.trim();
     u.status=$('e-status').value;
     u.mgmtLevel=$('e-mgmt').value;

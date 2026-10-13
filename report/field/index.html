@@ -513,6 +513,14 @@ function openFieldUpdate(id){
       </div>
       `:`
       <div class="field">
+        <label>민원인</label>
+        <input id="u-person" type="text" placeholder="홍길동" value="${(r.cname||r.person||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="field">
+        <label>연락처</label>
+        <input id="u-tel" type="tel" inputmode="tel" placeholder="010-0000-0000" value="${(r.ctel||r.tel||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="field">
         <label>방문 확인 결과</label>
         <textarea id="u-result" placeholder="방문 확인 결과 입력">${r.visitResult||r.inspResult||''}</textarea>
       </div>
@@ -585,9 +593,12 @@ async function saveFieldUpdate(){
   if(!updateTarget){toast('업데이트 대상이 없습니다');return;}
   const id=updateTarget.id;
   try{
+    const rEl=document.getElementById('u-result');
+    const result=rEl?rEl.value.trim():'';
     const updates={
       status:document.getElementById('u-status').value,
-      visitResult:document.getElementById('u-result')?document.getElementById('u-result').value.trim():'',
+      inspResult:result,     // 사무실앱과 같은 칸에 저장 (전에는 visitResult라 PC에서 안 보였음)
+      visitResult:result,    // 옛 기록 호환
       updatedAt:nowStr(),
       updatedBy:staff
     };
@@ -595,6 +606,10 @@ async function saveFieldUpdate(){
     if(isH){
       const ua=document.getElementById('u-action');
       if(ua) updates.action=ua.value.trim();
+    }else{
+      const up=document.getElementById('u-person'), ut=document.getElementById('u-tel');
+      if(up) updates.person=up.value.trim();
+      if(ut) updates.tel=ut.value.trim();
     }
     await RECS.child(id).update(updates);
 

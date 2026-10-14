@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1B2430">
+<title>위험성평가 · 본에코</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--ink:#1B2430;--ink2:#2E3A49;--mute:#5A6472;--line:#DDE1E6;--bg:#F3F4F1;--card:#fff;--acc:#B53C0C;--acc2:#F2A33A;
+--lowBg:#E3F1E8;--lowFg:#1F5234;--midBg:#FDEBC8;--midFg:#7A4A00;--hiBg:#FBE1DD;--hiFg:#8E1F14}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:15px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:var(--ink)}
+#app{max-width:720px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+header.top{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;padding-top:max(12px,env(safe-area-inset-top))}
+header.top h1{margin:0;font-size:18px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header.top .sub{font-size:12px;color:#C9CFD8}
+.iconbtn{background:none;border:none;color:inherit;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer}
+.iconbtn:active{background:rgba(255,255,255,.12)}
+main{flex:1;padding:14px 14px 96px}
+nav.bot{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.bot .in{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav.bot button{background:none;border:none;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--mute);cursor:pointer}
+nav.bot button.on{color:var(--acc);font-weight:700}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:16px}
+.card h3{margin:12px 0 6px;font-size:14px}
+.muted{color:var(--mute);font-size:13px}
+.row{display:flex;gap:8px;align-items:center}
+.between{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.btn{min-height:46px;border-radius:12px;border:1px solid #CBD1D8;background:#fff;padding:0 14px;font-weight:600;cursor:pointer}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.block{width:100%}
+.btn.sm{min-height:36px;font-size:13px;border-radius:9px;padding:0 10px}
+.btn:disabled{opacity:.5}
+.big{border:none;border-radius:14px;padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:92px;cursor:pointer;background:#fff}
+.big b{font-size:15px}.big span{font-size:12px;color:var(--mute)}
+.big.acc{background:var(--acc);color:#fff}.big.acc span{color:#FBE3D8}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+.chip{flex-shrink:0;border:1px solid #CBD1D8;background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.lv-낮음{background:var(--lowBg);color:var(--lowFg)}.lv-보통{background:var(--midBg);color:var(--midFg)}.lv-높음{background:var(--hiBg);color:var(--hiFg)}
+.st{background:#EEF0F2;color:#2E3A49}
+.item{display:block;width:100%;text-align:left;background:#fff;border:none;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer}
+.item .t{font-weight:600;font-size:14px;line-height:1.45}
+.item .m{font-size:12px;color:var(--mute);margin-top:3px}
+label.f{display:block;font-size:13px;font-weight:700;color:#4A5462;margin:12px 0 6px}
+input.i,select.i,textarea.i{width:100%;min-height:44px;border:1px solid #CBD1D8;border-radius:10px;padding:8px 10px;background:#fff}
+textarea.i{min-height:80px;line-height:1.5;resize:vertical}
+.seg{display:grid;gap:6px}
+.seg button{min-height:44px;border-radius:9px;border:1.5px solid #CBD1D8;background:#fff;font-weight:600;cursor:pointer}
+.seg button.on{border-color:var(--acc);background:#FBE6DC;color:#8A2C08}
+.seg button.ok.on{border-color:#2B6B45;background:var(--lowBg);color:var(--lowFg)}
+.seg button.ng.on{border-color:var(--hiFg);background:var(--hiBg);color:var(--hiFg)}
+.kv{display:grid;grid-template-columns:84px 1fr;gap:6px 10px;font-size:14px;line-height:1.5}
+.kv dt{color:var(--mute)}.kv dd{margin:0}
+.steps .s{display:flex;gap:10px;align-items:center;padding:6px 0}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.thumbs .ph{aspect-ratio:1;border-radius:8px;background:#E4E7EA;overflow:hidden;position:relative;border:none;padding:0;cursor:pointer}
+.thumbs .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.thumbs .ph .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(27,36,48,.72);color:#fff;font-size:10px;padding:3px 4px;line-height:1.3;text-align:left}
+.thumbs .ph .x{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.6);color:#fff;border-radius:50%;width:22px;height:22px;font-size:13px;line-height:22px;text-align:center}
+.ph-empty{display:flex;align-items:center;justify-content:center;height:100%;font-size:11px;color:var(--mute);padding:4px;text-align:center}
+.mx{display:grid;grid-template-columns:40px repeat(3,1fr);gap:4px;font-size:11px;color:var(--mute);text-align:center;align-items:center}
+.mx button{min-height:44px;border-radius:7px;border:1px solid transparent;font-weight:700;font-size:15px;cursor:pointer}
+.mx button.on{outline:3px solid var(--ink);outline-offset:-1px}
+.list-check .q{display:flex;gap:8px;font-size:14px;line-height:1.5;margin-bottom:8px}
+.list-check .q b{color:var(--mute);flex-shrink:0;min-width:24px}
+.cat{font-size:12px;font-weight:700;color:var(--acc);margin:14px 0 6px}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th,table.t td{border-bottom:1px solid #EEF0F2;padding:7px 4px;text-align:left;vertical-align:top}
+table.t th{color:var(--mute);font-weight:600}
+.empty{text-align:center;color:var(--mute);padding:24px 0;font-size:14px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:60;max-width:90%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:#fff;width:100%;max-width:720px;border-radius:16px 16px 0 0;padding:16px;max-height:92vh;overflow:auto}
+.lightbox{position:fixed;inset:0;background:#000;z-index:70;display:flex;flex-direction:column}
+.lightbox img{flex:1;min-height:0;object-fit:contain;width:100%}
+.lightbox .bar{display:flex;justify-content:space-between;align-items:center;color:#fff;padding:12px 14px;font-size:14px;gap:10px}
+canvas.sig{width:100%;height:180px;border:1.5px dashed #8C96A3;border-radius:10px;background:#F7F8F6;touch-action:none}
+.sigimg{height:40px;background:#fff}
+.warn{background:var(--hiBg);color:var(--hiFg);border-radius:10px;padding:10px 12px;font-size:13px;margin:8px 0}
+.note{background:#EEF0F2;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;color:#2E3A49}
+.pre{white-space:pre-line}
+#print{display:none}
+@media print{
+  body{background:#fff}
+  #app,.toast,.modal,.lightbox{display:none!important}
+  #print{display:block!important;font-size:10.5px;color:#000}
+  #print h1{font-size:16px;margin:0 0 4px}#print h2{font-size:13px;margin:14px 0 6px}
+  #print table{width:100%;border-collapse:collapse;page-break-inside:auto}
+  #print th,#print td{border:1px solid #444;padding:3px 4px;vertical-align:top}
+  #print th{background:#eee}
+  #print tr{page-break-inside:avoid}
+  #print .ph{display:inline-block;width:48%;margin:1%;vertical-align:top}
+  #print .ph img{width:100%}
+}
+@page{size:A4;margin:12mm}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <button class="iconbtn" id="backBtn" aria-label="뒤로" style="display:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div style="flex:1;min-width:0"><h1 id="title">위험성평가</h1><div class="sub" id="subtitle">본에코(주)</div></div>
+    <button class="iconbtn" id="userBtn" aria-label="사용자"><span id="userName" style="font-size:13px;color:#F2A33A;font-weight:700"></span></button>
+  </header>
+  <main id="main"></main>
+  <nav class="bot"><div class="in" id="nav"></div></nav>
+</div>
+<div id="print"></div>
+<script src="data2026.js"></script>
+<script>
+'use strict';
+const VER='v1';
+const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
+const ROOT='risk';
+const A=window.RISK2026;
+const PROC=[['공통','수집·운반 공통'],['생활','생활(봉투)폐기물'],['음식물','음식물류폐기물'],['재활용','재활용가능자원'],['대형','대형생활/기동대'],['건물','건물 내외 청소'],['수시','수시평가']];
+const PROCN=Object.fromEntries(PROC);
+const TEAMS=['생활팀','수송팀','재활팀','음식팀','대형팀','건물청소팀','사무실'];
+const CLS=['작업환경 요인','작업특성 요인','기계적 요인','화학(물질)적 요인','전기적 요인','생물학적 요인'];
+const RSTAT=['접수','검토중','평가 반영','조치완료'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lvl=n=>n>=6?'높음':(n>=3?'보통':'낮음');
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const nowStr=()=>{const d=new Date();return today()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const fmtD=s=>s?s.replace(/^(\d{4})-(\d{2})-(\d{2}).*/,'$1.$2.$3'):'';
+const won=n=>Number(n).toLocaleString('ko-KR')+'원';
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v==null?d:v}catch(e){return d}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+
+/* ---------- Firebase REST ---------- */
+async function api(method,path,body){
+  const r=await fetch(`${DB}/${ROOT}/${path}.json`,{method,headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
+  if(!r.ok)throw new Error('서버 '+r.status);
+  return r.json();
+}
+const get=p=>api('GET',p), put=(p,v)=>api('PUT',p,v), patch=(p,v)=>api('PATCH',p,v), post=(p,v)=>api('POST',p,v), del=p=>api('DELETE',p);
+async function log(what){try{await post('log',{t:nowStr(),u:S.user||'',what})}catch(e){}}
+
+/* ---------- state ---------- */
+const S={user:lsGet('risk_user',''),tab:'home',stack:[],cache:{},photoCache:{}};
+function toast(m,ms){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms||2200)}
+function setHead(t,sub){$('#title').textContent=t;$('#subtitle').textContent=sub||'본에코(주) · 위험성평가';$('#backBtn').style.display=S.stack.length?'flex':'none';$('#userName').textContent=S.user||'이름 설정'}
+const NAV=[['home','홈','<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'],['check','점검','<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>'],['report','신고','<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],['kras','평가','<path d="M4 20h16"/><rect x="5" y="12" width="3" height="6"/><rect x="10.5" y="8" width="3" height="10"/><rect x="16" y="4" width="3" height="14"/>'],['rec','기록','<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>']];
+function drawNav(){$('#nav').innerHTML=NAV.map(([k,l,svg])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg>${l}</button>`).join('')}
+function go(view,arg,push=true){if(push&&S.cur)S.stack.push(S.cur);S.cur={view,arg};render()}
+function back(){const p=S.stack.pop();if(p){S.cur=p;render()}}
+function tab(t){S.tab=t;S.stack=[];S.cur={view:t};drawNav();render()}
+async function render(){const {view,arg}=S.cur;window.scrollTo(0,0);const m=$('#main');try{await (V[view])(m,arg)}catch(e){console.error(e);m.innerHTML=`<div class="card"><div class="warn">불러오기 실패: ${esc(e.message)}</div><p class="muted">인터넷 연결을 확인하고 다시 시도해 주세요.</p><button class="btn block" data-act="retry">다시 시도</button></div>`}}
+document.addEventListener('click',e=>{
+  const n=e.target.closest('[data-tab]');if(n){tab(n.dataset.tab);return}
+  const b=e.target.closest('[data-go]');if(b){go(b.dataset.go,b.dataset.arg);return}
+  const ph=e.target.closest('[data-photo]');if(ph&&!e.target.closest('.x')){openPhoto(ph.dataset.photo,ph.dataset.cap,ph.dataset.list);return}
+  if(e.target.closest('[data-act="retry"]'))render();
+});
+$('#backBtn').onclick=back;
+$('#userBtn').onclick=askUser;
+function askUser(){const n=prompt('이름을 입력하세요 (기록·서명에 남습니다)',S.user||'');if(n!=null&&n.trim()){S.user=n.trim();lsSet('risk_user',S.user);setHead($('#title').textContent,$('#subtitle').textContent)}}
+function needUser(){if(!S.user)askUser();return !!S.user}
+
+/* ---------- photos ---------- */
+async function photoSrc(id){
+  if(S.photoCache[id])return S.photoCache[id];
+  const path=id.startsWith('p')&&id.length===3?`archive/2026/photos/${id}`:`photos/${id}`;
+  const v=await get(path);if(v)S.photoCache[id]=v;return v;
+}
+function thumbs(ids,opts={}){
+  if(!ids||!ids.length)return '';
+  const list=ids.join(',');
+  return `<div class="thumbs">${ids.map(id=>{const cap=opts.cap?(A.photos[id]||{}).cap||'':'';return `<button class="ph" data-photo="${id}" data-cap="${esc(cap)}" data-list="${list}"><div class="ph-empty" data-ph="${id}">불러오는 중</div>${cap?`<span class="cap">${esc(cap)}</span>`:''}${opts.del?`<span class="x" data-delph="${id}">×</span>`:''}</button>`}).join('')}</div>`;
+}
+async function fillThumbs(root){
+  for(const el of root.querySelectorAll('[data-ph]')){
+    const id=el.dataset.ph;
+    photoSrc(id).then(src=>{if(src)el.outerHTML=`<img src="${src}" alt="">`;else el.textContent='사진 미등록'}).catch(()=>{el.textContent='연결 안 됨'});
+  }
+}
+async function openPhoto(id,cap,list){
+  const ids=(list||id).split(',');let i=ids.indexOf(id);
+  const lb=document.createElement('div');lb.className='lightbox';
+  const draw=async()=>{const pid=ids[i];const c=cap&&ids.length===1?cap:((A.photos[pid]||{}).cap||'');lb.innerHTML=`<div class="bar"><span>${esc(c)} <span style="color:#999">${i+1}/${ids.length}</span></span><button class="btn sm" data-x>닫기</button></div><img alt="" src=""><div class="bar"><button class="btn sm" data-p ${i?'':'disabled'}>◀ 이전</button><button class="btn sm" data-n ${i<ids.length-1?'':'disabled'}>다음 ▶</button></div>`;
+    const src=await photoSrc(pid).catch(()=>null);const im=lb.querySelector('img');if(src)im.src=src;else im.alt='사진 미등록'};
+  lb.onclick=e=>{if(e.target.closest('[data-x]'))lb.remove();else if(e.target.closest('[data-p]')&&i>0){i--;draw()}else if(e.target.closest('[data-n]')&&i<ids.length-1){i++;draw()}};
+  document.body.appendChild(lb);draw();
+}
+function compress(file,max=1280,q=0.7){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>{const im=new Image();im.onload=()=>{let w=im.width,h=im.height;const s=Math.min(1,max/Math.max(w,h));w=Math.round(w*s);h=Math.round(h*s);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(im,0,0,w,h);res(c.toDataURL('image/jpeg',q))};im.onerror=rej;im.src=fr.result};fr.onerror=rej;fr.readAsDataURL(file)})}
+// photo picker bound to an array
+function photoPicker(holder,arr){
+  const draw=()=>{holder.innerHTML=`<div class="thumbs">${arr.map((d,k)=>`<div class="ph"><img src="${d}" alt=""><span class="x" data-rm="${k}">×</span></div>`).join('')}</div><label class="btn block" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;border-style:dashed"><input type="file" accept="image/*" multiple hidden>📷 사진 추가</label>`;
+    holder.querySelector('input').onchange=async e=>{for(const f of e.target.files){try{arr.push(await compress(f))}catch(_){toast('사진을 읽지 못했습니다')}}draw()};
+    holder.querySelectorAll('[data-rm]').forEach(x=>x.onclick=()=>{arr.splice(+x.dataset.rm,1);draw()})};
+  draw();
+}
+async function savePhotos(arr){const ids=[];for(const d of arr){const id='f'+uid();await put('photos/'+id,d);S.photoCache[id]=d;ids.push(id)}return ids}
+
+/* ---------- shared data loaders ---------- */
+async function load(path,force){if(!force&&S.cache[path])return S.cache[path];const v=(await get(path))||{};S.cache[path]=v;return v}
+function inval(p){delete S.cache[p]}
+async function years(){const y=await load('years');return Object.keys(y).map(Number).sort()}
+function krasCard(r,year){
+  return `<button class="item" data-go="krasView" data-arg="${year}|${r.id}"><div class="between"><span class="muted">${esc(PROCN[r.proc]||r.proc)} · ${esc(r.task||'')}</span><span class="tag lv-${lvl(r.risk)}">${r.risk} ${lvl(r.risk)}</span></div><div class="t" style="margin-top:4px">${esc(r.hazard)}</div><div class="m">개선 후 ${r.after?`<span class="tag lv-${lvl(r.after)}">${r.after} ${lvl(r.after)}</span>`:'-'} · 완료 ${r.done?fmtD(r.done):(r.dateNote?esc(r.dateNote.slice(0,24)):'<b style="color:#8E1F14">미완료</b>')}</div></button>`;
+}
+
+/* ================= VIEWS ================= */
+const V={};
+
+V.home=async m=>{
+  setHead('위험성평가','본에코(주) · '+VER);
+  const ys=(await years().catch(()=>[])).filter(y=>y>2026);const cy=ys.length?ys[ys.length-1]:null;
+  let open=[],reps=[];
+  try{const r=await load('reports',true);reps=Object.entries(r).map(([id,v])=>({id,...v})).filter(x=>x.status!=='조치완료').sort((a,b)=>b.t>a.t?1:-1)}catch(e){}
+  if(cy){try{const k=await load('kras/'+cy,true);open=Object.entries(k).map(([id,v])=>({id,...v})).filter(x=>!x.done&&!x.deleted).sort((a,b)=>b.risk-a.risk)}catch(e){}}
+  const steps=cy?null:[['1','사전준비','실시규정 3.5 · 1차 교육 4.10'],['2','유해·위험요인 파악','체크리스트 4.10 / 4.30 · 의견청취'],['3','위험성 결정','KRAS 평가 5.11 ~ 5.14'],['4','감소대책 수립·실행','수립 5.15 · 교육 5.19 / 5.22'],['5','기록·보존','종합본 5.29 · 2029.05까지 보관']];
+  m.innerHTML=`
+  <div class="grid2" style="margin-bottom:12px">
+    <button class="big acc" data-go="reportForm"><b>⚠ 아차사고 신고</b><span>사진 한 장이면 됩니다</span></button>
+    <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>참석자 손가락 서명</span></button>
+  </div>
+  <div class="card"><div class="between"><h2 style="margin:0">${cy?cy+'년 평가 진행':'2026년 정기평가'}</h2><span class="tag ${cy?'st':'lv-낮음'}">${cy?'진행중':'완료 · 보관'}</span></div>
+   ${cy?`<p class="muted">평가표 ${Object.keys(S.cache['kras/'+cy]||{}).length}건 · 미완료 ${open.length}건</p><button class="btn block" data-go="kras" data-arg="${cy}">${cy}년 평가표 열기</button>`:
+   `<div class="steps" style="margin-top:8px">${steps.map(s=>`<div class="s"><span class="dot" style="background:var(--ink);color:#fff">${s[0]}</span><div style="flex:1"><div style="font-weight:600;font-size:14px">${s[1]}</div><div class="muted">${s[2]}</div></div><span class="tag lv-낮음">완료</span></div>`).join('')}</div>
+   <button class="btn block" style="margin-top:8px" data-go="newYear">다음 정기평가 시작하기</button>`}
+  </div>
+  <div class="card"><h2>조치 필요</h2>
+   ${open.slice(0,5).map(r=>krasCard(r,cy)).join('')}
+   ${reps.slice(0,5).map(r=>`<button class="item" data-go="reportView" data-arg="${r.id}" style="background:#F7F8F6"><div class="between"><span class="muted">${esc(r.kind)} · ${esc(r.team||'')}</span><span class="tag st">${esc(r.status)}</span></div><div class="t">${esc((r.text||'').slice(0,60))}</div><div class="m">${esc(r.t)}</div></button>`).join('')}
+   ${!open.length&&!reps.length?'<div class="empty">조치가 남은 항목이 없습니다</div>':''}
+  </div>
+  <div class="card"><h2>2026년 평가 결과 요약</h2>
+   <div class="grid3" style="text-align:center">
+    <div><div style="font-size:22px;font-weight:700">${A.kras.length}</div><div class="muted">평가 항목</div></div>
+    <div><div style="font-size:22px;font-weight:700;color:#8E1F14">${A.kras.filter(r=>r.risk>=6).length}</div><div class="muted">높음</div></div>
+    <div><div style="font-size:22px;font-weight:700;color:#7A4A00">${A.kras.filter(r=>r.risk>=3&&r.risk<6).length}</div><div class="muted">보통</div></div>
+   </div>
+   <button class="btn block" style="margin-top:10px" data-go="kras" data-arg="2026">2026년 평가표 보기</button>
+  </div>`;
+};
+
+/* ---------- 점검 (checklists) ---------- */
+V.check=async m=>{
+  setHead('현장 체크리스트','2단계 · 유해·위험요인 파악');
+  let saved=[];try{const c=await load('checks',true);saved=Object.entries(c).map(([id,v])=>({id,...v})).sort((a,b)=>b.date>a.date?1:-1)}catch(e){}
+  m.innerHTML=`<div class="card"><h2>새 점검 시작</h2><p class="muted">2026년 체크리스트를 그대로 씁니다. 부적합 항목은 사진을 붙이고 평가표로 넘길 수 있습니다.</p>
+   ${A.checklists.map(c=>`<button class="item" data-go="checkForm" data-arg="${c.key}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(c.name)}</span><span class="muted">${c.items.length}항목 ›</span></div></button>`).join('')}</div>
+   <div class="card"><h2>점검 기록</h2>
+   ${saved.map(s=>{const ng=Object.values(s.res||{}).filter(x=>x.r==='부적합').length;return `<button class="item" data-go="checkView" data-arg="${s.id}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(s.name)}</span>${ng?`<span class="tag lv-높음">부적합 ${ng}</span>`:'<span class="tag lv-낮음">이상 없음</span>'}</div><div class="m">${fmtD(s.date)} · ${esc(s.by||'')}</div></button>`}).join('')}
+   ${A.checklists.map(c=>`<button class="item" data-go="archCheck" data-arg="${c.key}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(c.name)}</span><span class="tag st">2026 보관</span></div><div class="m">1차 2026.04.10 · 2차 2026.04.30 · ${esc(A.roles.assessors)}</div></button>`).join('')}
+   </div>`;
+};
+V.checkForm=async(m,key)=>{
+  const L=A.checklists.find(c=>c.key===key);setHead(L.name,'점검 입력');
+  if(!needUser()){back();return}
+  const st={res:{},photos:{}};let lastCat='';
+  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="cdate">점검일</label><input class="i" type="date" id="cdate" value="${today()}"></div><div><label class="f">점검자</label><input class="i" id="cby" value="${esc(S.user)}"></div></div></div>
+  <div class="card list-check" id="cl">${L.items.map(it=>{const h=it.cat!==lastCat?`<div class="cat">${esc(lastCat=it.cat)}</div>`:'';return h+`<div style="padding:10px 0;border-bottom:1px solid #EEF0F2"><div class="q"><b>${esc(it.no)}</b><span>${esc(it.text)}</span></div><div class="seg" style="grid-template-columns:repeat(3,1fr)" data-it="${it.id}"><button class="ok" data-r="적합">적합</button><button class="ng" data-r="부적합">부적합</button><button data-r="해당없음">해당없음</button></div><div data-extra="${it.id}" style="display:none"><input class="i" placeholder="부적합 내용·비고" data-note="${it.id}" style="margin-top:8px"><div data-pp="${it.id}"></div></div></div>`}).join('')}</div>
+  <div class="card"><div class="between"><span class="muted" id="cnt">0 / ${L.items.length}</span><button class="btn sm" id="allok">남은 항목 모두 적합</button></div><button class="btn pri block" style="margin-top:10px" id="csave">점검 저장</button></div>`;
+  const cnt=()=>$('#cnt').textContent=Object.keys(st.res).length+' / '+L.items.length;
+  m.querySelectorAll('[data-it]').forEach(seg=>seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;const id=seg.dataset.it;st.res[id]=b.dataset.r;seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const ex=m.querySelector(`[data-extra="${id}"]`);ex.style.display=b.dataset.r==='부적합'?'block':'none';if(b.dataset.r==='부적합'&&!st.photos[id]){st.photos[id]=[];photoPicker(m.querySelector(`[data-pp="${id}"]`),st.photos[id])}cnt()});
+  $('#allok').onclick=()=>{L.items.forEach(it=>{if(!st.res[it.id]){st.res[it.id]='적합';m.querySelector(`[data-it="${it.id}"] .ok`).classList.add('on')}});cnt()};
+  $('#csave').onclick=async()=>{
+    if(Object.keys(st.res).length<L.items.length&&!confirm('표시하지 않은 항목이 있습니다. 그대로 저장할까요?'))return;
+    const b=$('#csave');b.disabled=true;b.textContent='저장 중…';
+    try{const res={};for(const it of L.items){if(!st.res[it.id])continue;const o={r:st.res[it.id]};const n=m.querySelector(`[data-note="${it.id}"]`).value.trim();if(n)o.note=n;if(st.photos[it.id]&&st.photos[it.id].length)o.photos=await savePhotos(st.photos[it.id]);res[it.id]=o}
+      const rec={key,name:L.name,date:$('#cdate').value,by:$('#cby').value.trim(),t:nowStr(),res};const r=await post('checks',rec);await log('체크리스트 저장: '+L.name);inval('checks');toast('저장했습니다');S.stack.pop();S.cur={view:'checkView',arg:r.name};render()}
+    catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='점검 저장'}};
+};
+V.checkView=async(m,id)=>{
+  const s=(await load('checks'))[id];const L=A.checklists.find(c=>c.key===s.key);setHead(s.name,fmtD(s.date)+' 점검');
+  const ng=L.items.filter(it=>s.res&&s.res[it.id]&&s.res[it.id].r==='부적합');
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>점검일</dt><dd>${fmtD(s.date)}</dd><dt>점검자</dt><dd>${esc(s.by)}</dd><dt>결과</dt><dd>적합 ${Object.values(s.res||{}).filter(x=>x.r==='적합').length} · 부적합 ${ng.length} · 해당없음 ${Object.values(s.res||{}).filter(x=>x.r==='해당없음').length}</dd></dl></div>
+  ${ng.length?`<div class="card"><h2>부적합 항목</h2>${ng.map(it=>{const r=s.res[it.id];return `<div style="padding:8px 0;border-bottom:1px solid #EEF0F2"><div class="t" style="font-weight:600">${esc(it.no)}. ${esc(it.text)}</div>${r.note?`<div class="muted">${esc(r.note)}</div>`:''}${thumbs(r.photos)}<button class="btn sm" style="margin-top:6px" data-tokras="${it.id}">평가표로 보내기</button></div>`}).join('')}</div>`:''}
+  <div class="card list-check"><h2>전체 결과</h2>${L.items.map(it=>{const r=(s.res||{})[it.id];return `<div class="q"><b>${esc(it.no)}</b><span style="flex:1">${esc(it.text)}</span><span class="tag ${r&&r.r==='부적합'?'lv-높음':(r&&r.r==='적합'?'lv-낮음':'st')}">${r?r.r:'-'}</span></div>`}).join('')}</div>
+  <button class="btn block" id="pr">인쇄 / PDF</button>`;
+  fillThumbs(m);$('#pr').onclick=()=>printCheck(L,s);
+  m.querySelectorAll('[data-tokras]').forEach(b=>b.onclick=()=>{const it=L.items.find(x=>x.id===b.dataset.tokras);const r=s.res[it.id];go('krasForm',`|new|${JSON.stringify({proc:s.key==='공통'?'공통':s.key,hazard:it.text+(r.note?' — '+r.note:''),photos:r.photos||[]})}`)});
+};
+V.archCheck=async(m,key)=>{
+  const L=A.checklists.find(c=>c.key===key);setHead(L.name,'2026 보관 · 4.10 / 4.30');let lastCat='';
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>작성자</dt><dd>${esc(A.roles.rule)}</dd><dt>평가원</dt><dd>${esc(A.roles.assessors)}</dd><dt>점검일</dt><dd>1차 4.10 (현장 점검) · 2차 4.30 (최종 확인)</dd><dt>결과</dt><dd>${L.items.length}항목 모두 적합(√)</dd></dl></div>
+  <div class="card list-check">${L.items.map(it=>{const h=it.cat!==lastCat?`<div class="cat">${esc(lastCat=it.cat)}</div>`:'';return h+`<div class="q"><b>${esc(it.no)}</b><span style="flex:1">${esc(it.text)}${it.note?`<br><span class="muted">비고: ${esc(it.note)}</span>`:''}</span><span class="tag lv-낮음">√</span></div>`}).join('')}</div>
+  <div class="card"><h3 style="margin-top:0">참고자료</h3>${A.refs.map(r=>`<div class="muted">· ${esc(r)}</div>`).join('')}</div>
+  <button class="btn block" id="pr">인쇄 / PDF</button>`;
+  $('#pr').onclick=()=>printCheck(L,{date:'2026-04-30',by:A.roles.assessors,res:Object.fromEntries(L.items.map(i=>[i.id,{r:'적합',note:i.note}]))});
+};
+
+/* ---------- 신고 ---------- */
+V.report=async m=>{
+  setHead('아차사고·의견 신고','근로자 참여 기록');
+  const r=await load('reports',true);const list=Object.entries(r).map(([id,v])=>({id,...v})).sort((a,b)=>b.t>a.t?1:-1);
+  m.innerHTML=`<button class="btn pri block" data-go="reportForm" style="margin-bottom:12px">+ 새로 신고하기</button>
+  <div class="card"><h2>접수 목록 <span class="muted">${list.length}건</span></h2>${list.map(x=>`<button class="item" data-go="reportView" data-arg="${x.id}" style="background:#F7F8F6"><div class="between"><span class="muted">${esc(x.kind)} · ${esc(x.team||'')}</span><span class="tag ${x.status==='조치완료'?'lv-낮음':'st'}">${esc(x.status)}</span></div><div class="t">${esc((x.text||'').slice(0,70))}</div><div class="m">${esc(x.t)} · ${x.anon?'익명':esc(x.by||'')}${x.photos?' · 사진 '+x.photos.length:''}</div></button>`).join('')||'<div class="empty">아직 접수된 신고가 없습니다</div>'}</div>
+  <div class="card"><h2>2026 근로자 의견 청취 결과</h2><button class="btn block" data-go="archOpinion">팀별 종합표 보기</button></div>`;
+};
+V.reportForm=async m=>{
+  setHead('신고하기','아차사고 · 위험요인 · 개선 건의');
+  const st={kind:'아차사고',photos:[]};
+  m.innerHTML=`<div class="card"><label class="f">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="kind">${['아차사고','위험요인','개선 건의'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
+  <div class="grid2"><div><label class="f" for="team">소속 팀</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div><div><label class="f" for="place">장소</label><input class="i" id="place" placeholder="예: 잠실본동 골목"></div></div>
+  <label class="f" for="txt">무슨 일이 있었나요?</label><textarea class="i" id="txt" placeholder="언제, 어디서, 어떤 상황이었는지 적어 주세요"></textarea>
+  <label class="f">사진</label><div id="pp"></div>
+  <label style="display:flex;align-items:center;gap:8px;margin-top:12px;min-height:44px"><input type="checkbox" id="anon" style="width:20px;height:20px;accent-color:#B53C0C"> 이름 숨기기 (익명)</label>
+  <button class="btn pri block" id="send" style="margin-top:10px">신고하기</button></div>`;
+  $('#kind').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.kind=b.dataset.k;$('#kind').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
+  photoPicker($('#pp'),st.photos);
+  $('#send').onclick=async()=>{const txt=$('#txt').value.trim();if(!txt){toast('내용을 적어 주세요');return}
+    const anon=$('#anon').checked;if(!anon&&!needUser())return;
+    const b=$('#send');b.disabled=true;b.textContent='보내는 중…';
+    try{const ph=await savePhotos(st.photos);const rec={kind:st.kind,team:$('#team').value,place:$('#place').value.trim(),text:txt,anon,by:anon?'':S.user,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
+      await post('reports',rec);await log('신고 접수: '+st.kind);inval('reports');toast('접수되었습니다. 감사합니다!');back()}
+    catch(e){toast('전송 실패: '+e.message);b.disabled=false;b.textContent='신고하기'}};
+};
+V.reportView=async(m,id)=>{
+  const x=(await load('reports',true))[id];setHead(x.kind,x.t);
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>구분</dt><dd>${esc(x.kind)}</dd><dt>팀</dt><dd>${esc(x.team)}</dd><dt>장소</dt><dd>${esc(x.place||'-')}</dd><dt>신고자</dt><dd>${x.anon?'익명':esc(x.by)}</dd><dt>접수</dt><dd>${esc(x.t)}</dd></dl><p class="pre" style="line-height:1.6">${esc(x.text)}</p>${thumbs(x.photos)}</div>
+  <div class="card"><h2>처리</h2><label class="f" for="rs">상태</label><select class="i" id="rs">${RSTAT.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
+  <label class="f" for="rn">조치 내용</label><textarea class="i" id="rn">${esc(x.action||'')}</textarea>
+  <div class="grid2" style="margin-top:10px"><button class="btn" id="tok">평가표로 보내기</button><button class="btn dark" id="rsv">저장</button></div>
+  ${(x.hist||[]).length?`<h3>처리 이력</h3>${x.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}`:''}</div>`;
+  fillThumbs(m);
+  $('#rsv').onclick=async()=>{if(!needUser())return;const st=$('#rs').value,ac=$('#rn').value.trim();const hist=(x.hist||[]).concat([{t:nowStr(),u:S.user,what:st+(ac?' / '+ac.slice(0,40):'')}]);
+    try{await patch('reports/'+id,{status:st,action:ac,hist});await log('신고 처리: '+st);inval('reports');toast('저장했습니다');render()}catch(e){toast('저장 실패: '+e.message)}};
+  $('#tok').onclick=()=>go('krasForm',`|new|${JSON.stringify({proc:'수시',hazard:x.text,photos:x.photos||[],from:id})}`);
+};
+
+/* ---------- 평가 (KRAS) ---------- */
+V.kras=async(m,yearArg)=>{
+  const ys=await years().catch(()=>[]);const year=yearArg?+yearArg:(ys.length?ys[ys.length-1]:2026);
+  setHead(year+'년 위험성평가표',year===2026?'KRAS · 2026.05.11 ~ 05.14 · 보관본':'KRAS · 진행중');
+  let rows=year===2026?A.kras.slice():[];{const k=await load('kras/'+year,true).catch(()=>({}));rows=rows.concat(Object.entries(k).map(([id,v])=>({id,...v})).filter(r=>!r.deleted))}
+  S.kf=S.kf||{};const f=S.kf[year]||(S.kf[year]={proc:'',lv:''});
+  const draw=()=>{const R=rows.filter(r=>(!f.proc||r.proc===f.proc)&&(!f.lv||lvl(r.risk)===f.lv));
+    $('#kl').innerHTML=R.map(r=>krasCard(r,year)).join('')||'<div class="empty">해당 항목이 없습니다</div>';$('#kc').textContent=R.length+'건'};
+  m.innerHTML=`<div class="chips">${[2026,...ys.filter(y=>y!==2026)].map(y=>`<button class="chip ${y===year?'on':''}" data-go="kras" data-arg="${y}">${y}년</button>`).join('')}<button class="chip" data-go="newYear">+ 새 연도</button></div>
+  <div class="chips" id="pf"><button class="chip ${!f.proc?'on':''}" data-p="">전체</button>${PROC.map(([k,n])=>`<button class="chip ${f.proc===k?'on':''}" data-p="${k}">${k}</button>`).join('')}</div>
+  <div class="chips" id="lf"><button class="chip ${!f.lv?'on':''}" data-l="">모든 위험도</button>${['높음','보통','낮음'].map(l=>`<button class="chip ${f.lv===l?'on':''}" data-l="${l}">${l}</button>`).join('')}</div>
+  <div class="between" style="margin-bottom:8px"><span class="muted" id="kc"></span><span class="row">${year!==2026?`<button class="btn sm pri" data-go="krasForm" data-arg="${year}|new">+ 항목 추가</button>`:`<button class="btn sm pri" id="addSusi">+ 수시평가</button>`}<button class="btn sm" id="kpr">인쇄</button></span></div>
+  <div id="kl"></div>`;
+  $('#pf').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;f.proc=b.dataset.p;$('#pf').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));draw()};
+  $('#lf').onclick=e=>{const b=e.target.closest('[data-l]');if(!b)return;f.lv=b.dataset.l;$('#lf').querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',x===b));draw()};
+  $('#kpr').onclick=()=>printKras(year,rows.filter(r=>!f.proc||r.proc===f.proc));
+  const as=$('#addSusi');if(as)as.onclick=async()=>{const y=(await years().catch(()=>[])).filter(v=>v>2026).slice(-1)[0]||2026;go('krasForm',`${y}|new|${JSON.stringify({proc:'수시'})}`)};
+  draw();
+};
+V.krasView=async(m,arg)=>{
+  const [ys,id]=arg.split('|');const year=+ys;
+  const arch=year===2026&&A.kras.find(x=>x.id===id);const r=arch||{id,...(await load('kras/'+year,true))[id]};
+  setHead(PROCN[r.proc]||r.proc,year+'년 · '+(r.task||''));
+  const bul=s=>esc(s||'-').replace(/\s*⦁\s*/g,'<br>· ').replace(/^<br>/,'');
+  m.innerHTML=`<div class="card"><div class="muted">${esc(r.task)} · ${esc(r.cls)}</div><p style="font-size:16px;font-weight:700;line-height:1.5;margin:6px 0 10px">${esc(r.hazard)}</p>
+   <dl class="kv"><dt>관련 근거</dt><dd>${esc(r.law||'-')}</dd><dt>현재 조치</dt><dd>${bul(r.current)}</dd></dl>${thumbs(r.photos)}</div>
+  <div class="card"><div class="between"><h2 style="margin:0">위험성</h2><span class="tag lv-${lvl(r.risk)}" style="font-size:14px">${r.risk} · ${lvl(r.risk)}</span></div>
+   <p class="muted" style="margin:6px 0 0">가능성(빈도) ${r.p} × 중대성(강도) ${r.s}</p>${mxHtml(r.p,r.s,true)}</div>
+  <div class="card"><h2>감소대책</h2><div style="line-height:1.6">${bul(r.plan)}</div>
+   <dl class="kv" style="margin-top:12px"><dt>개선 후</dt><dd>${r.after?`<span class="tag lv-${lvl(r.after)}">${r.after} · ${lvl(r.after)}</span>`:'-'}</dd><dt>개선 예정일</dt><dd>${fmtD(r.due)||'-'}</dd><dt>완료일</dt><dd>${fmtD(r.done)||'<b style="color:#8E1F14">미완료</b>'}</dd>${r.dateNote?`<dt>비고</dt><dd>${esc(r.dateNote)}</dd>`:''}<dt>담당자</dt><dd>${esc(r.owner||'-')}</dd></dl></div>
+  ${(r.hist||[]).length?`<div class="card"><h2>수정 이력</h2>${r.hist.map(h=>`<div class="muted" style="margin-bottom:4px">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}</div>`:''}
+  ${arch?'<p class="muted" style="text-align:center">2026년 보관본은 수정할 수 없습니다 (기록 보존)</p>':`<button class="btn dark block" data-go="krasForm" data-arg="${year}|${id}">수정</button>`}`;
+  fillThumbs(m);
+};
+function mxHtml(p,s,ro){let h='<div class="mx" style="margin-top:10px">';for(const sv of [3,2,1]){h+=`<span>중대 ${sv}</span>`;for(const pv of [1,2,3]){const v=sv*pv,l=lvl(v);h+=`<button type="button" ${ro?'disabled':''} data-mx="${pv},${sv}" class="lv-${l} ${p===pv&&s===sv?'on':''}" aria-label="가능성 ${pv} 중대성 ${sv} 위험성 ${v}">${v}</button>`}}h+='<span></span><span>가능 1</span><span>2</span><span>3</span></div>';return h}
+V.krasForm=async(m,arg)=>{
+  const parts=arg.split('|');let year=+parts[0]||new Date().getFullYear();const id=parts[1];const pre=parts[2]?JSON.parse(parts.slice(2).join('|')):{};
+  if(!needUser()){back();return}
+  const ymeta=(await load('years',true))[year];
+  if(!ymeta){if(year!==2026&&!confirm(year+'년 평가표가 아직 없습니다. 만들까요?')){back();return}await put('years/'+year,{created:nowStr(),by:S.user,evalFrom:year===2026?A.period.krasFrom:today(),evalTo:year===2026?A.period.krasTo:today()});inval('years')}
+  const meta=(await load('years',true))[year]||{};
+  const isNew=id==='new';const cur=isNew?{proc:pre.proc||'공통',task:'수집·운반',cls:'작업환경 요인',hazard:pre.hazard||'',law:'',current:'',p:2,s:2,plan:'',after:1,due:'',done:'',owner:S.user,photos:pre.photos||[]}:{...(await load('kras/'+year,true))[id]};
+  setHead(isNew?'평가 항목 추가':'평가 항목 수정',year+'년');
+  const newPh=[];
+  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="fp">공정</label><select class="i" id="fp">${PROC.map(([k,n])=>`<option value="${k}" ${cur.proc===k?'selected':''}>${n}</option>`).join('')}</select></div><div><label class="f" for="ft">세부작업</label><input class="i" id="ft" value="${esc(cur.task)}" list="tasks"><datalist id="tasks"><option>수집·운반</option><option>차량운행</option><option>차량점검</option><option>계단청소</option><option>화장실청소</option><option>주차장청소</option></datalist></div></div>
+  <label class="f" for="fc">위험분류</label><select class="i" id="fc">${CLS.map(c=>`<option ${cur.cls===c?'selected':''}>${c}</option>`).join('')}</select>
+  <label class="f" for="fh">위험 발생 상황 및 결과</label><textarea class="i" id="fh">${esc(cur.hazard)}</textarea>
+  <label class="f" for="fl">관련 근거 (법적 기준)</label><input class="i" id="fl" value="${esc(cur.law)}" placeholder="예: 안전보건규칙 제3조[전도의 방지]">
+  <label class="f" for="fcu">현재의 안전보건 조치</label><textarea class="i" id="fcu">${esc(cur.current)}</textarea>
+  <label class="f">사진</label>${thumbs(cur.photos)}<div id="pp"></div></div>
+  <div class="card"><div class="between"><h2 style="margin:0">위험성 결정</h2><span class="tag" id="rk"></span></div><p class="muted" style="margin:4px 0 0">칸을 눌러 가능성 × 중대성을 고르세요</p><div id="mx"></div></div>
+  <div class="card"><label class="f" for="fpl" style="margin-top:0">위험성 감소대책</label><textarea class="i" id="fpl">${esc(cur.plan)}</textarea>
+  <label class="f">개선 후 위험성</label><div class="seg" style="grid-template-columns:repeat(6,1fr)" id="af">${[1,2,3,4,6,9].map(v=>`<button data-v="${v}" class="${cur.after===v?'on':''}">${v}</button>`).join('')}</div>
+  <div class="grid2"><div><label class="f" for="fdu">개선 예정일</label><input class="i" type="date" id="fdu" value="${cur.due||''}"></div><div><label class="f" for="fdo">완료일</label><input class="i" type="date" id="fdo" value="${cur.done||''}"></div></div>
+  <div id="dw"></div>
+  <label class="f" for="fo">담당자</label><input class="i" id="fo" value="${esc(cur.owner||'')}">
+  <button class="btn pri block" id="fs" style="margin-top:14px">저장</button>${!isNew?'<button class="btn block" id="fdel" style="margin-top:8px;color:#8E1F14">삭제</button>':''}</div>`;
+  photoPicker($('#pp'),newPh);fillThumbs(m);
+  const drawMx=()=>{$('#mx').innerHTML=mxHtml(cur.p,cur.s);const v=cur.p*cur.s;$('#rk').className='tag lv-'+lvl(v);$('#rk').textContent=v+' · '+lvl(v)};
+  $('#mx').onclick=e=>{const b=e.target.closest('[data-mx]');if(!b)return;[cur.p,cur.s]=b.dataset.mx.split(',').map(Number);drawMx()};drawMx();
+  $('#af').onclick=e=>{const b=e.target.closest('button');if(!b)return;cur.after=+b.dataset.v;$('#af').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
+  const chk=()=>{const du=$('#fdu').value,dn=$('#fdo').value;let w='';const ev=meta.evalFrom||'';
+    if(cur.proc!=='수시'&&ev&&dn&&dn<ev)w='완료일이 평가일('+fmtD(ev)+')보다 앞섭니다. 평가 후 조치한 날짜를 넣어 주세요.';
+    else if(du&&dn&&dn<du)w='완료일이 예정일보다 앞섭니다.';$('#dw').innerHTML=w?`<div class="warn">${w}</div>`:'';return !w};
+  $('#fdu').onchange=chk;$('#fdo').onchange=chk;$('#fp').onchange=()=>{cur.proc=$('#fp').value;chk()};
+  $('#fs').onclick=async()=>{
+    const v={proc:$('#fp').value,task:$('#ft').value.trim(),cls:$('#fc').value,hazard:$('#fh').value.trim(),law:$('#fl').value.trim(),current:$('#fcu').value.trim(),p:cur.p,s:cur.s,risk:cur.p*cur.s,plan:$('#fpl').value.trim(),after:cur.after,due:$('#fdu').value,done:$('#fdo').value,owner:$('#fo').value.trim()};
+    if(!v.hazard){toast('위험 발생 상황을 적어 주세요');return}
+    if(!chk()){toast('날짜를 확인해 주세요');return}
+    const b=$('#fs');b.disabled=true;b.textContent='저장 중…';
+    try{const ph=(cur.photos||[]).concat(await savePhotos(newPh));if(ph.length)v.photos=ph;
+      let changes=[];if(!isNew){for(const k of ['hazard','p','s','plan','after','due','done','owner','law','current']){if(String(cur[k]||'')!==String(v[k]||''))changes.push(k==='done'?`완료일 ${fmtD(cur.done)||'-'} → ${fmtD(v.done)}`:k==='due'?`예정일 ${fmtD(cur.due)||'-'} → ${fmtD(v.due)}`:(k==='p'||k==='s')?`위험성 ${cur.p*cur.s} → ${v.risk}`:({hazard:'위험상황',plan:'감소대책',after:'개선후',owner:'담당자',law:'근거',current:'현재조치'}[k])+' 수정')}}
+      changes=[...new Set(changes)];
+      v.hist=(cur.hist||[]).concat([{t:nowStr(),u:S.user,what:isNew?'작성':(changes.join(', ')||'저장')}]);
+      if(pre.from)v.fromReport=pre.from;
+      let nid=id;if(isNew){nid=(await post('kras/'+year,v)).name}else await put(`kras/${year}/${id}`,v);
+      if(pre.from)await patch('reports/'+pre.from,{status:'평가 반영'}).catch(()=>{});
+      await log(`${year} 평가표 ${isNew?'추가':'수정'}: ${v.hazard.slice(0,30)}`);inval('kras/'+year);toast('저장했습니다');S.stack.pop();S.cur={view:'krasView',arg:year+'|'+nid};render()}
+    catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='저장'}};
+  const fd=$('#fdel');if(fd)fd.onclick=async()=>{if(!confirm('이 항목을 삭제할까요? (기록은 이력으로 남습니다)'))return;const h=(cur.hist||[]).concat([{t:nowStr(),u:S.user,what:'삭제'}]);await patch(`kras/${year}/${id}`,{deleted:true,hist:h});await log(year+' 평가표 삭제');inval('kras/'+year);toast('삭제했습니다');S.stack=S.stack.filter(x=>x.view!=='krasView');S.cur={view:'kras',arg:String(year)};render()};
+};
+V.newYear=async m=>{
+  setHead('새 정기평가 시작','작년 평가표를 불러와 재검토');
+  const ys=await years().catch(()=>[]);const ny=Math.max(new Date().getFullYear(),...ys.map(y=>y+1),2027);
+  m.innerHTML=`<div class="card"><h2>${ny}년 정기평가</h2><p style="line-height:1.6">작년 평가표 항목을 그대로 가져와 시작합니다. 위험성 점수는 유지하고, <b>예정일·완료일은 비워서</b> 올해 다시 확인하도록 합니다.</p>
+  <label class="f" for="src">가져올 평가표</label><select class="i" id="src"><option value="2026">2026년 (${A.kras.length}항목)</option>${ys.map(y=>`<option value="${y}">${y}년</option>`).join('')}<option value="">빈 평가표로 시작</option></select>
+  <div class="grid2"><div><label class="f" for="ef">평가 시작일</label><input class="i" type="date" id="ef" value="${today()}"></div><div><label class="f" for="et">평가 종료일</label><input class="i" type="date" id="et" value="${today()}"></div></div>
+  <div class="note" style="margin-top:12px">지침상 정기평가 때 이전 평가 결과를 재검토하는 방식도 인정됩니다. 바뀐 작업·장비·아차사고는 항목을 추가하세요.</div>
+  <button class="btn pri block" id="go" style="margin-top:12px">${ny}년 평가표 만들기</button></div>`;
+  $('#go').onclick=async()=>{if(!needUser())return;if(ys.includes(ny)&&!confirm(ny+'년 평가표가 이미 있습니다. 항목을 더 추가할까요?'))return;
+    const b=$('#go');b.disabled=true;b.textContent='만드는 중…';
+    try{await put('years/'+ny,{created:nowStr(),by:S.user,evalFrom:$('#ef').value,evalTo:$('#et').value,from:$('#src').value||''});
+      const src=$('#src').value;let rows=[];if(src==='2026')rows=A.kras;else if(src){const k=await load('kras/'+src,true);rows=Object.values(k).filter(r=>!r.deleted)}
+      const out={};rows.forEach((r,i)=>{const {id,due,done,dateNote,hist,...rest}=r;out['r'+String(i+1).padStart(3,'0')]={...rest,risk:r.p*r.s,due:'',done:'',hist:[{t:nowStr(),u:S.user,what:src+'년 평가표에서 가져옴'}]}});
+      if(rows.length)await patch('kras/'+ny,out);await log(ny+'년 정기평가 시작 ('+(src||'빈')+')');inval('years');inval('kras/'+ny);toast(ny+'년 평가표를 만들었습니다');S.stack=[];S.tab='kras';drawNav();S.cur={view:'kras',arg:String(ny)};render()}
+    catch(e){toast('실패: '+e.message);b.disabled=false}};
+};
+
+/* ---------- 기록 ---------- */
+V.rec=async m=>{
+  setHead('기록 · 보존','시행규칙 제37조 · 3년 보관');
+  m.innerHTML=`<div class="card"><h2>교육 · TBM</h2><button class="btn pri block" data-go="eduForm">+ 교육·TBM 기록하기</button><button class="btn block" style="margin-top:8px" data-go="eduList">교육 기록 전체 보기</button></div>
+  <div class="card"><h2>2026년 보관본 <span class="tag lv-낮음">2029.05까지 보관</span></h2>
+   ${[['archPrep','1단계 · 사전준비','실시규정 · 일정 · 예산 · 회의록'],['archEdu','교육 기록 (2026)','10건 · 실행서 · 일지 · 사진'],['check','2단계 · 체크리스트','6종 204항목'],['archVehicle','차량 안전장치 점검표','2026.04.16 · 15대'],['archOpinion','근로자 의견 청취','팀별 종합 · 설문 문항'],['kras','3~5단계 · KRAS 평가표','51항목 · 수시평가 2건'],['archMaterial','감소대책 교육자료','현장 · 건물청소'],['archOrg','조직도 · 비상연락','보고 체계 · 비상 전화'],['archPhotos','사진 전체','41장']].map(([v,t,s])=>`<button class="item" data-go="${v}" ${v==='kras'?'data-arg="2026"':''} style="background:#F7F8F6"><div class="between"><span class="t">${t}</span><span class="muted">›</span></div><div class="m">${s}</div></button>`).join('')}</div>
+  <div class="card"><h2>출력</h2><div class="grid2"><button class="btn" id="p1">2026 평가표 인쇄</button><button class="btn" id="p2">2026 교육 기록 인쇄</button></div></div>
+  <div class="card"><h2>설정</h2><button class="btn block" data-go="settings">설정 · 연결 확인 · 사진 올리기</button></div>`;
+  $('#p1').onclick=()=>printKras(2026,A.kras);$('#p2').onclick=()=>printEdu();
+};
+V.archPrep=async m=>{
+  setHead('1단계 · 사전준비','2026 보관본');
+  const tot=A.budget.reduce((s,b)=>s+b.amt,0);let lastM='';
+  m.innerHTML=`<div class="card"><h2>실시규정 (절차서)</h2><dl class="kv"><dt>작성자</dt><dd>${esc(A.roles.rule)}</dd><dt>안전보건 관리담당자</dt><dd>${esc(A.roles.manager)}</dd><dt>작성일</dt><dd>${fmtD(A.roles.ruleDate)}</dd><dt>평가원</dt><dd>${esc(A.roles.assessors)}</dd></dl>${thumbs(['p23'],{cap:1})}</div>
+  <div class="card"><h2>사전준비 회의 · 공지</h2>${thumbs(['p11','p12','p13'],{cap:1})}</div>
+  <div class="card"><h2>추진 일정</h2>${thumbs(['p03','p04'],{cap:1})}<table class="t" style="margin-top:10px"><tbody>${A.schedule.map(s=>{const mo=s.d.slice(5,7);const h=mo!==lastM?`<tr><th colspan="3" style="color:var(--acc)">${+(lastM=mo)}월</th></tr>`:'';return h+`<tr><td style="white-space:nowrap">${+s.d.slice(5,7)}.${+s.d.slice(8)}</td><td style="white-space:nowrap"><span class="tag st">${esc(s.tag)}</span></td><td>${esc(s.task)}</td></tr>`}).join('')}</tbody></table></div>
+  <div class="card"><h2>2026 안전·보건 예산 (예정)</h2><table class="t"><tbody>${A.budget.map(b=>`<tr><td><b>${esc(b.name)}</b>${b.detail?`<div class="muted">${esc(b.detail)}</div>`:''}</td><td style="text-align:right;white-space:nowrap">${won(b.amt)}</td></tr>`).join('')}<tr><th>합계</th><th style="text-align:right">${won(tot)}</th></tr></tbody></table>
+  <div class="note" style="margin-top:8px">예비비 13,367,000원은 예비비 제외 합계(133,370,000원)의 10%인 13,337,000원과 3만원 차이가 납니다. 종합본 원문 그대로입니다.</div></div>`;
+  fillThumbs(m);
+};
+V.archEdu=async m=>{
+  setHead('교육 기록','2026 보관본');
+  m.innerHTML=A.education.map(e=>`<button class="item" data-go="archEduView" data-arg="${e.id}"><div class="between"><span class="muted">${fmtD(e.date)} ${esc(e.time)}</span><span class="tag st">${esc(e.team)}</span></div><div class="t">${esc(e.title)}</div><div class="m">${esc(e.place||'')} · 사진 ${e.photos.length}${e.docs.length?' · 일지 '+e.docs.length:''}</div></button>`).join('');
+};
+V.archEduView=async(m,id)=>{
+  const e=A.education.find(x=>x.id===id);setHead(e.title,fmtD(e.date)+' · '+e.team);
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>교육일시</dt><dd>${fmtD(e.date)} ${esc(e.time)}</dd><dt>교육장소</dt><dd>${esc(e.place||'-')}</dd><dt>대상</dt><dd>${esc(e.team)}</dd></dl>
+   ${e.items.length?`<h3>교육 내용</h3>${e.items.map(i=>`<div style="line-height:1.6">● ${esc(i)}</div>`).join('')}`:''}
+   ${e.material?`<button class="btn block" style="margin-top:10px" data-go="archMaterial" data-arg="${e.material}">교육자료 보기</button>`:''}</div>
+  <div class="card"><h2>교육 사진</h2>${thumbs(e.photos,{cap:1})}</div>
+  ${e.docs.length?`<div class="card"><h2>교육일지 · 실행서 · 공지</h2>${thumbs(e.docs,{cap:1})}</div>`:''}`;
+  fillThumbs(m);
+};
+V.archMaterial=async(m,key)=>{
+  const keys=key?[key]:['field','building'];setHead('감소대책 교육자료','2026.05.15 작성 · 5.19 교육');
+  m.innerHTML=keys.map(k=>{const t=A.materials[k];return `<div class="card"><h2>${esc(t.title)}</h2><p class="muted">작성 ${fmtD(t.date)} · ${esc(t.by)}</p><div class="note">“안전은 타협의 대상이 아닙니다.” 위험성 평가로 도출된 대책들은 여러분의 생명을 지키기 위한 최소한의 약속입니다.</div>${t.sections.map(([h,ls])=>`<h3>${esc(h)}</h3>${ls.map(l=>`<div style="line-height:1.6;font-size:14px">· ${esc(l)}</div>`).join('')}`).join('')}</div>`}).join('');
+};
+V.archOpinion=async m=>{
+  setHead('근로자 의견 청취','2026 · 팀별 종합');
+  m.innerHTML=A.opinions.map(o=>`<div class="card"><h2>${esc(o.team)}</h2><dl class="kv"><dt>현장 실태</dt><dd>${esc(o.hazard)}</dd><dt>건의 사항</dt><dd>${esc(o.suggest)}</dd><dt>후속 조치</dt><dd><b>${esc(o.action)}</b></dd></dl></div>`).join('')+
+  `<div class="card"><h2>설문 문항 (현장)</h2>${A.survey['현장'].map((q,i)=>`<div style="line-height:1.6;font-size:14px">${i+1}. ${esc(q)}</div>`).join('')}<h3>건물청소팀</h3>${A.survey['건물청소'].map((q,i)=>`<div style="line-height:1.6;font-size:14px">${i+1}. ${esc(q)}</div>`).join('')}</div>`;
+};
+V.archVehicle=async m=>{
+  setHead('차량 안전장치 점검표','2026.04.16 · '+A.roles.rule);
+  const c=v=>v==='×'?'<span class="tag lv-높음">×</span>':(v==='와이드'?'<span class="tag st">와이드</span>':esc(v));
+  m.innerHTML=`<div class="card"><p class="muted" style="margin-top:0">환경부 「환경미화원 작업 안전 가이드라인」 2024.02 기준. 영상장치 위치(후면·측면·덮개)와 안전스위치·안전멈춤바 상태.</p><div style="overflow-x:auto"><table class="t"><thead><tr><th>차량</th><th>부서</th><th>측면</th><th>덮개</th><th>안전스위치</th><th>멈춤바</th><th>비고</th></tr></thead><tbody>${A.vehicles.map(v=>`<tr><td><b>${v.no}</b></td><td>${esc(v.dept)}</td><td>${c(v.side)}</td><td>${c(v.cover)}</td><td>${esc(v.switch)}</td><td>${esc(v.stopbar)}</td><td class="muted">${esc(v.note)}</td></tr>`).join('')}</tbody></table></div>
+  <div class="note" style="margin-top:8px">× = 덮개 쪽 카메라 없음 (2759 · 6110 · 9033 · 8078 · 2350 · 1351). 원본 표의 빈 칸은 정상으로 옮겼습니다.</div></div>`;
+};
+V.archOrg=async m=>{
+  setHead('조직도 · 비상연락','2026 보관본');
+  m.innerHTML=`<div class="card"><h2>보고 체계</h2><p style="line-height:1.7">${esc(A.emergency.chain)}</p></div>
+  <div class="card"><h2>비상·위급 시 전화</h2>${A.emergency.phones.map(p=>`<a class="item" href="tel:${p[2]}" style="text-decoration:none;color:inherit;background:#F7F8F6"><div class="between"><span class="t">${esc(p[1])}</span><span class="tag lv-높음">${esc(p[0])}</span></div><div class="m">${esc(p[2])} · 눌러서 전화</div></a>`).join('')}<p class="muted">관리감독자 박국환 · 대표 권현정 (개인 연락처는 종합본 원본 참고)</p></div>
+  <div class="card"><h2>조직도</h2>${thumbs(['p41'],{cap:1})}</div>`;
+  fillThumbs(m);
+};
+V.archPhotos=async m=>{
+  setHead('2026 사진 전체','41장');
+  const g={};Object.entries(A.photos).forEach(([id,p])=>(g[p.grp]=g[p.grp]||[]).push(id));
+  m.innerHTML=Object.entries(g).map(([k,ids])=>`<div class="card"><h2>${esc(k)} <span class="muted">${ids.length}</span></h2>${thumbs(ids,{cap:1})}</div>`).join('');
+  fillThumbs(m);
+};
+
+/* ---------- 교육·TBM (live) ---------- */
+V.eduList=async m=>{
+  setHead('교육 · TBM 기록','');
+  const e=await load('edu',true);const list=Object.entries(e).map(([id,v])=>({id,...v})).sort((a,b)=>b.date>a.date?1:-1);
+  m.innerHTML=`<button class="btn pri block" data-go="eduForm" style="margin-bottom:12px">+ 교육·TBM 기록하기</button>${list.map(x=>`<button class="item" data-go="eduView" data-arg="${x.id}"><div class="between"><span class="muted">${fmtD(x.date)} ${esc(x.time||'')}</span><span class="tag st">${esc(x.kind)}</span></div><div class="t">${esc(x.title)}</div><div class="m">${esc(x.place||'')} · 참석 ${(x.att||[]).length}명</div></button>`).join('')||'<div class="empty">아직 기록이 없습니다</div>'}
+  <button class="btn block" data-go="archEdu">2026년 교육 기록 (보관본)</button>`;
+};
+V.eduForm=async m=>{
+  setHead('교육·TBM 기록','참석자 서명');if(!needUser()){back();return}
+  const st={kind:'TBM',att:[],photos:[]};
+  m.innerHTML=`<div class="card"><label class="f" style="margin-top:0">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="ek">${['TBM','정기 안전교육','위험성평가 교육'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
+  <label class="f" for="et">제목</label><input class="i" id="et" placeholder="예: 작업 전 안전점검 회의">
+  <div class="grid2"><div><label class="f" for="ed">날짜</label><input class="i" type="date" id="ed" value="${today()}"></div><div><label class="f" for="etm">시간</label><input class="i" id="etm" placeholder="21:00~21:15"></div></div>
+  <div class="grid2"><div><label class="f" for="ep">장소</label><input class="i" id="ep" placeholder="휴게실"></div><div><label class="f" for="eb">교육자</label><input class="i" id="eb" value="${esc(S.user)}"></div></div>
+  <label class="f" for="ec">교육 내용 / 오늘의 위험요인</label><textarea class="i" id="ec" placeholder="한 줄에 하나씩"></textarea>
+  <label class="f">평가 결과 공유</label><label style="display:flex;gap:8px;align-items:center;min-height:40px"><input type="checkbox" id="esh" style="width:20px;height:20px;accent-color:#B53C0C"> 위험성평가 결과(위험요인·감소대책)를 근로자에게 알림</label>
+  <label class="f">사진</label><div id="pp"></div></div>
+  <div class="card"><div class="between"><h2 style="margin:0">참석자 서명 <span class="muted" id="ac">0명</span></h2><button class="btn sm pri" id="addSig">+ 서명 받기</button></div><div id="al" style="margin-top:8px"></div></div>
+  <button class="btn dark block" id="es">저장</button>`;
+  $('#ek').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.kind=b.dataset.k;$('#ek').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
+  photoPicker($('#pp'),st.photos);
+  const drawAtt=()=>{$('#ac').textContent=st.att.length+'명';$('#al').innerHTML=st.att.map((a,k)=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span><b>${esc(a.name)}</b> <span class="muted">${esc(a.team||'')}</span></span><span class="row"><img class="sigimg" src="${a.sig}" alt="${esc(a.name)} 서명"><button class="btn sm" data-rm="${k}">삭제</button></span></div>`).join('');$('#al').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.att.splice(+b.dataset.rm,1);drawAtt()})};
+  $('#addSig').onclick=()=>sigModal(a=>{st.att.push(a);drawAtt()});
+  $('#es').onclick=async()=>{const title=$('#et').value.trim()||st.kind;
+    const b=$('#es');b.disabled=true;b.textContent='저장 중…';
+    try{const ph=await savePhotos(st.photos);const rec={kind:st.kind,title,date:$('#ed').value,time:$('#etm').value.trim(),place:$('#ep').value.trim(),by:$('#eb').value.trim(),content:$('#ec').value.trim(),shared:$('#esh').checked,att:st.att,t:nowStr()};if(ph.length)rec.photos=ph;
+      const r=await post('edu',rec);await log('교육 기록: '+title);inval('edu');toast('저장했습니다');S.stack.pop();S.cur={view:'eduView',arg:r.name};render()}
+    catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='저장'}};
+};
+function sigModal(done){
+  const md=document.createElement('div');md.className='modal';
+  md.innerHTML=`<div class="sheet"><h2 style="margin:0 0 8px">참석자 서명</h2><div class="grid2"><div><label class="f" for="sn" style="margin-top:0">이름</label><input class="i" id="sn"></div><div><label class="f" for="st" style="margin-top:0">팀</label><select class="i" id="st">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div></div><label class="f">여기에 손가락으로 서명</label><canvas class="sig"></canvas><div class="grid3" style="margin-top:10px"><button class="btn" data-c>취소</button><button class="btn" data-r>다시 쓰기</button><button class="btn pri" data-o>서명 완료</button></div></div>`;
+  document.body.appendChild(md);const cv=md.querySelector('canvas');const r=cv.getBoundingClientRect();const dpr=window.devicePixelRatio||1;cv.width=r.width*dpr;cv.height=r.height*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);c.lineWidth=2.5;c.lineCap='round';c.strokeStyle='#111';let dr=false,any=false;
+  const pt=e=>{const b=cv.getBoundingClientRect();return [e.clientX-b.left,e.clientY-b.top]};
+  cv.onpointerdown=e=>{dr=true;any=true;cv.setPointerCapture(e.pointerId);const [x,y]=pt(e);c.beginPath();c.moveTo(x,y)};
+  cv.onpointermove=e=>{if(!dr)return;const [x,y]=pt(e);c.lineTo(x,y);c.stroke()};
+  cv.onpointerup=()=>dr=false;
+  md.querySelector('#sn').focus();
+  md.onclick=e=>{if(e.target.closest('[data-c]'))md.remove();else if(e.target.closest('[data-r]')){c.clearRect(0,0,cv.width,cv.height);any=false}else if(e.target.closest('[data-o]')){const n=md.querySelector('#sn').value.trim();if(!n){toast('이름을 적어 주세요');return}if(!any){toast('서명해 주세요');return}
+    const sm=document.createElement('canvas');sm.width=240;sm.height=Math.round(240*cv.height/cv.width);const sc=sm.getContext('2d');sc.fillStyle='#fff';sc.fillRect(0,0,sm.width,sm.height);sc.drawImage(cv,0,0,sm.width,sm.height);
+    done({name:n,team:md.querySelector('#st').value,sig:sm.toDataURL('image/png'),t:nowStr()});md.remove()}};
+}
+V.eduView=async(m,id)=>{
+  const x=(await load('edu',true))[id];setHead(x.title,fmtD(x.date)+' · '+x.kind);
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>일시</dt><dd>${fmtD(x.date)} ${esc(x.time||'')}</dd><dt>장소</dt><dd>${esc(x.place||'-')}</dd><dt>교육자</dt><dd>${esc(x.by||'-')}</dd><dt>결과 공유</dt><dd>${x.shared?'위험성평가 결과 공유함':'-'}</dd></dl>${x.content?`<h3>교육 내용</h3><div class="pre" style="line-height:1.6">${esc(x.content)}</div>`:''}${thumbs(x.photos)}</div>
+  <div class="card"><h2>참석자 ${(x.att||[]).length}명</h2>${(x.att||[]).map(a=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span><b>${esc(a.name)}</b> <span class="muted">${esc(a.team||'')}</span></span><img class="sigimg" src="${a.sig}" alt="${esc(a.name)} 서명"></div>`).join('')||'<div class="empty">서명 없음</div>'}</div>
+  <button class="btn block" id="pr">교육 실행서 인쇄 / PDF</button>`;
+  fillThumbs(m);$('#pr').onclick=()=>printEduOne(x);
+};
+
+/* ---------- 설정 ---------- */
+V.settings=async m=>{
+  setHead('설정','연결 확인 · 사진 올리기');
+  m.innerHTML=`<div class="card"><h2>사용자</h2><p>현재 이름: <b>${esc(S.user||'(없음)')}</b></p><button class="btn block" id="un">이름 바꾸기</button></div>
+  <div class="card"><h2>연결 확인</h2><div id="diag" class="note">확인 중…</div><button class="btn block" style="margin-top:8px" id="rd">다시 확인</button></div>
+  <div class="card"><h2>2026 사진 올리기 (처음 한 번)</h2><p class="muted" style="line-height:1.6">PC에서 받은 「2026_사진」 폴더의 사진 41장(p01.jpg ~ p42.jpg)을 모두 선택하세요. 서버에 올라가 모든 휴대폰에서 보입니다.</p><label class="btn pri block" style="display:flex;align-items:center;justify-content:center"><input type="file" id="arch" accept="image/jpeg" multiple hidden>사진 41장 선택</label><div id="ap" class="muted" style="margin-top:8px"></div></div>
+  <div class="card"><h2>최근 활동</h2><div id="lg" class="muted">불러오는 중…</div></div>
+  <p class="muted" style="text-align:center">위험성평가 앱 ${VER} · 저장 위치 ${ROOT}/</p>`;
+  $('#un').onclick=()=>{askUser();render()};
+  const diag=async()=>{$('#diag').textContent='확인 중…';const t0=performance.now();try{const y=await get('years');const ph=await fetch(`${DB}/${ROOT}/archive/2026/photos.json?shallow=true`).then(r=>r.json());const n=ph?Object.keys(ph).length:0;$('#diag').innerHTML=`서버 연결 <b style="color:#1F5234">정상</b> (${Math.round(performance.now()-t0)}ms)<br>평가 연도: ${Object.keys(y||{}).join(', ')||'없음 (2026 보관본만)'}<br>2026 사진: <b>${n} / 41장</b> ${n<41?'<span style="color:#8E1F14">— 아래에서 올려 주세요</span>':'올라가 있음'}<br>인터넷: ${navigator.onLine?'연결됨':'끊김'} · 앱 ${VER}`}catch(e){$('#diag').innerHTML=`<span style="color:#8E1F14">서버 연결 실패</span>: ${esc(e.message)}`}};
+  $('#rd').onclick=diag;diag();
+  $('#arch').onchange=async e=>{const fs=[...e.target.files].filter(f=>/^p\d{2}\.jpe?g$/i.test(f.name));if(!fs.length){$('#ap').textContent='p01.jpg 같은 이름의 사진이 없습니다';return}
+    let k=0;for(const f of fs){const id=f.name.slice(0,3).toLowerCase();$('#ap').textContent=`올리는 중 ${++k} / ${fs.length} (${id})`;try{const d=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(f)});await put('archive/2026/photos/'+id,d);S.photoCache[id]=d}catch(err){$('#ap').textContent='실패: '+id+' '+err.message;return}}
+    await log('2026 사진 '+fs.length+'장 올림');$('#ap').textContent=`완료: ${fs.length}장 올렸습니다`;diag()};
+  get('log').then(l=>{const a=Object.values(l||{}).slice(-15).reverse();$('#lg').innerHTML=a.map(x=>`<div>${esc(x.t)} ${esc(x.u)} — ${esc(x.what)}</div>`).join('')||'활동 없음'}).catch(()=>$('#lg').textContent='불러오기 실패');
+};
+
+/* ---------- 인쇄 ---------- */
+function doPrint(html,landscape){const p=$('#print');p.innerHTML=html;let st=document.getElementById('pgst');if(!st){st=document.createElement('style');st.id='pgst';document.head.appendChild(st)}st.textContent=landscape?'@page{size:A4 landscape;margin:10mm}':'@page{size:A4;margin:12mm}';setTimeout(()=>window.print(),300)}
+const pb=t=>esc(t||'').replace(/\s*⦁\s*/g,'<br>· ').replace(/^<br>/,'');
+function printKras(year,rows){
+  const byP={};rows.forEach(r=>(byP[r.proc]=byP[r.proc]||[]).push(r));
+  const head=year===2026?`평가일시 2026.05.11 ~ 05.14`:'';
+  let h=`<h1>${A.company} ${year}년 위험성평가 (KRAS 표준 양식)</h1><div>${head}</div>`;
+  for(const [k] of PROC){const R=byP[k];if(!R)continue;
+    h+=`<h2>작업공정명: ${PROCN[k]}</h2><table><thead><tr><th>세부작업</th><th>위험분류</th><th style="width:20%">위험 발생 상황 및 결과</th><th>관련 근거</th><th style="width:14%">현재의 안전보건 조치</th><th>가능성</th><th>중대성</th><th>위험성</th><th style="width:18%">위험성 감소대책</th><th>개선후</th><th>예정일</th><th>완료일</th><th>담당자</th></tr></thead><tbody>${R.map(r=>`<tr><td>${esc(r.task)}</td><td>${esc(r.cls)}</td><td>${esc(r.hazard)}</td><td>${esc(r.law)}</td><td>${pb(r.current)}</td><td>${r.p}</td><td>${r.s}</td><td>${r.risk}<br>(${lvl(r.risk)})</td><td>${pb(r.plan)}</td><td>${r.after||''}${r.after?'<br>('+lvl(r.after)+')':''}</td><td>${fmtD(r.due)}</td><td>${fmtD(r.done)}${r.dateNote?'<br>'+esc(r.dateNote):''}</td><td>${esc(r.owner)}</td></tr>`).join('')}</tbody></table>`}
+  doPrint(h,true);
+}
+function printCheck(L,s){let last='';doPrint(`<h1>유해·위험요인 파악 체크리스트 — ${esc(L.name)}</h1><div>점검일 ${fmtD(s.date)} · 점검자 ${esc(s.by)}</div><table style="margin-top:8px"><thead><tr><th>번호</th><th>구분</th><th>유해·위험요인(점검항목)</th><th>결과</th><th>비고</th></tr></thead><tbody>${L.items.map(it=>{const r=(s.res||{})[it.id]||{};return `<tr><td>${esc(it.no)}</td><td>${it.cat!==last?esc(last=it.cat):''}</td><td>${esc(it.text)}</td><td>${esc(r.r==='적합'?'√':(r.r||''))}</td><td>${esc(r.note||'')}</td></tr>`}).join('')}</tbody></table>`)}
+async function printEdu(){let h=`<h1>${A.company} 2026년 위험성평가 관련 교육 기록</h1>`;for(const e of A.education){h+=`<h2>${fmtD(e.date)} ${esc(e.time)} · ${esc(e.title)} (${esc(e.team)})</h2><div>장소: ${esc(e.place||'-')}</div>${e.items.map(i=>`<div>● ${esc(i)}</div>`).join('')}<div>${(await Promise.all(e.photos.slice(0,2).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean).map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}</div>`}doPrint(h)}
+async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0,4).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean);
+  doPrint(`<h1 style="text-align:center">교 육 실 행 서</h1><table><tr><th style="width:20%">구분</th><td>${esc(x.kind)}</td></tr><tr><th>교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육장소</th><td>${esc(x.place||'')}</td></tr><tr><th>교육자</th><td>${esc(x.by||'')}</td></tr><tr><th>교육내용</th><td style="white-space:pre-line">${esc(x.content||x.title)}${x.shared?'\n● 위험성평가 결과 공유':''}</td></tr></table><h2>교육 사진</h2>${ph.map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}<h2>참석자 서명 (${(x.att||[]).length}명)</h2><table><thead><tr><th>번호</th><th>성명</th><th>팀</th><th>서명</th></tr></thead><tbody>${(x.att||[]).map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.team||'')}</td><td><img src="${a.sig}" style="height:28px"></td></tr>`).join('')}</tbody></table>`)}
+
+/* ---------- start ---------- */
+S.cur={view:'home'};drawNav();render();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

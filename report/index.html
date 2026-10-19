@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="민원관리">
-<title>민원·사고예방 관리 v2</title>
+<title>민원·사고재해예방 관리대장</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="../../icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -172,6 +172,13 @@ input,select,textarea{font-family:inherit;outline:none}
 .pa-edit{background:#dbeafe;color:var(--blue)}
 .pa-dl{background:#dcfce7;color:var(--green)}
 .pa-del{background:#fee2e2;color:var(--red)}
+/* 사고재해예방 3단 묶음 */
+.group-label{display:block;font-size:12.5px;font-weight:800;color:var(--red);margin-bottom:5px;padding-bottom:4px;border-bottom:2px solid #fecaca}
+.group-hint{display:block;font-size:11px;color:var(--sub);font-weight:600;margin-bottom:7px;line-height:1.5}
+.risk-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.rchip{padding:6px 12px;border-radius:16px;font-size:12.5px;font-weight:700;border:1.5px solid var(--line);background:#fff;color:var(--sub);cursor:pointer}
+.rchip:hover{background:#f8fafc}
+.rchip.on{background:#fee2e2;border-color:var(--red2);color:var(--red)}
 /* 추가 사진 */
 .extra-wrap{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
 .extra-hdr{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
@@ -247,7 +254,7 @@ input,select,textarea{font-family:inherit;outline:none}
 <body>
 
 <div id="login-screen">
-  <h1>민원·사고예방<br>관리 시스템</h1>
+  <h1>민원·사고재해예방<br>관리대장</h1>
   <p>사무실 (PC/태블릿) 버전 v2</p>
   <input id="login-name" class="form-input" type="text" placeholder="담당자 이름" maxlength="10">
   <button id="login-btn" onclick="doLogin()">시작하기</button>
@@ -256,7 +263,7 @@ input,select,textarea{font-family:inherit;outline:none}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1>📋 민원·사고예방 관리 v2</h1>
+      <h1>📋 민원·사고재해예방 관리대장</h1>
       <div id="hdr-right">
         <span id="staff-name"></span>
         <button id="logout-btn" onclick="doLogout()">변경</button>
@@ -274,7 +281,7 @@ input,select,textarea{font-family:inherit;outline:none}
   <div class="pane on" id="pane-form">
     <div id="type-toggle">
       <button class="type-btn minwon on" onclick="setFT('minwon',this)">📋 민원 접수</button>
-      <button class="type-btn hazard" onclick="setFT('hazard',this)">⚠️ 사고예방</button>
+      <button class="type-btn hazard" onclick="setFT('hazard',this)">⚠️ 사고재해예방</button>
     </div>
 
     <div id="form-minwon">
@@ -410,12 +417,21 @@ input,select,textarea{font-family:inherit;outline:none}
       </div>
       <div class="form-card">
         <div class="form-row">
-          <span class="form-label">사고위험 요인구분 *</span>
-          <input class="form-input" id="h-risktype" type="text" placeholder="예) 급경사, 교통혼잡, 유리병, 맹견" autocomplete="off">
+          <span class="group-label">① 위험요인 및 현황 *</span>
+          <span class="group-hint">위험요인을 눌러 고르고, 아래에 현재 상태를 적으세요 (요인은 다시 쓰지 않아도 됩니다)</span>
+          <div class="risk-chips" id="h-risk-chips"></div>
+          <input class="form-input" id="h-risk-etc" type="text" placeholder="기타 위험요인 직접 입력" style="display:none;margin-bottom:7px" oninput="syncRiskType()" autocomplete="off">
+          <input type="hidden" id="h-risktype">
+          <textarea class="form-textarea" id="h-riskcont" placeholder="예) 내리막 끝 교차로라 수거차 정차 시 추돌 위험. 야간 가로등 없어 시야 불량"></textarea>
         </div>
-        <div class="form-row"><span class="form-label">주요 위험내용</span><textarea class="form-textarea" id="h-riskcont" placeholder="위험요소 상세 내용"></textarea></div>
-        <div class="form-row"><span class="form-label">안전점검 결과</span><textarea class="form-textarea" id="h-insp" placeholder="점검 결과"></textarea></div>
-        <div class="form-row"><span class="form-label">사고예방 조치사항</span><textarea class="form-textarea" id="h-action" placeholder="조치사항"></textarea></div>
+        <div class="form-row">
+          <span class="group-label">② 점검 및 현장실태</span>
+          <textarea class="form-textarea" id="h-insp" placeholder="예) 반사경 없음, 경고 표지 미설치, 보호구 미착용 확인"></textarea>
+        </div>
+        <div class="form-row">
+          <span class="group-label">③ 개선 및 안전대책</span>
+          <textarea class="form-textarea" id="h-action" placeholder="예) 반사경 설치 요청, 수거시간 주간 조정, 2인 1조 작업 지시"></textarea>
+        </div>
         <div class="form-2col">
           <div><span class="form-label">위험등급 *</span>
             <select class="form-select" id="h-level"><option value="High">🔴 High (높음)</option><option value="Medium">🔴 Medium (보통)</option><option value="Low">🔴 Low (낮음)</option></select>
@@ -439,7 +455,7 @@ input,select,textarea{font-family:inherit;outline:none}
           <div class="extra-list" id="h-extra-list"></div>
         </div>
       </div>
-      <button class="submit-btn hazard" onclick="submitH()">✅ 사고예방 등록</button>
+      <button class="submit-btn hazard" onclick="submitH()">✅ 사고재해예방 등록</button>
     </div>
   </div>
 
@@ -450,7 +466,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <button class="flt-btn f-생활" onclick="setFlt('생활',this)">🟢 생활</button>
       <button class="flt-btn f-음식물" onclick="setFlt('음식물',this)">🟡 음식물</button>
       <button class="flt-btn f-재활용" onclick="setFlt('재활용',this)">🔵 재활용</button>
-      <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">🔴 사고예방</button>
+      <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">🔴 사고재해예방</button>
     </div>
     <div id="date-filter">
       <input type="date" id="flt-from" onchange="renderList()" title="시작일">
@@ -461,7 +477,7 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="list-toolbar">
       <span id="list-count"></span>
       <div class="tb-btns">
-        <label id="print-split" title="체크하면 생활·음식물·재활용·사고예방이 각각 새 장에 인쇄됩니다"><input type="checkbox" id="print-split-cb"> 구분별 쪽 나눔</label>
+        <label id="print-split" title="체크하면 생활·음식물·재활용·사고재해예방이 각각 새 장에 인쇄됩니다"><input type="checkbox" id="print-split-cb"> 구분별 쪽 나눔</label>
         <button id="print-btn" onclick="printList()">🖨 인쇄</button>
         <button id="excel-btn" onclick="exportExcel()">📊 엑셀 내보내기</button>
       </div>
@@ -671,7 +687,7 @@ function startApp(){
   $('staff-name').textContent=staff;
   $('m-date').value=today(); $('m-time').value=now_t(); $('h-inspdate').value=today();
   connectFB();
-  renderExtra('m'); renderExtra('h');
+  renderExtra('m'); renderExtra('h'); renderRiskChips();
   if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 }
 
@@ -994,7 +1010,7 @@ function resetMForm(){
 
 async function submitH(){
   if(!$('h-addr').value.trim()){toast('주소 입력');return;}
-  if(!$('h-risktype').value.trim()){toast('위험요인 입력');return;}
+  if(!$('h-risktype').value.trim()){toast('① 위험요인을 하나 이상 선택하세요');return;}
   if(!hPos && !confirm('⚠️ 주소 확인 해주세요.\n\n위치가 지정되지 않아 지도에 표시되지 않습니다.\n그래도 저장할까요?'))return;
   const id=uuid();
   const rec={id,recType:'hazard',hazardNo:nextHNo(),dong:$('h-dong').value,
@@ -1010,7 +1026,7 @@ async function submitH(){
     for(var ei=0;ei<tmpPhoto.extraH.length;ei++){
       await PHOTOS.child(id).child('extra').child('e'+Date.now()+'_'+ei).set(tmpPhoto.extraH[ei]);
     }
-    toast(hPos?('✅ 사고예방 등록! ('+rec.hazardNo+')'):('✅ 등록 완료 ('+rec.hazardNo+') — 위치 미지정, 지도 표시 안 됨'));
+    toast(hPos?('✅ 사고재해예방 등록! ('+rec.hazardNo+')'):('✅ 등록 완료 ('+rec.hazardNo+') — 위치 미지정, 지도 표시 안 됨'));
     resetHForm();
   }catch{toast('⚠️ 저장 실패');}
   finally{$('photo-progress').classList.remove('on');}
@@ -1018,6 +1034,7 @@ async function submitH(){
 function resetHForm(){
   ['h-addr','h-riskcont','h-insp','h-action','h-note'].forEach(i=>$(i).value='');
   $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
+  hRisk=[];if($('h-risk-etc'))$('h-risk-etc').value='';renderRiskChips();
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';$('h-extra').value='';
   hPos=null;hPosManual=false;$('h-addr-ok').innerHTML=ADDR_WARN;
   $('h-dong-sel').value='';
@@ -1060,7 +1077,7 @@ function exportExcel(){
   const rows=[['구분','번호','날짜','시간','주소','폐기물구분/위험요인','민원내용/위험내용','처리상태/위험등급','민원인','연락처','접수경로','방문결과','조치내용','담당자','등록일시']];
   data.forEach(r=>{
     if(r.recType==='hazard'){
-      rows.push(['사고예방',r.hazardNo||'',r.inspDate||'','',r.addr||'',r.riskType||'',r.riskContent||'',r.riskLevel||'','','','',r.inspResult||'',r.action||'',r.staff||'',r.createdAt||'']);
+      rows.push(['사고재해예방',r.hazardNo||'',r.inspDate||'','',r.addr||'',r.riskType||'',r.riskContent||'',r.riskLevel||'','','','',r.inspResult||'',r.action||'',r.staff||'',r.createdAt||'']);
     } else {
       rows.push(['민원',r.no||'',r.date||'',r.time||'',r.addr||'',r.subtype||'',r.content||'',r.status||'',r.person||'',r.tel||'',r.channel||'',r.inspResult||'',r.actionNote||'',r.staff||'',r.createdAt||'']);
     }
@@ -1070,7 +1087,7 @@ function exportExcel(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const today_=new Date().toISOString().slice(0,10).replace(/-/g,'');
-  a.href=url; a.download='민원사고예방_'+today_+'.csv';
+  a.href=url; a.download='민원사고재해예방_'+today_+'.csv';
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
   toast('📊 CSV 다운로드 완료 ('+data.length+'건)');
@@ -1095,7 +1112,7 @@ function renderList(){
     const isH=r.recType==='hazard';
     const bdr=isH?'hazard':r.subtype;
     const no=isH?r.hazardNo:r.no;
-    const st=isH?'🔴 사고예방':(r.status==='처리완료'?'✅ '+r.status:r.status==='처리중'?'🔄 '+r.status:'📩 '+r.status);
+    const st=isH?'🔴 사고재해예방':(r.status==='처리완료'?'✅ '+r.status:r.status==='처리중'?'🔄 '+r.status:'📩 '+r.status);
     const stCls=isH?'st-처리완료':('st-'+r.status);
     return `<div class="rec-card bdr-${bdr}" onclick="openDet('${r.id}')">
       <div class="rc-top"><span class="rc-no">${no||''}</span><span class="rc-status ${stCls}">${st}</span></div>
@@ -1161,7 +1178,7 @@ function openDet(id){
   const r=recs.find(x=>x.id===id); if(!r)return;
   curDetailId=id;
   const isH=r.recType==='hazard';
-  $('modal-title').textContent=isH?`⚠️ ${r.hazardNo} 사고예방`:`📋 ${r.no} 민원 (${r.subtype})`;
+  $('modal-title').textContent=isH?`⚠️ ${r.hazardNo} 사고재해예방`:`📋 ${r.no} 민원 (${r.subtype})`;
   let body='';
   if(isH){
     body=`<div class="det-2col">
@@ -1169,13 +1186,11 @@ function openDet(id){
       <div class="det-row"><div class="det-label">위험등급</div><div class="det-val" style="font-weight:800;color:${pinColorDark(r)}">${r.riskLevel}</div></div>
     </div>
     <div class="det-row"><div class="det-label">주소</div><div class="det-val">${r.addr}</div></div>
-    <div class="det-2col">
-      <div class="det-row"><div class="det-label">행정동</div><div class="det-val">${r.dong||'-'}</div></div>
-      <div class="det-row"><div class="det-label">위험요인</div><div class="det-val">${r.riskType||'-'}</div></div>
-    </div>
-    <div class="det-row"><div class="det-label">주요 위험내용</div><div class="det-val">${r.riskContent||'-'}</div></div>
-    <div class="det-row"><div class="det-label">안전점검 결과</div><div class="det-val">${r.inspResult||'-'}</div></div>
-    <div class="det-row"><div class="det-label">조치사항</div><div class="det-val">${r.action||'-'}</div></div>
+    <div class="det-row"><div class="det-label">행정동</div><div class="det-val">${r.dong||'-'}</div></div>
+    <div class="det-row"><div class="det-label">① 위험요인 및 현황</div>
+      <div class="det-val">${r.riskType?('<b style="color:var(--red)">'+r.riskType+'</b>'+(r.riskContent?'<br>':'')):''}${r.riskContent||(r.riskType?'':'-')}</div></div>
+    <div class="det-row"><div class="det-label">② 점검 및 현장실태</div><div class="det-val">${r.inspResult||r.visitResult||'-'}</div></div>
+    <div class="det-row"><div class="det-label">③ 개선 및 안전대책</div><div class="det-val">${r.action||'-'}</div></div>
     <div class="det-2col">
       <div class="det-row"><div class="det-label">점검일자</div><div class="det-val">${r.inspDate||'-'}</div></div>
       <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
@@ -1348,6 +1363,30 @@ function delPhoto(id,field,label){
   }).catch(function(){ toast('⚠️ 삭제 실패'); });
 }
 
+// ── 위험요인 칩 (분류는 누르고, 현황은 적고 — 중복 기재 없음) ──
+const RISK_TAGS=['급경사','교통혼잡','유리병','맹견','계단','협소골목','추락','감전','낙하','기타'];
+let hRisk=[];
+function renderRiskChips(){
+  const el=$('h-risk-chips'); if(!el)return;
+  el.innerHTML=RISK_TAGS.map(function(t){
+    return '<button type="button" class="rchip'+(hRisk.indexOf(t)>=0?' on':'')+'" onclick="toggleRisk(\''+t+'\')">'+t+'</button>';
+  }).join('');
+  const etc=$('h-risk-etc');
+  if(etc) etc.style.display = (hRisk.indexOf('기타')>=0) ? 'block' : 'none';
+  syncRiskType();
+}
+function toggleRisk(t){
+  const i=hRisk.indexOf(t);
+  if(i>=0)hRisk.splice(i,1); else hRisk.push(t);
+  renderRiskChips();
+}
+function syncRiskType(){
+  const etcEl=$('h-risk-etc');
+  const etc=etcEl?etcEl.value.trim():'';
+  const list=hRisk.map(function(t){ return (t==='기타'&&etc)?etc:t; }).filter(function(t){return t!=='기타'||!etc;});
+  const el=$('h-risktype'); if(el) el.value=list.join('·');
+}
+
 // ── 접수폼 추가 사진 ──
 function extraArr(form){ return form==='m' ? tmpPhoto.extraM : tmpPhoto.extraH; }
 async function onExtraPick(input,form){
@@ -1406,7 +1445,7 @@ function openEdit(id){
   curDetailId=id;
   const isH=r.recType==='hazard';
   const E=mkEsc;
-  $('modal-title').textContent=(isH?'✏️ 사고예방 수정 ':'✏️ 민원 수정 ')+(isH?(r.hazardNo||''):(r.no||''));
+  $('modal-title').textContent=(isH?'✏️ 사고재해예방 수정 ':'✏️ 민원 수정 ')+(isH?(r.hazardNo||''):(r.no||''));
   let b='';
   if(isH){
     b=`<div class="form-2col">
@@ -1417,16 +1456,19 @@ function openEdit(id){
         </select></div>
     </div>
     <div class="form-row"><span class="form-label">위험지점 주소 *</span><input class="form-input" id="e-addr" value="${E(r.addr)}"></div>
-    <div class="form-2col">
-      <div><span class="form-label">사고위험 요인구분 *</span><input class="form-input" id="e-risktype" value="${E(r.riskType)}"></div>
-      <div><span class="form-label">위험등급</span>
-        <select class="form-select" id="e-level">
-        ${['High','Medium','Low'].map(v=>'<option value="'+v+'"'+(r.riskLevel===v?' selected':'')+'>🔴 '+v+'</option>').join('')}
-        </select></div>
+    <div class="form-row"><span class="form-label">위험등급</span>
+      <select class="form-select" id="e-level">
+      ${['High','Medium','Low'].map(v=>'<option value="'+v+'"'+(r.riskLevel===v?' selected':'')+'>🔴 '+v+'</option>').join('')}
+      </select></div>
+    <div class="form-row">
+      <span class="group-label">① 위험요인 및 현황 *</span>
+      <input class="form-input" id="e-risktype" placeholder="위험요인 (예: 급경사·유리병)" value="${E(r.riskType)}" style="margin-bottom:6px">
+      <textarea class="form-textarea" id="e-riskcont" placeholder="현재 상태">${E(r.riskContent)}</textarea>
     </div>
-    <div class="form-row"><span class="form-label">주요 위험내용</span><textarea class="form-textarea" id="e-riskcont">${E(r.riskContent)}</textarea></div>
-    <div class="form-row"><span class="form-label">안전점검 결과</span><textarea class="form-textarea" id="e-insp">${E(r.inspResult)}</textarea></div>
-    <div class="form-row"><span class="form-label">조치사항</span><textarea class="form-textarea" id="e-action">${E(r.action)}</textarea></div>
+    <div class="form-row"><span class="group-label">② 점검 및 현장실태</span>
+      <textarea class="form-textarea" id="e-insp">${E(r.inspResult||r.visitResult)}</textarea></div>
+    <div class="form-row"><span class="group-label">③ 개선 및 안전대책</span>
+      <textarea class="form-textarea" id="e-action">${E(r.action)}</textarea></div>
     <div class="form-row"><span class="form-label">비고</span><input class="form-input" id="e-note" value="${E(r.note)}"></div>`;
   }else{
     b=`<div class="form-2col">
@@ -1506,8 +1548,8 @@ function saveEdit(id){
 }
 
 // ── 목록 인쇄 (구분별로 묶어서) ──
-const PRINT_ORDER=['생활','음식물','재활용','사고예방'];
-function printGroupKey(r){ return r.recType==='hazard' ? '사고예방' : (r.subtype||'기타'); }
+const PRINT_ORDER=['생활','음식물','재활용','사고재해예방'];
+function printGroupKey(r){ return r.recType==='hazard' ? '사고재해예방' : (r.subtype||'기타'); }
 function printRowDate(r){ return (r.recType==='hazard' ? r.inspDate : r.date) || ''; }
 
 function printList(){
@@ -1517,7 +1559,7 @@ function printList(){
   const split=!!(splitEl&&splitEl.checked);
   const f=$('flt-from').value, t=$('flt-to').value;
   const period=(f||t)?((f||'처음')+' ~ '+(t||'오늘')):'전체 기간';
-  const fltName=(curFlt==='all')?'전체':(curFlt==='hazard'?'사고예방':curFlt);
+  const fltName=(curFlt==='all')?'전체':(curFlt==='hazard'?'사고재해예방':curFlt);
 
   // 구분별로 묶기
   const groups={};
@@ -1537,10 +1579,11 @@ function printList(){
   });
 
   const head='<thead><tr>'
-    +'<th style="width:7%">번호</th><th style="width:8%">일자</th><th style="width:7%">구분</th>'
-    +'<th style="width:16%">주소</th><th style="width:11%">내용구분/위험요인</th>'
-    +'<th style="width:20%">상세내용</th><th style="width:17%">조치내용</th>'
-    +'<th style="width:7%">상태/등급</th><th style="width:7%">담당자</th>'
+    +'<th style="width:6%">번호</th><th style="width:7%">일자</th><th style="width:6%">구분</th>'
+    +'<th style="width:14%">주소</th><th style="width:10%">내용구분·위험요인</th>'
+    +'<th style="width:17%">상세내용·현황</th><th style="width:15%">점검·확인결과</th>'
+    +'<th style="width:15%">조치·안전대책</th>'
+    +'<th style="width:5%">상태·등급</th><th style="width:5%">담당자</th>'
     +'</tr></thead>';
 
   function rowHtml(r){
@@ -1548,10 +1591,11 @@ function printList(){
     return '<tr>'
       +'<td>'+mkEsc(isH?r.hazardNo:r.no)+'</td>'
       +'<td>'+mkEsc(printRowDate(r))+'</td>'
-      +'<td>'+mkEsc(isH?'사고예방':(r.subtype||''))+'</td>'
+      +'<td>'+mkEsc(isH?'사고재해':(r.subtype||''))+'</td>'
       +'<td>'+mkEsc(r.addr||'')+'</td>'
       +'<td>'+mkEsc(isH?(r.riskType||''):(r.category||''))+'</td>'
       +'<td>'+mkEsc(isH?(r.riskContent||''):(r.content||''))+'</td>'
+      +'<td>'+mkEsc(r.inspResult||r.visitResult||'')+'</td>'
       +'<td>'+mkEsc(isH?(r.action||''):(r.actionNote||''))+'</td>'
       +'<td>'+mkEsc(isH?(r.riskLevel||''):(r.status||''))+'</td>'
       +'<td>'+mkEsc(r.staff||'')+'</td>'
@@ -1569,7 +1613,7 @@ function printList(){
 
   const tally=keys.map(function(k){return k+' '+groups[k].length;}).join(' · ');
   $('print-area').innerHTML=
-    '<div class="pr-title">민원 · 사고예방 관리대장</div>'
+    '<div class="pr-title">민원 · 사고재해예방 관리대장</div>'
     +'<div class="pr-sub">구분: '+mkEsc(fltName)+' &nbsp;|&nbsp; 기간: '+mkEsc(period)
     +' &nbsp;|&nbsp; 총 '+data.length+'건 ('+mkEsc(tally)+') &nbsp;|&nbsp; 출력일: '+today()
     +' &nbsp;|&nbsp; 출력자: '+mkEsc(staff)+'</div>'

@@ -298,7 +298,7 @@ body.nv{padding-top:44px}
   <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
   <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint" id="verLine">v57 · 2026-10-22 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v59 · 2026-10-22 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -826,6 +826,36 @@ function alreadySent(date, veh, g, t, n, no){
     return true;
   });
 }
+/* 두 줄이 같은 전표인지 봅니다.
+   전표번호가 둘 다 있으면 번호가 답입니다. 없으면 1차·2차·실중량이 모두 같을 때만 같다고 봅니다. */
+function sameSlip(a, b){
+  if(a.no && b.no) return a.no === b.no;
+  if(a.g && b.g && a.t && b.t) return +a.g===+b.g && +a.t===+b.t && +a.w===+b.w;
+  return false;
+}
+/* 같은 전표를 두 번 읽었으면 잘 읽힌 조각끼리 모아 한 줄로 만듭니다.
+   어두운 데서는 한 번은 시각이, 한 번은 번호가 빠지곤 하니 둘을 합치면 오히려 낫습니다. */
+function mergeSlip(keep, extra){
+  ['no','t1','t2','g','t','slipDate'].forEach(k=>{ if(!keep[k] && extra[k]) keep[k]=extra[k]; });
+  if(!(+keep.w) && +extra.w) keep.w = extra.w;
+}
+/* 판독한 줄을 전표 목록에 넣습니다.
+   기사님이 판독을 기다리지 않고 같은 전표를 다시 찍는 일이 잦아서,
+   이미 있는 줄과 같은 전표면 새 줄을 만들지 않고 그 줄에 합칩니다. */
+function addRows(fresh){
+  let merged = 0, weak = 0;
+  fresh.forEach(r=>{
+    const same = form.rows.find(x=> (x.no || (x.g && x.t)) && sameSlip(x, r));
+    if(same){
+      // 양쪽 다 전표번호가 있어 번호로 맞춘 것이 아니면, 중량만 보고 합친 것입니다.
+      // 그건 정말 두 번 나르신 것일 수도 있으니 기사님께 알려 드립니다.
+      if(!(same.no && r.no)) weak++;
+      mergeSlip(same, r); merged++;
+    }
+    else form.rows.push(r);
+  });
+  return {merged, weak};
+}
 // 판독으로 들어온 줄 중에 이미 올린 것이 있는지 표시합니다
 function markDups(rows){
   let n=0;
@@ -1011,7 +1041,8 @@ async function runOcrSpread(dataUrl, sid){
   const fresh2 = found.slice(0,n).map(v=>({w:String(v.n), g:v.g, t:v.t, site:'', auto:true, shot:sid}));
   attachTimes(fresh2, spreadTimes);
   const dup2 = markDups(fresh2);
-  fresh2.forEach(r=> form.rows.push(r));
+  const add2 = addRows(fresh2);
+  if(add2.merged) ocrMsg(`같은 전표를 다시 찍으셨습니다 — ${add2.merged}장은 아까 줄에 합쳤습니다.`,'ok');
   form.cnt=form.rows.length;
   drawCnt(); drawSlips();
   ocrMsg(`전표 ${n}장을 찾았습니다.`
@@ -1099,7 +1130,8 @@ async function runOcr(dataUrl, sid, hard){
      그쪽이 이깁니다 (아래 저장부). 전표를 직접 보신 분이 기계보다 낫습니다. */
   if(sd0) fresh.forEach(r=>{ r.slipDate = sd0; });
   const dupN = markDups(fresh);
-  fresh.forEach(r=> form.rows.push(r));
+  const add = addRows(fresh);            // 아까 찍은 전표를 또 찍으셨으면 한 줄로 합칩니다
+  const sameN = add.merged;
   form.cnt = form.rows.length;
   // 날짜는 판독을 믿지 않습니다 (9를 8로 읽는 일이 잦습니다). 위에서 기사가 고른 날로 갑니다.
 
@@ -1158,7 +1190,9 @@ async function runOcr(dataUrl, sid, hard){
     dmsg = ` ⚠ 사진에는 ${label(sd)}로 보입니다. 전표를 다시 보세요.`;
     ocrDate = sd; dact = [{k:'date', t:`${label(sd)}로 바꾸기`}];
   }
-  ocrMsg(`전표 ${n}장을 읽었습니다.`
+  ocrMsg(`전표 ${n-sameN}장을 읽었습니다.`
+        + (sameN ? ` 같은 전표 ${sameN}장은 아까 줄에 합쳤습니다 — 두 번 안 들어갑니다.` : '')
+        + (add.weak ? ` ⚠ 그중 ${add.weak}장은 전표번호가 없어 중량만 보고 합쳤습니다. 정말 두 번 나르신 거면 아래 ＋ 로 한 줄 더하세요.` : '')
         + (tot>n ? ` 지금까지 ${tot}장.` : '')
         + (dupN ? ` ⚠ 이미 올린 전표입니다 — 빨간 줄은 × 로 지우세요.` : '')
         + `${dmsg}${smsg} ${chk}`
@@ -1205,7 +1239,7 @@ $('#bSave').onclick = ()=>{
   if(!siteName()){ nudge('#fSite','반입처를 고르세요'); return; }
   if(!form.rows.some(r=>+r.w>0)){ nudge('#fSlips','실중량을 넣으세요'); return; }
   rememberSite(siteName());
-  const rows = form.rows.filter(r=>+r.w>0);
+  let rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
 
   // 사진에서 읽은 날짜가 오늘에서 많이 떨어져 있으면 한 번 더 여쭙니다.
@@ -1222,18 +1256,41 @@ $('#bSave').onclick = ()=>{
         + `맞으면 「확인」, 아니면 「취소」를 누르고 위에서 날짜를 고르세요.`)) return;
   }
 
-  // 이미 올린 전표가 섞여 있으면 한 번 짚어 줍니다
-  const dups = rows.filter(r=> (r.no || (r.g && r.t)) &&
+  // 한 묶음 안에 같은 전표번호가 둘 있으면 한 줄로 합칩니다 (마지막 그물)
+  const byNo = {};
+  rows = rows.filter(r=>{
+    if(!r.no) return true;
+    if(byNo[r.no]){ mergeSlip(byNo[r.no], r); return false; }
+    byNo[r.no] = r; return true;
+  });
+
+  // ── 이미 올린 전표 걸러내기 ──
+  // 전표번호가 같으면 같은 전표입니다. 한 장에 번호가 둘일 수 없으니 물을 것도 없습니다.
+  // 묻고 「확인」을 받으면 바쁜 현장에서 그냥 눌러 버리셔서, 아예 빼고 저장합니다.
+  const hard = rows.filter(r=> r.no && alreadySent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no));
+  if(hard.length){
+    const kept = rows.length - hard.length;
+    alert(
+      `이미 올린 전표 ${hard.length}장은 빼고 저장합니다.\n\n`
+      + hard.slice(0,5).map(r=>`  전표번호 ${r.no} · ${comma(+r.w)}kg`).join('\n')
+      + (hard.length>5 ? `\n  … 외 ${hard.length-5}장` : '')
+      + `\n\n같은 전표번호가 이미 사무실로 올라가 있습니다.\n`
+      + (kept ? `나머지 ${kept}장만 저장합니다.` : `저장할 전표가 남지 않았습니다.`));
+    hard.forEach(r=>{ const i=form.rows.indexOf(r); if(i>=0) form.rows.splice(i,1); });
+    rows = rows.filter(r=> !hard.includes(r));
+    drawCnt(); drawSlips();
+    if(!rows.length) return;
+  }
+  // 전표번호가 없어 중량만으로 걸린 것은 진짜 두 번 나른 것일 수 있어 여쭙니다.
+  const soft = rows.filter(r=> !r.no && r.g && r.t &&
                                alreadySent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no));
-  if(dups.length){
+  if(soft.length){
     const go = confirm(
-      `이미 올린 전표가 ${dups.length}장 섞여 있습니다.\n\n`
-      + dups.slice(0,4).map(r=> r.no
-          ? `  전표번호 ${r.no} · ${comma(+r.w)}kg`
-          : `  ${comma(+r.w)}kg  (1차 ${comma(r.g)} · 2차 ${comma(r.t)})`).join('\n')
-      + (dups.length>4 ? `\n  … 외 ${dups.length-4}장` : '')
-      + `\n\n이대로 저장하면 사무실 대장에 두 번 들어갑니다.\n`
-      + `빨간 줄을 × 로 지우고 저장하는 게 맞습니다.\n\n그래도 저장할까요?`);
+      `전표번호가 안 읽힌 줄 ${soft.length}장이 이미 올린 것과 중량이 똑같습니다.\n\n`
+      + soft.slice(0,4).map(r=>`  ${comma(+r.w)}kg  (1차 ${comma(r.g)} · 2차 ${comma(r.t)})`).join('\n')
+      + (soft.length>4 ? `\n  … 외 ${soft.length-4}장` : '')
+      + `\n\n정말 두 번 나르셨으면 「확인」,\n`
+      + `아까 그 전표를 다시 찍으신 거라면 「취소」를 누르고 빨간 줄을 × 로 지우세요.`);
     if(!go) return;
   }
 
@@ -1477,7 +1534,7 @@ if('serviceWorker' in navigator){
 
 /* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
    다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
-const APP_VER = 'v57';
+const APP_VER = 'v59';
 let newVer = null;
 
 function appBusy(){

@@ -298,7 +298,7 @@ body.nv{padding-top:44px}
   <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
   <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint" id="verLine">v56 · 2026-10-12 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v57 · 2026-10-22 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -635,6 +635,14 @@ $('#fOcr').onclick = e=>{
       form.date=ocrDate; form.dateFrom='사진'; drawDay(); drawSlips();
       ocrMsg(`계근일을 ${label(ocrDate)}로 바꿨습니다. 전표와 맞는지 한 번 더 보세요.`,'ok');
     }
+    if(a.dataset.act==='today'){
+      // 사진에서 읽은 날짜를 버리고 오늘로 되돌립니다
+      const t = ymd(new Date());
+      form.date = t; form.dateFrom = '손';
+      form.rows.forEach(r=>{ r.slipDate = ''; });
+      drawDay(); drawSlips();
+      ocrMsg(`계근일을 오늘 ${label(t)}로 바꿨습니다.`,'ok');
+    }
     return;
   }
   if(e.target.id!=='fRaw' || !ocrRaw) return;
@@ -876,11 +884,25 @@ function readSlipDate(text){
   }
   if(!cands.length) return '';
   const now = new Date().setHours(0,0,0,0);
+  // 전표는 계근하고 바로 찍어 올립니다. 그러니 오늘·어제·그저께가 아니면
+  // 숫자를 잘못 본 것입니다 (어두운 데서 9를 8로, 1을 7로 봅니다).
+  // 더 지난 전표는 기사님이 위에서 날짜를 손으로 골라 주셔야 합니다.
   const ok = [...new Set(cands)]
     .map(d=>({d, gap:(now - new Date(d+'T00:00:00').getTime())/86400000}))
-    .filter(x=> x.gap >= -1 && x.gap <= 15)
+    .filter(x=> x.gap >= 0 && x.gap <= 2)
     .sort((a,b)=>Math.abs(a.gap)-Math.abs(b.gap));
   return ok.length ? ok[0].d : '';
+}
+
+/* 전표에 찍힌 날짜와 2차 계량시각을 지금 시각에 비춰 봅니다.
+   전표는 계근하고 몇 시간 안에 올라오니, 그보다 멀면 날짜를 잘못 읽은 것입니다.
+   야간조는 밤 10시에 단 전표를 새벽에 몰아 올리기도 해서 넉넉히 둡니다. */
+function dateFitsTime(d, t2){
+  if(!d || !t2) return true;                       // 볼 거리가 없으면 통과
+  const when = new Date(d+'T'+t2+':00').getTime();
+  if(isNaN(when)) return true;
+  const hrs = (Date.now() - when) / 3600000;
+  return hrs >= -2 && hrs <= 16;   // 야간조 한 탕(8시간)을 넉넉히 덮습니다
 }
 
 /* 전표에 찍힌 계량 시각 (1차·2차).
@@ -1095,6 +1117,9 @@ async function runOcr(dataUrl, sid, hard){
       : '숫자를 확인하고, 전표의 제품명을 보고 성상을 고르세요.';
   const sd = (fresh.length && fresh[0].slipDate) ? fresh[0].slipDate : sd0;
   const spanDays = [...new Set(fresh.map(r=>r.slipDate).filter(Boolean))];
+  const today0 = ymd(new Date());
+  const sdT = (fresh.find(r=>r.t2)||{}).t2 || (fresh.find(r=>r.t1)||{}).t1 || '';
+  const fits = dateFitsTime(sd, sdT);
   let dmsg='', dact=[];
   if(form.dateFrom === '손' && sd && sd !== form.date){
     // 기사가 손으로 고른 날이 있으면 그 날로 저장합니다. 바꾸고 싶으면 단추로.
@@ -1106,14 +1131,28 @@ async function runOcr(dataUrl, sid, hard){
     dmsg = ` 계근일이 전표마다 다릅니다 (${spanDays.map(label).join(' · ')}). 그대로 저장됩니다.`;
     form.dateFrom = form.dateFrom || '사진';
   }else if(sd && sd===form.date){
-    dmsg = ` 계근일 ${label(sd)} 맞습니다.`;
+    dmsg = fits ? ` 계근일 ${label(sd)} 맞습니다.`
+                : ` ⚠ 계근일이 ${label(sd)}인데 2차 ${sdT}입니다 — 지금 시각과 안 맞습니다. 전표의 날짜를 다시 보세요.`;
     form.dateFrom = form.dateFrom || '사진';
   }else if(sd && !form.dateFrom){
     // 아직 아무도(기사도, 앞 사진도) 날짜를 정하지 않았을 때만 맞춥니다.
     // 앞 사진이 이미 정했으면 건드리지 않습니다 — 자정을 넘긴 묶음에서
     // 뒷 사진이 앞 전표들까지 다른 날로 끌고 가면 안 되니까요.
     form.date = sd; form.dateFrom = '사진'; drawDay(); drawSlips();
-    dmsg = ` 계근일을 ${label(sd)}로 맞췄습니다 (전표에서 읽음).`;
+    const gap = (new Date().setHours(0,0,0,0) - new Date(sd+'T00:00:00').getTime())/86400000;
+    if(fits && gap <= 1){
+      // 오늘이거나, 자정을 넘겨 어제 것을 올리는 야간조 — 늘 있는 일입니다
+      dmsg = ` 계근일을 ${label(sd)}로 맞췄습니다 (전표에서 읽음${sdT?`, 2차 ${sdT}`:''}).`;
+    }else{
+      // 오늘이 아닌 날로 읽혔습니다. 어두운 데서 숫자를 잘못 본 일이 잦으니 꼭 짚어 줍니다.
+      dmsg = ` ⚠ 전표를 ${label(sd)}로 읽었습니다${sdT?` (2차 ${sdT})`:''} — 오늘은 ${label(today0)}입니다.`
+           + ` 전표에 찍힌 날짜를 눈으로 한 번 보세요.`;
+      dact = [{k:'today', t:`오늘(${label(today0)})로 바꾸기`}];
+    }
+  }else if(!sd){
+    // 날짜를 아예 못 읽었습니다. 조용히 오늘로 저장하면 틀린 줄도 모릅니다.
+    dmsg = ` ⚠ 전표의 계량일시를 못 읽었습니다 — 고르신 ${label(form.date)}로 저장됩니다.`
+         + ` 날짜가 다르면 위에서 고쳐 주세요.`;
   }else if(sd){
     // 기사가 손으로 고른 날과 다르면 함부로 바꾸지 않고 물어봅니다
     dmsg = ` ⚠ 사진에는 ${label(sd)}로 보입니다. 전표를 다시 보세요.`;
@@ -1168,6 +1207,20 @@ $('#bSave').onclick = ()=>{
   rememberSite(siteName());
   const rows = form.rows.filter(r=>+r.w>0);
   if(!rows.length){ toast('실중량을 입력하세요','err'); return; }
+
+  // 사진에서 읽은 날짜가 오늘에서 많이 떨어져 있으면 한 번 더 여쭙니다.
+  // 어두운 데서 찍으면 날짜 숫자만 잘못 읽히는 일이 잦습니다.
+  if(form.dateFrom !== '손'){
+    const t0 = new Date().setHours(0,0,0,0);
+    const old2 = [...new Set(rows.map(r=>rowDate(r)).filter(Boolean))]
+      .filter(d => (t0 - new Date(d+'T00:00:00').getTime())/86400000 >= 2);
+    if(old2.length && !confirm(
+        `계근일이 ${old2.map(label).join(' · ')} 로 되어 있습니다.\n`
+        + `오늘은 ${label(ymd(new Date()))}입니다.\n\n`
+        + `어두운 데서 찍으면 날짜 숫자만 잘못 읽히는 일이 있습니다.\n`
+        + `전표에 찍힌 날짜를 눈으로 한 번 보시고,\n`
+        + `맞으면 「확인」, 아니면 「취소」를 누르고 위에서 날짜를 고르세요.`)) return;
+  }
 
   // 이미 올린 전표가 섞여 있으면 한 번 짚어 줍니다
   const dups = rows.filter(r=> (r.no || (r.g && r.t)) &&
@@ -1424,7 +1477,7 @@ if('serviceWorker' in navigator){
 
 /* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
    다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
-const APP_VER = 'v56';
+const APP_VER = 'v57';
 let newVer = null;
 
 function appBusy(){

@@ -129,6 +129,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .rc-det{padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
 .rc-det:hover{background:#bae6fd}
 .rc-mapmark{font-size:11px;opacity:.65}
+.mf-allbtn{padding:2px 9px;border-radius:7px;font-size:11px;font-weight:800;background:#1e40af;color:#fff;border:none;cursor:pointer;margin-left:2px}
 .rec-card:hover{box-shadow:0 2px 14px rgba(30,64,175,.18)}
 #map-focus{display:none;align-items:center;justify-content:space-between;gap:8px;background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:7px}
 #map-focus.on{display:flex}
@@ -507,9 +508,9 @@ input,select,textarea{font-family:inherit;outline:none}
       <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">⚠️ 사고재해예방</button>
     </div>
     <div id="date-filter">
-      <input type="date" id="flt-from" onchange="renderList()" title="시작일">
+      <input type="date" id="flt-from" onchange="renderList();renderMap()" title="시작일">
       <span class="date-sep">~</span>
-      <input type="date" id="flt-to" onchange="renderList()" title="종료일">
+      <input type="date" id="flt-to" onchange="renderList();renderMap()" title="종료일">
       <button class="date-clear" onclick="clearDate()">✕ 초기화</button>
     </div>
     <div id="list-toolbar">
@@ -1141,8 +1142,8 @@ function resetHForm(){
 }
 
 // ── 목록 ──
-function setFlt(f,el){curFlt=f;document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderList();}
-function clearDate(){$('flt-from').value='';$('flt-to').value='';renderList();}
+function setFlt(f,el){curFlt=f;document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');focusId=null;renderList();renderMap();}
+function clearDate(){$('flt-from').value='';$('flt-to').value='';renderList();renderMap();}
 
 // 날짜 필터 적용된 데이터 반환
 function filteredRecs(){
@@ -1250,12 +1251,20 @@ function showOnMap(id){
   setTimeout(function(){ initMap(); renderMap(); },150);
 }
 function clearFocus(){ focusId=null; renderMap(); }
+// 지도에서 바로 구분 필터 해제
+function showAllOnMap(){
+  curFlt='all'; focusId=null;
+  document.querySelectorAll('.flt-btn').forEach(function(b){ b.classList.toggle('on', b.classList.contains('f-all')); });
+  renderList(); renderMap();
+}
 
 function renderMap(){
   if(!kakaoMap)return;
   mapPins.forEach(p=>p.setMap(null));mapPins=[];
-  let list=recs.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
-  const miss=recs.length-list.length;
+  const base=filteredRecs();                       // 목록에 걸린 구분·기간 필터를 그대로 사용
+  let list=base.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
+  const miss=base.length-list.length;
+  const fname=(curFlt==='all')?'':(curFlt==='hazard'?'사고재해예방':(curFlt==='occur'?'사고발생지점':curFlt));
   const fb=$('map-focus');
   const fr=focusId?recs.find(x=>x.id===focusId):null;
   if(fr){
@@ -1272,8 +1281,10 @@ function renderMap(){
   const st=$('map-stat');
   if(st)st.innerHTML = fr
     ? '선택한 <b>1건</b>만 표시 중 — 전체를 보려면 위 <b>전체 지도</b>를 누르세요'
-    : ('지도 표시 <b>'+list.length+'건</b> / 전체 '+recs.length+'건'
-       +(miss?' · <span class="miss">위치 미지정 '+miss+'건</span>':''));
+    : ((fname?('<b>'+fname+'</b>만 표시 중 — '):'')
+       +'지도 <b>'+list.length+'건</b> / 조건에 맞는 '+base.length+'건'
+       +(miss?' · <span class="miss">위치 미지정 '+miss+'건</span>':'')
+       +(fname?' · <button class="mf-allbtn" onclick="showAllOnMap()">전체 보기</button>':''));
   if(!list.length)return;
   const bounds=new kakao.maps.LatLngBounds();
   list.forEach(r=>{

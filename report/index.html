@@ -126,6 +126,15 @@ input,select,textarea{font-family:inherit;outline:none}
 .rc-status{font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px}
 .st-접수{background:#dbeafe;color:var(--blue)}.st-처리중{background:#fef9c3;color:var(--yellow)}.st-처리완료{background:#dcfce7;color:var(--green)}
 .rc-addr{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-map{padding:3px 9px;border-radius:7px;font-size:12px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
+.rc-map:hover{background:#bae6fd}
+#map-focus{display:none;align-items:center;justify-content:space-between;gap:8px;background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:7px}
+#map-focus.on{display:flex}
+#map-focus b{font-size:13px;color:#92400e}
+#map-focus span.sub{font-size:11px;color:#a16207;font-weight:600}
+#map-focus button{padding:7px 12px;border-radius:8px;font-size:12px;font-weight:800;border:none;cursor:pointer;white-space:nowrap}
+.mf-det{background:#1e40af;color:#fff;margin-right:5px}
+.mf-all{background:#fff;color:#92400e;border:1.5px solid #fcd34d!important}
 .rc-meta{font-size:11px;color:var(--sub)}.rc-cat{font-size:11px;font-weight:700;margin-top:2px}
 .bdr-생활{border-color:var(--green2)}.bdr-음식물{border-color:var(--yellow2)}.bdr-재활용{border-color:var(--blue2)}.bdr-hazard{border-color:var(--red2)}
 #map-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
@@ -295,7 +304,7 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="tabs">
       <div class="tab on" onclick="sw('form')" id="tab-form">✏️ 접수</div>
       <div class="tab" onclick="sw('list')" id="tab-list">📋 목록</div>
-      <div class="tab" onclick="sw('map')" id="tab-map">🗺 지도</div>
+      <div class="tab" onclick="swMap()" id="tab-map">🗺 지도</div>
       <div class="tab" onclick="sw('photo')" id="tab-photo">📦 보관함</div>
     </div>
   </div>
@@ -492,7 +501,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <button class="flt-btn f-생활" onclick="setFlt('생활',this)">🟢 생활</button>
       <button class="flt-btn f-음식물" onclick="setFlt('음식물',this)">🟡 음식물</button>
       <button class="flt-btn f-재활용" onclick="setFlt('재활용',this)">🔵 재활용</button>
-      <button class="flt-btn f-발생" onclick="setFlt('occur',this)">🚨 사고발생</button>
+      <button class="flt-btn f-발생" onclick="setFlt('occur',this)">🚨 사고발생지점</button>
       <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">⚠️ 사고재해예방</button>
     </div>
     <div id="date-filter">
@@ -522,6 +531,13 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고Mid</div>
       <div class="leg"><div class="leg-dot" style="background:#f87171"></div>사고Low</div>
       <div class="leg"><div class="leg-dot" style="background:#f97316"></div>예방지역</div>
+    </div>
+    <div id="map-focus">
+      <div><b id="mf-title"></b><br><span class="sub" id="mf-sub"></span></div>
+      <div style="flex-shrink:0">
+        <button class="mf-det" id="mf-det">📋 상세보기</button>
+        <button class="mf-all" onclick="clearFocus()">전체 지도</button>
+      </div>
     </div>
     <div id="map-stat"></div>
     <div id="map-container"></div>
@@ -822,6 +838,8 @@ function sw(t){
   ['form','list','map','photo'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
   if(t==='map')setTimeout(initMap,80);
 }
+// 지도 탭을 직접 누르면 선택 해제하고 전체를 보여줌
+function swMap(){ focusId=null; sw('map'); }
 
 // ── 폼 타입 ──
 let hKind='사고재해예방';
@@ -1196,7 +1214,12 @@ function renderList(){
     const st=isH?(isOccur(r)?'🚨 사고발생지점':'⚠️ 사고재해예방'):(r.status==='처리완료'?'✅ '+r.status:r.status==='처리중'?'🔄 '+r.status:'📩 '+r.status);
     const stCls=isH?'st-처리완료':('st-'+r.status);
     return `<div class="rec-card bdr-${bdr}" onclick="openDet('${r.id}')">
-      <div class="rc-top"><span class="rc-no">${no||''}</span><span class="rc-status ${stCls}">${st}</span></div>
+      <div class="rc-top"><span class="rc-no">${no||''}</span>
+        <span style="display:flex;align-items:center;gap:6px">
+          ${(r.addrPos&&r.addrPos.lat)?`<button class="rc-map" onclick="event.stopPropagation();showOnMap('${r.id}')" title="지도에서 이 건만 보기">🗺</button>`:''}
+          <span class="rc-status ${stCls}">${st}</span>
+        </span>
+      </div>
       <div class="rc-addr">${r.addr}</div>
       <div class="rc-meta">${r.date||''} ${isH?(r.dong||''):'('+r.subtype+')'}</div>
       <div class="rc-cat" style="color:${pinColor(r)}">${isH?'⚠️ '+r.riskType:'📋 '+r.category}</div>
@@ -1213,14 +1236,42 @@ function initMap(){
   initFixedMarkers(); // 주요 장소 고정 마커
   renderMap();
 }
+// 목록에서 고른 한 건만 지도에 띄우기
+let focusId=null;
+function showOnMap(id){
+  const r=recs.find(x=>x.id===id);
+  if(!r){toast('기록을 찾을 수 없습니다');return;}
+  if(!(r.addrPos&&r.addrPos.lat)){toast('이 건은 위치가 지정되지 않았습니다');return;}
+  focusId=id;
+  sw('map');
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.id==='tab-map');});
+  setTimeout(function(){ initMap(); renderMap(); },120);
+}
+function clearFocus(){ focusId=null; renderMap(); }
+
 function renderMap(){
   if(!kakaoMap)return;
   mapPins.forEach(p=>p.setMap(null));mapPins=[];
-  const list=recs.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
+  let list=recs.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
   const miss=recs.length-list.length;
+  const fb=$('map-focus');
+  const fr=focusId?recs.find(x=>x.id===focusId):null;
+  if(fr){
+    list=[fr];
+    const isH=fr.recType==='hazard';
+    $('mf-title').textContent='📍 '+((isH?fr.hazardNo:fr.no)||'')+'  '+(fr.addr||'');
+    $('mf-sub').textContent=(isH?(isOccur(fr)?'사고발생지점':'사고재해예방'):fr.subtype||'')
+      +' · '+((isH?fr.inspDate:fr.date)||'');
+    $('mf-det').onclick=function(){ openDet(fr.id); };
+    fb.classList.add('on');
+  }else{
+    fb.classList.remove('on');
+  }
   const st=$('map-stat');
-  if(st)st.innerHTML='지도 표시 <b>'+list.length+'건</b> / 전체 '+recs.length+'건'
-    +(miss?' · <span class="miss">위치 미지정 '+miss+'건</span>':'');
+  if(st)st.innerHTML = fr
+    ? '선택한 <b>1건</b>만 표시 중 — 전체를 보려면 위 <b>전체 지도</b>를 누르세요'
+    : ('지도 표시 <b>'+list.length+'건</b> / 전체 '+recs.length+'건'
+       +(miss?' · <span class="miss">위치 미지정 '+miss+'건</span>':''));
   if(!list.length)return;
   const bounds=new kakao.maps.LatLngBounds();
   list.forEach(r=>{
@@ -1245,7 +1296,7 @@ function renderMap(){
   // 모든 마커가 보이도록 자동 맞춤 (가락동처럼 멀리 있는 건도 화면에 들어옴)
   if(list.length===1){
     kakaoMap.setCenter(new kakao.maps.LatLng(list[0].addrPos.lat,list[0].addrPos.lng));
-    kakaoMap.setLevel(4);
+    kakaoMap.setLevel(focusId?3:4);
   }else{
     kakaoMap.setBounds(bounds,70,70,70,70);
   }

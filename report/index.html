@@ -350,6 +350,7 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="자전거포">자전거포</option>
             <option value="삼전현대">삼전현대</option>
             <option value="가락시장">가락시장</option>
+            <option value="__etc">기타 (직접 입력)</option>
           </select>
         </div>
         <div class="form-row">
@@ -417,9 +418,11 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="form-card">
         <div class="form-2col">
           <div><span class="form-label">행정동</span>
-            <select class="form-select" id="h-dong"><option value="">선택</option>
+            <select class="form-select" id="h-dong" onchange="onAdminDong()"><option value="">선택</option>
               <option>잠실동</option><option>삼전동</option><option>잠실3동</option>
+              <option value="기타">기타 (직접 입력)</option>
             </select>
+            <input class="form-input" id="h-dong-etc" type="text" placeholder="행정동 직접 입력 (예: 석촌동)" style="display:none;margin-top:6px" autocomplete="off">
           </div>
           <div><span class="form-label" id="h-datelabel">점검일자</span><input class="form-input" id="h-inspdate" type="date"></div>
         </div>
@@ -439,6 +442,7 @@ input,select,textarea{font-family:inherit;outline:none}
             <option value="자전거포">자전거포</option>
             <option value="삼전현대">삼전현대</option>
             <option value="가락시장">가락시장</option>
+            <option value="__etc">기타 (직접 입력)</option>
           </select>
         </div>
         <div class="form-row">
@@ -972,6 +976,28 @@ function confirmMapPick(){
 function closeMapPick(){ $('mappick-bg').classList.remove('on'); }
 
 // ── 동 구분 선택 → 주소란 자동 입력 ──
+// 행정동 '기타' 선택 시 직접 입력칸 열기
+function onEditDong(){
+  const s=$('e-dong'), e=$('e-dong-etc');
+  if(!s||!e)return;
+  const etc = s.value==='기타';
+  e.style.display = etc ? 'block' : 'none';
+  if(etc) setTimeout(function(){e.focus();},50); else e.value='';
+}
+function onAdminDong(){
+  const s=$('h-dong'), e=$('h-dong-etc');
+  if(!s||!e)return;
+  const etc = s.value==='기타';
+  e.style.display = etc ? 'block' : 'none';
+  if(etc) setTimeout(function(){e.focus();},50); else e.value='';
+}
+// 저장할 행정동 값 (기타면 직접 입력한 글자)
+function adminDongValue(){
+  const s=$('h-dong'), e=$('h-dong-etc');
+  if(!s) return '';
+  return (s.value==='기타') ? (e?e.value.trim():'') : s.value;
+}
+
 function onDongChange(form){
   const selEl = document.getElementById(form==='m' ? 'm-dong-sel' : 'h-dong-sel');
   const val = selEl ? selEl.value : '';
@@ -979,6 +1005,14 @@ function onDongChange(form){
   const addrEl = form==='m' ? $('m-addr') : $('h-addr');
   const okEl   = form==='m' ? $('m-addr-ok') : $('h-addr-ok');
   if(form==='m') mPosManual=false; else hPosManual=false;  // 목록에서 새로 고르면 수동 지정 해제
+  // 기타 — 주소를 직접 적고 📍확인 또는 🗺지도로 위치 지정
+  if(val==='__etc'){
+    if(form==='m') mPos=null; else hPos=null;
+    addrEl.value=''; addrEl.focus();
+    okEl.innerHTML=ADDR_WARN;
+    selEl.value='';
+    return;
+  }
   const loc = FIXED_LOCS.find(function(l){return l.name===val;});
   if(loc){
     addrEl.value = loc.short;
@@ -1111,7 +1145,7 @@ async function submitH(){
   if(!$('h-risktype').value.trim()){toast('위험요인을 입력하세요');return;}
   if(!hPos && !confirm('⚠️ 주소 확인 해주세요.\n\n위치가 지정되지 않아 지도에 표시되지 않습니다.\n그래도 저장할까요?'))return;
   const id=uuid();
-  const rec={id,recType:'hazard',hKind:hKind,hazardNo:nextHNo(),dong:$('h-dong').value,
+  const rec={id,recType:'hazard',hKind:hKind,hazardNo:nextHNo(),dong:adminDongValue(),
     addr:$('h-addr').value.trim(),addrPos:hPos||null,riskType:$('h-risktype').value.trim(),
     riskContent:$('h-riskcont').value.trim(),inspResult:'',
     action:$('h-action').value.trim(),inspDate:$('h-inspdate').value,
@@ -1133,7 +1167,8 @@ async function submitH(){
 function resetHForm(){
   ['h-addr','h-risktype','h-riskcont','h-action','h-note','h-preaddr'].forEach(i=>$(i).value='');
   pPos=null;$('h-preaddr-ok').textContent='';
-  $('h-dong').value='';$('h-risktype').value='';$('h-level').value='High';
+  $('h-dong').value='';if($('h-dong-etc')){$('h-dong-etc').value='';$('h-dong-etc').style.display='none';}
+  $('h-risktype').value='';$('h-level').value='High';
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';$('h-extra').value='';
   hPos=null;hPosManual=false;$('h-addr-ok').innerHTML=ADDR_WARN;
   $('h-dong-sel').value='';
@@ -1580,9 +1615,13 @@ function openEdit(id){
     b=`<div class="form-2col">
       <div><span class="form-label">점검일자</span><input class="form-input" id="e-inspdate" type="date" value="${E(r.inspDate)}"></div>
       <div><span class="form-label">행정동</span>
-        <select class="form-select" id="e-dong"><option value="">선택</option>
+        <select class="form-select" id="e-dong" onchange="onEditDong()"><option value="">선택</option>
         ${['잠실동','삼전동','잠실3동'].map(d=>'<option'+(r.dong===d?' selected':'')+'>'+d+'</option>').join('')}
-        </select></div>
+        <option value="기타"${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?' selected':''}>기타 (직접 입력)</option>
+        </select>
+        <input class="form-input" id="e-dong-etc" type="text" placeholder="행정동 직접 입력"
+          value="${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?E(r.dong):''}"
+          style="margin-top:6px;${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?'':'display:none'}"></div>
     </div>
     <div class="form-row"><span class="form-label">위험지점 주소 *</span><input class="form-input" id="e-addr" value="${E(r.addr)}"></div>
     <div class="form-row"><span class="form-label">위험등급</span>
@@ -1649,7 +1688,7 @@ function saveEdit(id){
   u.addr=addr;
   if(isH){
     u.inspDate=$('e-inspdate').value;
-    u.dong=$('e-dong').value;
+    u.dong = ($('e-dong').value==='기타') ? ($('e-dong-etc')?$('e-dong-etc').value.trim():'') : $('e-dong').value;
     u.riskType=$('e-risktype').value.trim();
     u.riskLevel=$('e-level').value;
     u.riskContent=$('e-riskcont').value.trim();

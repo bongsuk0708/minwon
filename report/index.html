@@ -125,7 +125,12 @@ input,select,textarea{font-family:inherit;outline:none}
 .rc-det:hover{background:#bae6fd}
 .rc-mapmark{font-size:11px;opacity:.65}
 /* 직원 */
-.st-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.st-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+#st-left-wrap{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--sub);cursor:pointer;white-space:nowrap}
+#st-left-wrap input{cursor:pointer;margin:0}
+.st-card.left{opacity:.5}
+.st-badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:9px;background:#fee2e2;color:var(--red);margin-top:4px}
+.st-rank{font-size:12.5px;font-weight:700;color:var(--blue)}
 #st-count{font-size:12px;font-weight:700;color:var(--sub)}
 .st-add{padding:8px 14px;border-radius:9px;font-size:13px;font-weight:800;background:var(--blue);color:#fff;border:none;cursor:pointer}
 .st-add:hover{background:#1e3a8a}
@@ -576,7 +581,11 @@ input,select,textarea{font-family:inherit;outline:none}
   <div class="pane" id="pane-staff">
     <div class="st-bar">
       <span id="st-count"></span>
-      <button class="st-add" onclick="openStaffEdit()">＋ 직원 추가</button>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <select class="form-select" id="st-dept" onchange="renderStaff()" style="width:auto;min-width:130px;font-size:12.5px;padding:7px 9px"></select>
+        <label id="st-left-wrap"><input type="checkbox" id="st-showleft" onchange="renderStaff()"> 퇴사자 포함</label>
+        <button class="st-add" onclick="openStaffEdit()">＋ 직원 추가</button>
+      </div>
     </div>
     <div id="st-list"></div>
   </div>
@@ -1631,21 +1640,51 @@ function subStaff(){
 
 function renderStaff(){
   const el=$('st-list'); if(!el)return;
-  $('st-count').textContent='총 '+staffList.length+'명';
-  if(!staffList.length){
-    el.innerHTML='<div id="st-empty">등록된 직원이 없습니다.<br>위 <b>＋ 직원 추가</b>를 눌러 등록하세요.</div>';
+  const showLeft = $('st-showleft') && $('st-showleft').checked;
+  // 부서 목록 채우기
+  const sel=$('st-dept');
+  if(sel){
+    const cur=sel.value;
+    const depts=[...new Set(staffList.map(function(s){return (s.dept||'').trim();}).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">부서 전체</option>'+depts.map(function(d){return '<option>'+mkEsc(d)+'</option>';}).join('');
+    sel.value = depts.indexOf(cur)>=0 ? cur : '';
+  }
+  const dept = sel ? sel.value : '';
+  let list=staffList.filter(function(s){
+    if(!showLeft && s.status==='퇴사') return false;
+    if(dept && (s.dept||'').trim()!==dept) return false;
+    return true;
+  });
+  // 재직자 먼저 → 부서 → 입사일
+  list.sort(function(a,b){
+    const la=(a.status==='퇴사')?1:0, lb=(b.status==='퇴사')?1:0;
+    if(la!==lb) return la-lb;
+    const d=String(a.dept||'').localeCompare(String(b.dept||''));
+    if(d) return d;
+    return String(a.joined||'').localeCompare(String(b.joined||''));
+  });
+  const nLeft=staffList.filter(function(s){return s.status==='퇴사';}).length;
+  $('st-count').innerHTML='재직 <b>'+(staffList.length-nLeft)+'명</b>'
+    +(nLeft?' · 퇴사 '+nLeft+'명':'')
+    +(dept?' · 표시 '+list.length+'명':'');
+  if(!list.length){
+    el.innerHTML='<div id="st-empty">보여줄 직원이 없습니다.<br>위 <b>＋ 직원 추가</b>를 눌러 등록하세요.</div>';
     return;
   }
-  el.innerHTML=staffList.map(function(s){
+  el.innerHTML=list.map(function(s){
     const tel=String(s.tel||'').trim();
-    return '<div class="st-card">'
+    const gone=s.status==='퇴사';
+    return '<div class="st-card'+(gone?' left':'')+'">'
       +(s.photo
         ? '<img class="st-photo" src="'+s.photo+'" data-fn="'+mkEsc(s.name||'직원')+'" onclick="openImg(this)" title="눌러서 크게 보기">'
         : '<div class="st-noimg">👤</div>')
-      +'<div class="st-name">'+mkEsc(s.name||'(이름 없음)')+'</div>'
-      +'<div class="st-row">입사 '+mkEsc(s.joined||'-')+'</div>'
-      +'<div class="st-row">'+(tel?('<a href="tel:'+mkEsc(tel.replace(/[^0-9+]/g,''))+'">'+mkEsc(tel)+'</a>'):'-')+'</div>'
-      +'<button class="st-edit" onclick="openStaffEdit(\''+s.id+'\')">✏️ 수정</button>'
+      +'<div class="st-name">'+mkEsc(s.name||'(이름 없음)')
+        +(s.rank?' <span class="st-rank">('+mkEsc(s.rank)+')</span>':'')+'</div>'
+      +'<div class="st-row">'+mkEsc(s.dept||'-')+(s.car?' ('+mkEsc(s.car)+')':'')+'</div>'
+      +'<div class="st-row">'+mkEsc(s.joined||'-')
+        +(tel?' (<a href="tel:'+mkEsc(tel.replace(/[^0-9+]/g,''))+'">'+mkEsc(tel)+'</a>)':'')+'</div>'
+      +(gone?'<div class="st-badge">퇴사 '+mkEsc(s.leftAt||'')+'</div>':'')
+      +'<br><button class="st-edit" onclick="openStaffEdit(\''+s.id+'\')">✏️ 수정</button>'
       +'</div>';
   }).join('');
 }
@@ -1664,10 +1703,30 @@ function openStaffEdit(id){
     +'</div>'
     +'<div class="form-row"><span class="form-label">이름 *</span>'
     +'<input class="form-input" id="sp-name" value="'+(s?E(s.name):'')+'" placeholder="홍길동"></div>'
-    +'<div class="form-row"><span class="form-label">입사년도</span>'
+    +'<div class="form-2col">'
+    +'<div><span class="form-label">보직 · 직급</span>'
+    +'<input class="form-input" id="sp-rank" value="'+(s?E(s.rank):'')+'" placeholder="운전원"></div>'
+    +'<div><span class="form-label">차량</span>'
+    +'<input class="form-input" id="sp-car" value="'+(s?E(s.car):'')+'" placeholder="84루3587"></div>'
+    +'</div>'
+    +'<div class="form-row"><span class="form-label">부서</span>'
+    +'<input class="form-input" id="sp-dept" value="'+(s?E(s.dept):'')+'" placeholder="생활쓰레기 수거"></div>'
+    +'<div class="form-2col">'
+    +'<div><span class="form-label">입사년도</span>'
     +'<input class="form-input" id="sp-joined" type="date" value="'+(s?E(s.joined):'')+'"></div>'
-    +'<div class="form-row"><span class="form-label">연락처</span>'
-    +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>';
+    +'<div><span class="form-label">연락처</span>'
+    +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>'
+    +'</div>'
+    +'<div class="form-2col">'
+    +'<div><span class="form-label">재직 상태</span>'
+    +'<select class="form-select" id="sp-status" onchange="onStStatus()">'
+    +'<option value="재직"'+((!s||s.status!=='퇴사')?' selected':'')+'>재직</option>'
+    +'<option value="퇴사"'+((s&&s.status==='퇴사')?' selected':'')+'>퇴사</option>'
+    +'</select></div>'
+    +'<div id="sp-left-wrap" style="'+((s&&s.status==='퇴사')?'':'display:none')+'">'
+    +'<span class="form-label">퇴사일</span>'
+    +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>'
+    +'</div>';
   $('modal-actions').innerHTML =
     (id?'<button class="act-btn del" onclick="delStaff(\''+id+'\')">🗑 삭제</button>':'')
     +'<button class="act-btn edit" onclick="closeMod()">취소</button>'
@@ -1690,10 +1749,18 @@ async function onStaffPhoto(input){
   finally{ $('photo-progress').classList.remove('on'); input.value=''; }
 }
 
+function onStStatus(){
+  const w=$('sp-left-wrap');
+  if(w) w.style.display = ($('sp-status').value==='퇴사') ? 'block' : 'none';
+}
 function saveStaff(){
   const name=$('sp-name').value.trim();
   if(!name){toast('이름을 입력하세요');return;}
-  const d={name:name, joined:$('sp-joined').value, tel:$('sp-tel').value.trim(), updatedAt:nowStr()};
+  const st=$('sp-status').value;
+  const d={name:name, rank:$('sp-rank').value.trim(), dept:$('sp-dept').value.trim(),
+           car:$('sp-car').value.trim(), joined:$('sp-joined').value,
+           tel:$('sp-tel').value.trim(), status:st,
+           leftAt:(st==='퇴사')?$('sp-left').value:'', updatedAt:nowStr()};
   if(stTmpPhoto) d.photo=stTmpPhoto;
   const id=stEditId||('s'+Date.now().toString(36));
   const ref=STAFF.child(id);

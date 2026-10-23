@@ -124,6 +124,22 @@ input,select,textarea{font-family:inherit;outline:none}
 .rc-det{padding:3px 9px;border-radius:7px;font-size:11.5px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
 .rc-det:hover{background:#bae6fd}
 .rc-mapmark{font-size:11px;opacity:.65}
+/* 직원 */
+.st-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+#st-count{font-size:12px;font-weight:700;color:var(--sub)}
+.st-add{padding:8px 14px;border-radius:9px;font-size:13px;font-weight:800;background:var(--blue);color:#fff;border:none;cursor:pointer}
+.st-add:hover{background:#1e3a8a}
+#st-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.st-card{background:var(--card);border-radius:var(--radius);padding:12px 10px;box-shadow:var(--shadow);text-align:center}
+.st-photo{width:84px;height:84px;border-radius:50%;object-fit:cover;border:2.5px solid var(--line);margin:0 auto 8px;display:block;cursor:pointer;background:var(--bg)}
+.st-noimg{width:84px;height:84px;border-radius:50%;border:2.5px dashed var(--line);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--sub);background:var(--bg)}
+.st-name{font-size:15px;font-weight:800;margin-bottom:5px}
+.st-row{font-size:11.5px;color:var(--sub);font-weight:600;line-height:1.7}
+.st-row a{color:var(--blue);text-decoration:none;font-weight:800}
+.st-edit{margin-top:8px;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
+.st-edit:hover{background:#bae6fd}
+#st-empty{text-align:center;padding:40px 16px;color:var(--sub);font-size:14px;line-height:1.8}
+.sp-prev{width:110px;height:110px;border-radius:50%;object-fit:cover;border:2.5px solid var(--line);display:block;margin:0 auto 8px;background:var(--bg);cursor:pointer}
 .mf-allbtn{padding:2px 9px;border-radius:7px;font-size:11px;font-weight:800;background:#1e40af;color:#fff;border:none;cursor:pointer;margin-left:2px}
 .rec-card:hover{box-shadow:0 2px 14px rgba(30,64,175,.18)}
 #map-focus{display:none;align-items:center;justify-content:space-between;gap:8px;background:#fef3c7;border:1.5px solid #fcd34d;border-radius:10px;padding:9px 12px;margin-bottom:7px}
@@ -304,6 +320,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <div class="tab" onclick="sw('list')" id="tab-list">📋 목록</div>
       <div class="tab" onclick="swMap()" id="tab-map">🗺 지도</div>
       <div class="tab" onclick="sw('photo')" id="tab-photo">📦 보관함</div>
+      <div class="tab" onclick="sw('staff')" id="tab-staff">👷 직원</div>
     </div>
   </div>
 
@@ -555,6 +572,15 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="ph-grid"></div>
   </div>
 
+  <!-- 직원 -->
+  <div class="pane" id="pane-staff">
+    <div class="st-bar">
+      <span id="st-count"></span>
+      <button class="st-add" onclick="openStaffEdit()">＋ 직원 추가</button>
+    </div>
+    <div id="st-list"></div>
+  </div>
+
 <!-- 상세 모달 -->
 <div id="modal-bg" onclick="closeMod(event)">
   <div id="modal">
@@ -621,6 +647,7 @@ const db=firebase.database();
 const RECS=db.ref('report/recs');
 const PHOTOS=db.ref('report/photos'); // 사진 별도 저장
 const LOCS=db.ref('report/locs');     // 장소 좌표 보정값 (모든 기기 공유)
+const STAFF=db.ref('report/staff');   // 직원 명부
 
 let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
 let mSub='',mPos=null,hPos=null,curDetailId=null;
@@ -756,6 +783,8 @@ function connectFB(){
     netBar('ok','✅ 연결됨 ('+recs.length+'건)');
   },()=>{netBar('err','⚠️ 오프라인');});
 
+  subStaff();
+
   // 저장된 장소 좌표 보정값 적용 (사용자가 지도로 찍은 값이 항상 최우선)
   LOCS.on('value',snap=>{
     locOverrides=snap.val()||{};
@@ -827,8 +856,9 @@ function nextHNo(){
 
 // ── 탭 ──
 function sw(t){
-  ['form','list','map','photo'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
+  ['form','list','map','photo','staff'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
   if(t==='map')setTimeout(initMap,80);
+  if(t==='staff')renderStaff();
 }
 // 지도 탭을 직접 누르면 선택 해제하고 전체를 보여줌
 function swMap(){ focusId=null; sw('map'); }
@@ -1586,6 +1616,99 @@ document.addEventListener('keydown',function(e){
     $('imgview-bg').classList.remove('on'); $('imgview-img').src='';
   }
 });
+
+// ── 직원 명부 ──
+let staffList=[], stTmpPhoto=null, stEditId=null;
+
+function subStaff(){
+  STAFF.on('value',function(snap){
+    const v=snap.val()||{};
+    staffList=Object.keys(v).map(function(k){ return Object.assign({id:k},v[k]); });
+    staffList.sort(function(a,b){ return String(a.joined||'').localeCompare(String(b.joined||'')); });
+    if($('pane-staff').classList.contains('on')) renderStaff();
+  });
+}
+
+function renderStaff(){
+  const el=$('st-list'); if(!el)return;
+  $('st-count').textContent='총 '+staffList.length+'명';
+  if(!staffList.length){
+    el.innerHTML='<div id="st-empty">등록된 직원이 없습니다.<br>위 <b>＋ 직원 추가</b>를 눌러 등록하세요.</div>';
+    return;
+  }
+  el.innerHTML=staffList.map(function(s){
+    const tel=String(s.tel||'').trim();
+    return '<div class="st-card">'
+      +(s.photo
+        ? '<img class="st-photo" src="'+s.photo+'" data-fn="'+mkEsc(s.name||'직원')+'" onclick="openImg(this)" title="눌러서 크게 보기">'
+        : '<div class="st-noimg">👤</div>')
+      +'<div class="st-name">'+mkEsc(s.name||'(이름 없음)')+'</div>'
+      +'<div class="st-row">입사 '+mkEsc(s.joined||'-')+'</div>'
+      +'<div class="st-row">'+(tel?('<a href="tel:'+mkEsc(tel.replace(/[^0-9+]/g,''))+'">'+mkEsc(tel)+'</a>'):'-')+'</div>'
+      +'<button class="st-edit" onclick="openStaffEdit(\''+s.id+'\')">✏️ 수정</button>'
+      +'</div>';
+  }).join('');
+}
+
+function openStaffEdit(id){
+  stEditId=id||null; stTmpPhoto=null;
+  const s=id?staffList.find(function(x){return x.id===id;}):null;
+  const E=mkEsc;
+  $('modal-title').textContent=id?'✏️ 직원 정보 수정':'＋ 직원 추가';
+  $('modal-body').innerHTML=
+    '<div class="form-row" style="text-align:center">'
+    +(s&&s.photo?'<img class="sp-prev" id="sp-prev" src="'+s.photo+'" onclick="$(\'sp-file\').click()">'
+                :'<div class="st-noimg" id="sp-prev" style="width:110px;height:110px;cursor:pointer" onclick="$(\'sp-file\').click()">👤</div>')
+    +'<input type="file" id="sp-file" accept="image/*" style="display:none" onchange="onStaffPhoto(this)">'
+    +'<button class="st-edit" onclick="$(\'sp-file\').click()">📷 사진 '+(s&&s.photo?'교체':'추가')+'</button>'
+    +'</div>'
+    +'<div class="form-row"><span class="form-label">이름 *</span>'
+    +'<input class="form-input" id="sp-name" value="'+(s?E(s.name):'')+'" placeholder="홍길동"></div>'
+    +'<div class="form-row"><span class="form-label">입사년도</span>'
+    +'<input class="form-input" id="sp-joined" type="date" value="'+(s?E(s.joined):'')+'"></div>'
+    +'<div class="form-row"><span class="form-label">연락처</span>'
+    +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>';
+  $('modal-actions').innerHTML =
+    (id?'<button class="act-btn del" onclick="delStaff(\''+id+'\')">🗑 삭제</button>':'')
+    +'<button class="act-btn edit" onclick="closeMod()">취소</button>'
+    +'<button class="act-btn mod" onclick="saveStaff()">💾 저장</button>';
+  $('modal-bg').classList.add('on');
+  curDetailId=null;
+}
+
+async function onStaffPhoto(input){
+  const f=input.files[0]; if(!f)return;
+  $('photo-progress').classList.add('on');
+  try{
+    stTmpPhoto=await compressPhoto(f,220,0.62);   // 명부용이라 작게
+    const pv=$('sp-prev');
+    if(pv){
+      if(pv.tagName==='IMG'){ pv.src=stTmpPhoto; }
+      else{ pv.outerHTML='<img class="sp-prev" id="sp-prev" src="'+stTmpPhoto+'" onclick="$(\'sp-file\').click()">'; }
+    }
+  }catch(e){ toast('⚠️ 사진 처리 실패'); }
+  finally{ $('photo-progress').classList.remove('on'); input.value=''; }
+}
+
+function saveStaff(){
+  const name=$('sp-name').value.trim();
+  if(!name){toast('이름을 입력하세요');return;}
+  const d={name:name, joined:$('sp-joined').value, tel:$('sp-tel').value.trim(), updatedAt:nowStr()};
+  if(stTmpPhoto) d.photo=stTmpPhoto;
+  const id=stEditId||('s'+Date.now().toString(36));
+  const ref=STAFF.child(id);
+  (stEditId?ref.update(d):ref.set(d)).then(function(){
+    toast(stEditId?'✅ 수정 완료':'✅ 직원 추가 완료');
+    closeMod(); stTmpPhoto=null; stEditId=null;
+  }).catch(function(){ toast('⚠️ 저장 실패'); });
+}
+
+function delStaff(id){
+  const s=staffList.find(function(x){return x.id===id;});
+  if(!confirm((s&&s.name?s.name+' ':'')+'직원을 명부에서 삭제할까요?'))return;
+  STAFF.child(id).remove().then(function(){ toast('🗑 삭제 완료'); closeMod(); })
+    .catch(function(){ toast('⚠️ 삭제 실패'); });
+}
 
 // ── 저장된 건 수정 ──
 function openEdit(id){

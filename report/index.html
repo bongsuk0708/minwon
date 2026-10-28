@@ -433,34 +433,37 @@ input,select,textarea{font-family:inherit;outline:none}
 
     <div id="form-hazard" style="display:none">
       <div class="form-card">
-        <div class="form-2col">
-          <div><span class="form-label">행정동</span>
-            <select class="form-select" id="h-dong" onchange="onAdminDong()"><option value="">선택</option>
-              <option>잠실동</option><option>삼전동</option><option>잠실3동</option>
-              <option value="기타">기타 (직접 입력)</option>
-            </select>
-            <input class="form-input" id="h-dong-etc" type="text" placeholder="행정동 직접 입력 (예: 석촌동)" style="display:none;margin-top:6px" autocomplete="off">
-          </div>
-          <div><span class="form-label" id="h-datelabel">점검일자</span><input class="form-input" id="h-inspdate" type="date"></div>
+        <div class="form-row">
+          <span class="form-label" id="h-datelabel">점검일자</span>
+          <input class="form-input" id="h-inspdate" type="date">
         </div>
         <div class="form-row">
-          <span class="form-label">📌 동 구분 <button class="loc-mgr-btn" onclick="openLocMgr()">📍 장소 위치 수정</button></span>
+          <span class="form-label">📌 행정동 · 동 구분 <button class="loc-mgr-btn" onclick="openLocMgr()">📍 장소 위치 수정</button></span>
           <select class="form-select" id="h-dong-sel" onchange="onDongChange('h')">
-            <option value="">동/위치 선택</option>
-            <option value="삼전동">삼전동</option>
-            <option value="잠실본동">잠실본동</option>
-            <option value="주공5단지">주공5단지</option>
-            <option value="트리지움">트리지움</option>
-            <option value="레이크">레이크</option>
-            <option value="잠실현대">잠실현대</option>
-            <option value="우성4차">우성4차</option>
-            <option value="석촌호수">석촌호수</option>
-            <option value="롯데월드">롯데월드</option>
-            <option value="자전거포">자전거포</option>
-            <option value="삼전현대">삼전현대</option>
-            <option value="가락시장">가락시장</option>
+            <option value="">행정동 또는 장소 선택</option>
+            <optgroup label="행정동">
+              <option value="잠실동">잠실동</option>
+              <option value="삼전동">삼전동</option>
+              <option value="잠실3동">잠실3동</option>
+              <option value="가락동">가락동</option>
+            </optgroup>
+            <optgroup label="아파트 · 장소">
+              <option value="잠실본동">잠실본동</option>
+              <option value="주공5단지">주공5단지</option>
+              <option value="트리지움">트리지움</option>
+              <option value="레이크">레이크</option>
+              <option value="잠실현대">잠실현대</option>
+              <option value="우성4차">우성4차</option>
+              <option value="석촌호수">석촌호수</option>
+              <option value="롯데월드">롯데월드</option>
+              <option value="자전거포">자전거포</option>
+              <option value="삼전현대">삼전현대</option>
+              <option value="가락시장">가락시장</option>
+            </optgroup>
             <option value="__etc">기타 (직접 입력)</option>
           </select>
+          <input type="hidden" id="h-dong">
+          <div id="h-dongshow" style="font-size:11.5px;color:var(--sub);font-weight:700;margin-top:4px"></div>
         </div>
         <div class="form-row">
           <span class="form-label" id="h-addrlabel">위험지점 주소 *</span>
@@ -1002,19 +1005,20 @@ function onEditDong(){
   e.style.display = etc ? 'block' : 'none';
   if(etc) setTimeout(function(){e.focus();},50); else e.value='';
 }
-function onAdminDong(){
-  const s=$('h-dong'), e=$('h-dong-etc');
-  if(!s||!e)return;
-  const etc = s.value==='기타';
-  e.style.display = etc ? 'block' : 'none';
-  if(etc) setTimeout(function(){e.focus();},50); else e.value='';
+// 고른 장소에서 행정동을 자동으로 정함 (아파트는 소속 행정동, 행정동은 그대로)
+const DONG_NAMES=['잠실동','삼전동','잠실3동','가락동'];
+function setHDong(val){
+  let d='';
+  if(DONG_NAMES.indexOf(val)>=0) d=val;
+  else{
+    const loc=FIXED_LOCS.find(function(l){return l.name===val;});
+    if(loc) d=loc.dong||'';
+  }
+  const el=$('h-dong'); if(el) el.value=d;
+  const sh=$('h-dongshow');
+  if(sh) sh.textContent = d ? ('행정동: '+d+'  (저장 후 수정에서 바꿀 수 있습니다)') : '';
 }
-// 저장할 행정동 값 (기타면 직접 입력한 글자)
-function adminDongValue(){
-  const s=$('h-dong'), e=$('h-dong-etc');
-  if(!s) return '';
-  return (s.value==='기타') ? (e?e.value.trim():'') : s.value;
-}
+function adminDongValue(){ const e=$('h-dong'); return e?e.value.trim():''; }
 
 function onDongChange(form){
   const selEl = document.getElementById(form==='m' ? 'm-dong-sel' : 'h-dong-sel');
@@ -1023,8 +1027,10 @@ function onDongChange(form){
   const addrEl = form==='m' ? $('m-addr') : $('h-addr');
   const okEl   = form==='m' ? $('m-addr-ok') : $('h-addr-ok');
   if(form==='m') mPosManual=false; else hPosManual=false;  // 목록에서 새로 고르면 수동 지정 해제
+  if(form==='h') setHDong(val);   // 행정동 자동 기록
   // 기타 — 주소를 직접 적고 📍확인 또는 🗺지도로 위치 지정
   if(val==='__etc'){
+    if(form==='h') setHDong('');
     if(form==='m') mPos=null; else hPos=null;
     addrEl.value=''; addrEl.focus();
     okEl.innerHTML=ADDR_WARN;
@@ -1040,16 +1046,18 @@ function onDongChange(form){
     if(form==='m') mPos={lat:loc.lat,lng:loc.lng};
     else hPos={lat:loc.lat,lng:loc.lng};
   } else {
-    // 동만 선택 — 동 중심 좌표를 임시로 넣어 지도에 반드시 찍히게 함
-    const dc = DONG_CENTER[val];
+    // 행정동만 선택 — 동 중심을 지도에서 찾아 임시 좌표로 넣고, 뒤에 상세주소를 적게 함
     addrEl.value = val+' ';
-    if(dc){
-      if(form==='m') mPos={lat:dc.lat,lng:dc.lng};
-      else hPos={lat:dc.lat,lng:dc.lng};
-      okEl.innerHTML='<span class="warn">📍 '+val+' 중심 — 🗺️지도로 정확한 위치를 찍어주세요</span>';
-    }else{
-      okEl.innerHTML=ADDR_WARN;
-    }
+    if(form==='m') mPos=null; else hPos=null;
+    okEl.innerHTML='<span class="warn">⏳ '+val+' 위치 확인 중…</span>';
+    geoTry('서울 송파구 '+val, function(p){
+      if(p){
+        if(form==='m') mPos={lat:p.lat,lng:p.lng}; else hPos={lat:p.lat,lng:p.lng};
+        okEl.innerHTML='<span class="warn">📍 '+val+' 중심 — 뒤에 상세주소를 적고 📍확인, 또는 🗺️지도로 정확한 위치를 찍어주세요</span>';
+      }else{
+        okEl.innerHTML=ADDR_WARN;
+      }
+    });
   }
   addrEl.focus();
   var l=addrEl.value.length;
@@ -1199,7 +1207,7 @@ async function submitH(){
 }
 function resetHForm(){
   ['h-addr','h-risktype','h-riskcont','h-action','h-note','h-preaddr'].forEach(i=>$(i).value='');
-  $('h-dong').value='';if($('h-dong-etc')){$('h-dong-etc').value='';$('h-dong-etc').style.display='none';}
+  $('h-dong').value='';if($('h-dongshow'))$('h-dongshow').textContent='';
   $('h-risktype').value='';$('h-level').value='High';
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';$('h-extra').value='';
   hPos=null;hPosManual=false;$('h-addr-ok').innerHTML=ADDR_WARN;
@@ -1638,6 +1646,24 @@ function subStaff(){
   });
 }
 
+// 부서를 큰 구분으로 묶어서 필터
+const DEPT_GROUPS=[
+  {k:'생활', re:/생활|종량/},
+  {k:'재활', re:/재활/},
+  {k:'음식물', re:/음식물/},
+  {k:'대형', re:/대형/},
+  {k:'기동대', re:/기동|현장관리|순찰|대체근무/}
+];
+function deptMatch(dept, sel){
+  const d=String(dept||'').trim();
+  if(!sel) return true;
+  if(sel.indexOf('g:')===0){
+    const g=DEPT_GROUPS.find(function(x){return x.k===sel.slice(2);});
+    return g ? g.re.test(d) : false;
+  }
+  return d===sel;
+}
+
 function renderStaff(){
   const el=$('st-list'); if(!el)return;
   const showLeft = $('st-showleft') && $('st-showleft').checked;
@@ -1646,13 +1672,19 @@ function renderStaff(){
   if(sel){
     const cur=sel.value;
     const depts=[...new Set(staffList.map(function(s){return (s.dept||'').trim();}).filter(Boolean))].sort();
-    sel.innerHTML='<option value="">부서 전체</option>'+depts.map(function(d){return '<option>'+mkEsc(d)+'</option>';}).join('');
-    sel.value = depts.indexOf(cur)>=0 ? cur : '';
+    sel.innerHTML='<option value="">부서 전체</option>'
+      +'<optgroup label="구분">'
+      +DEPT_GROUPS.map(function(g){return '<option value="g:'+g.k+'">'+mkEsc(g.k)+'</option>';}).join('')
+      +'</optgroup>'
+      +'<optgroup label="상세 부서">'
+      +depts.map(function(d){return '<option value="'+mkEsc(d)+'">'+mkEsc(d)+'</option>';}).join('')
+      +'</optgroup>';
+    sel.value = (cur.indexOf('g:')===0 || depts.indexOf(cur)>=0) ? cur : '';
   }
   const dept = sel ? sel.value : '';
   let list=staffList.filter(function(s){
     if(!showLeft && s.status==='퇴사') return false;
-    if(dept && (s.dept||'').trim()!==dept) return false;
+    if(dept && !deptMatch(s.dept, dept)) return false;
     return true;
   });
   // 재직자 먼저 → 부서 → 입사일
@@ -1672,17 +1704,19 @@ function renderStaff(){
     return;
   }
   el.innerHTML=list.map(function(s){
-    const tel=String(s.tel||'').trim();
     const gone=s.status==='퇴사';
+    const rej=String(s.rejoined||'').trim();
     return '<div class="st-card'+(gone?' left':'')+'">'
       +(s.photo
         ? '<img class="st-photo" src="'+s.photo+'" data-fn="'+mkEsc(s.name||'직원')+'" onclick="openImg(this)" title="눌러서 크게 보기">'
         : '<div class="st-noimg">👤</div>')
       +'<div class="st-name">'+mkEsc(s.name||'(이름 없음)')
         +(s.rank?' <span class="st-rank">('+mkEsc(s.rank)+')</span>':'')+'</div>'
-      +'<div class="st-row">'+mkEsc(s.dept||'-')+(s.car?' ('+mkEsc(s.car)+')':'')+'</div>'
-      +'<div class="st-row">'+mkEsc(s.joined||'-')
-        +(tel?' (<a href="tel:'+mkEsc(tel.replace(/[^0-9+]/g,''))+'">'+mkEsc(tel)+'</a>)':'')+'</div>'
+      +'<div class="st-row">🏷 '+mkEsc(s.dept||'-')+'</div>'
+      +'<div class="st-row">👷 '+mkEsc(s.rank||'-')+'</div>'
+      +'<div class="st-row">🚚 '+mkEsc(s.car||'-')+'</div>'
+      +'<div class="st-row">📅 입사 '+mkEsc(s.joined||'-')+'</div>'
+      +(rej?'<div class="st-row" style="color:var(--blue)">↩ 재입사 '+mkEsc(rej)+'</div>':'')
       +(gone?'<div class="st-badge">퇴사 '+mkEsc(s.leftAt||'')+'</div>':'')
       +'<br><button class="st-edit" onclick="openStaffEdit(\''+s.id+'\')">✏️ 수정</button>'
       +'</div>';
@@ -1693,6 +1727,7 @@ function openStaffEdit(id){
   stEditId=id||null; stTmpPhoto=null;
   const s=id?staffList.find(function(x){return x.id===id;}):null;
   const E=mkEsc;
+  const st0 = (s&&s.status) ? s.status : '재직';
   $('modal-title').textContent=id?'✏️ 직원 정보 수정':'＋ 직원 추가';
   $('modal-body').innerHTML=
     '<div class="form-row" style="text-align:center">'
@@ -1712,21 +1747,23 @@ function openStaffEdit(id){
     +'<div class="form-row"><span class="form-label">부서</span>'
     +'<input class="form-input" id="sp-dept" value="'+(s?E(s.dept):'')+'" placeholder="생활쓰레기 수거"></div>'
     +'<div class="form-2col">'
-    +'<div><span class="form-label">입사년도</span>'
+    +'<div><span class="form-label">입사일자</span>'
     +'<input class="form-input" id="sp-joined" type="date" value="'+(s?E(s.joined):'')+'"></div>'
     +'<div><span class="form-label">연락처</span>'
     +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>'
     +'</div>'
-    +'<div class="form-2col">'
-    +'<div><span class="form-label">재직 상태</span>'
+    +'<div class="form-row"><span class="form-label">재직 상태</span>'
     +'<select class="form-select" id="sp-status" onchange="onStStatus()">'
-    +'<option value="재직"'+((!s||s.status!=='퇴사')?' selected':'')+'>재직</option>'
-    +'<option value="퇴사"'+((s&&s.status==='퇴사')?' selected':'')+'>퇴사</option>'
+    +'<option value="재직"'+((st0==='재직')?' selected':'')+'>재직</option>'
+    +'<option value="재입사"'+((st0==='재입사')?' selected':'')+'>재입사</option>'
+    +'<option value="퇴사"'+((st0==='퇴사')?' selected':'')+'>퇴사</option>'
     +'</select></div>'
-    +'<div id="sp-left-wrap" style="'+((s&&s.status==='퇴사')?'':'display:none')+'">'
+    +'<div class="form-row" id="sp-rejoin-wrap" style="'+((st0==='재입사')?'':'display:none')+'">'
+    +'<span class="form-label">재입사일 <span style="font-weight:700;color:var(--sub)">(위 입사일자는 처음 입사일로 그대로 두세요)</span></span>'
+    +'<input class="form-input" id="sp-rejoin" type="date" value="'+(s?E(s.rejoined):'')+'"></div>'
+    +'<div class="form-row" id="sp-left-wrap" style="'+((st0==='퇴사')?'':'display:none')+'">'
     +'<span class="form-label">퇴사일</span>'
-    +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>'
-    +'</div>';
+    +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>';
   $('modal-actions').innerHTML =
     (id?'<button class="act-btn del" onclick="delStaff(\''+id+'\')">🗑 삭제</button>':'')
     +'<button class="act-btn edit" onclick="closeMod()">취소</button>'
@@ -1750,8 +1787,10 @@ async function onStaffPhoto(input){
 }
 
 function onStStatus(){
-  const w=$('sp-left-wrap');
-  if(w) w.style.display = ($('sp-status').value==='퇴사') ? 'block' : 'none';
+  const v=$('sp-status').value;
+  const w=$('sp-left-wrap'), r=$('sp-rejoin-wrap');
+  if(w) w.style.display = (v==='퇴사')   ? 'block' : 'none';
+  if(r) r.style.display = (v==='재입사') ? 'block' : 'none';
 }
 function saveStaff(){
   const name=$('sp-name').value.trim();
@@ -1760,6 +1799,7 @@ function saveStaff(){
   const d={name:name, rank:$('sp-rank').value.trim(), dept:$('sp-dept').value.trim(),
            car:$('sp-car').value.trim(), joined:$('sp-joined').value,
            tel:$('sp-tel').value.trim(), status:st,
+           rejoined:(st==='재입사')?$('sp-rejoin').value:'',
            leftAt:(st==='퇴사')?$('sp-left').value:'', updatedAt:nowStr()};
   if(stTmpPhoto) d.photo=stTmpPhoto;
   const id=stEditId||('s'+Date.now().toString(36));
@@ -1790,12 +1830,12 @@ function openEdit(id){
       <div><span class="form-label">점검일자</span><input class="form-input" id="e-inspdate" type="date" value="${E(r.inspDate)}"></div>
       <div><span class="form-label">행정동</span>
         <select class="form-select" id="e-dong" onchange="onEditDong()"><option value="">선택</option>
-        ${['잠실동','삼전동','잠실3동'].map(d=>'<option'+(r.dong===d?' selected':'')+'>'+d+'</option>').join('')}
-        <option value="기타"${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?' selected':''}>기타 (직접 입력)</option>
+        ${DONG_NAMES.map(d=>'<option'+(r.dong===d?' selected':'')+'>'+d+'</option>').join('')}
+        <option value="기타"${(r.dong&&DONG_NAMES.indexOf(r.dong)<0)?' selected':''}>기타 (직접 입력)</option>
         </select>
         <input class="form-input" id="e-dong-etc" type="text" placeholder="행정동 직접 입력"
-          value="${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?E(r.dong):''}"
-          style="margin-top:6px;${(r.dong&&['잠실동','삼전동','잠실3동'].indexOf(r.dong)<0)?'':'display:none'}"></div>
+          value="${(r.dong&&DONG_NAMES.indexOf(r.dong)<0)?E(r.dong):''}"
+          style="margin-top:6px;${(r.dong&&DONG_NAMES.indexOf(r.dong)<0)?'':'display:none'}"></div>
     </div>
     <div class="form-row"><span class="form-label">위험지점 주소 *</span><input class="form-input" id="e-addr" value="${E(r.addr)}"></div>
     <div class="form-row"><span class="form-label">위험등급</span>

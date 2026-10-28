@@ -140,6 +140,8 @@ input,select,textarea{font-family:inherit;outline:none}
 .st-noimg{width:84px;height:84px;border-radius:50%;border:2.5px dashed var(--line);margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--sub);background:var(--bg)}
 .st-name{font-size:15px;font-weight:800;margin-bottom:5px}
 .st-row{font-size:11.5px;color:var(--sub);font-weight:600;line-height:1.7}
+#sp-drop{display:inline-block;padding:6px;border-radius:14px;border:2px dashed transparent}
+#sp-drop.drag{border-color:var(--blue);background:#eaf2ff}
 .st-row a{color:var(--blue);text-decoration:none;font-weight:800}
 .st-edit{margin-top:8px;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
 .st-edit:hover{background:#bae6fd}
@@ -1714,6 +1716,7 @@ function renderStaff(){
         +(s.rank?' <span class="st-rank">('+mkEsc(s.rank)+')</span>':'')+'</div>'
       +'<div class="st-row">🏷 '+mkEsc(s.dept||'-')+'</div>'
       +'<div class="st-row">👷 '+mkEsc(s.rank||'-')+'</div>'
+      +(s.duty?'<div class="st-row">🧰 '+mkEsc(s.duty)+'</div>':'')
       +'<div class="st-row">🚚 '+mkEsc(s.car||'-')+'</div>'
       +'<div class="st-row">📅 입사 '+mkEsc(s.joined||'-')+'</div>'
       +(rej?'<div class="st-row" style="color:var(--blue)">↩ 재입사 '+mkEsc(rej)+'</div>':'')
@@ -1731,36 +1734,39 @@ function openStaffEdit(id){
   $('modal-title').textContent=id?'✏️ 직원 정보 수정':'＋ 직원 추가';
   $('modal-body').innerHTML=
     '<div class="form-row" style="text-align:center">'
+    +'<div id="sp-drop" ondragover="event.preventDefault();this.classList.add(\'drag\')" ondragleave="this.classList.remove(\'drag\')" ondrop="onStaffDrop(event)">'
     +(s&&s.photo?'<img class="sp-prev" id="sp-prev" src="'+s.photo+'" onclick="$(\'sp-file\').click()">'
                 :'<div class="st-noimg" id="sp-prev" style="width:110px;height:110px;cursor:pointer" onclick="$(\'sp-file\').click()">👤</div>')
+    +'</div>'
     +'<input type="file" id="sp-file" accept="image/*" style="display:none" onchange="onStaffPhoto(this)">'
-    +'<button class="st-edit" onclick="$(\'sp-file\').click()">📷 사진 '+(s&&s.photo?'교체':'추가')+'</button>'
+    +'<div><button class="st-edit" onclick="$(\'sp-file\').click()">📷 사진 '+(s&&s.photo?'교체':'추가')+'</button>'
+    +'<button class="st-edit" onclick="pasteStaffPhoto()">📋 붙여넣기</button></div>'
+    +'<div style="font-size:11px;color:var(--sub);font-weight:700;margin-top:4px">복사한 사진을 <b>Ctrl+V</b> 로 붙여넣거나, 사진을 끌어다 놓아도 됩니다</div>'
     +'</div>'
     +'<div class="form-row"><span class="form-label">이름 *</span>'
     +'<input class="form-input" id="sp-name" value="'+(s?E(s.name):'')+'" placeholder="홍길동"></div>'
+    +'<div class="form-row"><span class="form-label">직급</span>'
+    +'<input class="form-input" id="sp-rank" value="'+(s?E(s.rank):'')+'" placeholder="운전원 · 환경공무관 · 대리"></div>'
+    +'<div class="form-row"><span class="form-label">보직 (주요업무)</span>'
+    +'<input class="form-input" id="sp-duty" value="'+(s?E(s.duty):'')+'" placeholder="생활쓰레기 수거운반 등"></div>'
     +'<div class="form-2col">'
-    +'<div><span class="form-label">보직 · 직급</span>'
-    +'<input class="form-input" id="sp-rank" value="'+(s?E(s.rank):'')+'" placeholder="운전원"></div>'
+    +'<div><span class="form-label">부서</span>'
+    +'<input class="form-input" id="sp-dept" value="'+(s?E(s.dept):'')+'" placeholder="생활쓰레기 수거"></div>'
     +'<div><span class="form-label">차량</span>'
     +'<input class="form-input" id="sp-car" value="'+(s?E(s.car):'')+'" placeholder="84루3587"></div>'
     +'</div>'
-    +'<div class="form-row"><span class="form-label">부서</span>'
-    +'<input class="form-input" id="sp-dept" value="'+(s?E(s.dept):'')+'" placeholder="생활쓰레기 수거"></div>'
-    +'<div class="form-2col">'
-    +'<div><span class="form-label">입사일자</span>'
+    +'<div class="form-row"><span class="form-label">입사일자</span>'
     +'<input class="form-input" id="sp-joined" type="date" value="'+(s?E(s.joined):'')+'"></div>'
-    +'<div><span class="form-label">연락처</span>'
+    +'<div class="form-row"><span class="form-label">재입사일 <span style="font-weight:700;color:var(--sub)">(없으면 비워두세요)</span></span>'
+    +'<input class="form-input" id="sp-rejoin" type="date" value="'+(s?E(s.rejoined):'')+'"></div>'
+    +'<div class="form-row"><span class="form-label">연락처</span>'
     +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>'
-    +'</div>'
     +'<div class="form-row"><span class="form-label">재직 상태</span>'
     +'<select class="form-select" id="sp-status" onchange="onStStatus()">'
     +'<option value="재직"'+((st0==='재직')?' selected':'')+'>재직</option>'
     +'<option value="재입사"'+((st0==='재입사')?' selected':'')+'>재입사</option>'
     +'<option value="퇴사"'+((st0==='퇴사')?' selected':'')+'>퇴사</option>'
     +'</select></div>'
-    +'<div class="form-row" id="sp-rejoin-wrap" style="'+((st0==='재입사')?'':'display:none')+'">'
-    +'<span class="form-label">재입사일 <span style="font-weight:700;color:var(--sub)">(위 입사일자는 처음 입사일로 그대로 두세요)</span></span>'
-    +'<input class="form-input" id="sp-rejoin" type="date" value="'+(s?E(s.rejoined):'')+'"></div>'
     +'<div class="form-row" id="sp-left-wrap" style="'+((st0==='퇴사')?'':'display:none')+'">'
     +'<span class="form-label">퇴사일</span>'
     +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>';
@@ -1772,34 +1778,73 @@ function openStaffEdit(id){
   curDetailId=null;
 }
 
-async function onStaffPhoto(input){
-  const f=input.files[0]; if(!f)return;
+async function applyStaffPhoto(file){
+  if(!file){ toast('⚠️ 사진이 없습니다'); return; }
   $('photo-progress').classList.add('on');
   try{
-    stTmpPhoto=await compressPhoto(f,220,0.62);   // 명부용이라 작게
+    stTmpPhoto=await compressPhoto(file,220,0.62);   // 명부용이라 작게
     const pv=$('sp-prev');
     if(pv){
       if(pv.tagName==='IMG'){ pv.src=stTmpPhoto; }
       else{ pv.outerHTML='<img class="sp-prev" id="sp-prev" src="'+stTmpPhoto+'" onclick="$(\'sp-file\').click()">'; }
     }
+    toast('✅ 사진 적용됨 — 💾저장을 눌러주세요');
   }catch(e){ toast('⚠️ 사진 처리 실패'); }
-  finally{ $('photo-progress').classList.remove('on'); input.value=''; }
+  finally{ $('photo-progress').classList.remove('on'); }
 }
+async function onStaffPhoto(input){
+  const f=input.files[0]; if(!f)return;
+  await applyStaffPhoto(f); input.value='';
+}
+// 📋 버튼 — 클립보드에서 바로 가져오기
+async function pasteStaffPhoto(){
+  try{
+    if(!navigator.clipboard || !navigator.clipboard.read){
+      toast('이 브라우저는 버튼 붙여넣기를 지원하지 않습니다 — Ctrl+V 를 눌러주세요'); return;
+    }
+    const items=await navigator.clipboard.read();
+    for(const it of items){
+      const t=(it.types||[]).find(function(x){return x.indexOf('image/')===0;});
+      if(t){ await applyStaffPhoto(await it.getType(t)); return; }
+    }
+    toast('복사된 사진이 없습니다 — 사진을 먼저 복사해 주세요');
+  }catch(e){ toast('붙여넣기 권한이 없습니다 — 창을 한 번 클릭하고 Ctrl+V 를 눌러주세요'); }
+}
+// 사진을 끌어다 놓기
+function onStaffDrop(ev){
+  ev.preventDefault();
+  const el=$('sp-drop'); if(el) el.classList.remove('drag');
+  const dt=ev.dataTransfer||{};
+  const f=(dt.files&&dt.files[0]) || null;
+  if(f && /^image\//.test(f.type)) applyStaffPhoto(f);
+  else toast('사진 파일을 끌어다 놓아주세요');
+}
+// Ctrl+V — 직원 수정창이 열려 있을 때만
+document.addEventListener('paste', function(ev){
+  if(!$('sp-prev')) return;
+  const items=(ev.clipboardData&&ev.clipboardData.items)||[];
+  for(let i=0;i<items.length;i++){
+    if(items[i].type && items[i].type.indexOf('image/')===0){
+      const f=items[i].getAsFile();
+      if(f){ ev.preventDefault(); applyStaffPhoto(f); return; }
+    }
+  }
+});
 
 function onStStatus(){
-  const v=$('sp-status').value;
-  const w=$('sp-left-wrap'), r=$('sp-rejoin-wrap');
-  if(w) w.style.display = (v==='퇴사')   ? 'block' : 'none';
-  if(r) r.style.display = (v==='재입사') ? 'block' : 'none';
+  const w=$('sp-left-wrap');
+  if(w) w.style.display = ($('sp-status').value==='퇴사') ? 'block' : 'none';
 }
 function saveStaff(){
   const name=$('sp-name').value.trim();
   if(!name){toast('이름을 입력하세요');return;}
-  const st=$('sp-status').value;
-  const d={name:name, rank:$('sp-rank').value.trim(), dept:$('sp-dept').value.trim(),
+  let st=$('sp-status').value;
+  const rj=$('sp-rejoin').value;
+  if(rj && st==='재직') st='재입사';        // 재입사일을 적으면 상태도 같이 맞춤
+  const d={name:name, rank:$('sp-rank').value.trim(), duty:$('sp-duty').value.trim(),
+           dept:$('sp-dept').value.trim(),
            car:$('sp-car').value.trim(), joined:$('sp-joined').value,
-           tel:$('sp-tel').value.trim(), status:st,
-           rejoined:(st==='재입사')?$('sp-rejoin').value:'',
+           tel:$('sp-tel').value.trim(), status:st, rejoined:rj,
            leftAt:(st==='퇴사')?$('sp-left').value:'', updatedAt:nowStr()};
   if(stTmpPhoto) d.photo=stTmpPhoto;
   const id=stEditId||('s'+Date.now().toString(36));

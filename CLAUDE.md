@@ -38,7 +38,7 @@ git push
 - 올린 뒤 확인: `grep -c "10_29 보안\|bn_anon" <고친 파일>` 이 0이 아니어야 한다 (자동 로그인 줄이 남아 있는지).
 
 ## 참고
-- 저장소(Firebase) 규칙: minwon·report·risk = 로그인한 앱만, gyegeun·gyegeun2·undong = 누구나. 규칙을 바꿀 땐 본에코와 먼저 상의.
+- 저장소(Firebase) 규칙: minwon·report·gyegeun·risk = 로그인한 앱만(10/29 계근도 잠금), gyegeun2·undong = 누구나. 규칙을 바꿀 땐 본에코와 먼저 상의.
 - 새 앱을 만들어 다른 저장 위치(예: `newapp/`)를 쓰면 규칙에 추가해야 저장된다 → 본에코에 알려 주기.
 
 ## 앱별 방 (대화방 정리)

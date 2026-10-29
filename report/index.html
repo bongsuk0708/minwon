@@ -12,6 +12,7 @@
 <link rel="apple-touch-icon" href="../../icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4421ecfa7ea279c190db811c789e450d&libraries=services"></script>
 <style>
@@ -657,6 +658,7 @@ const FB={
   appId:'1:410383379202:web:b5dd661f83df18530ff01b'
 };
 firebase.initializeApp(FB);
+if(window.firebase&&firebase.auth){firebase.auth().onAuthStateChanged(function(u){if(!u&&!window.__bnAnon){window.__bnAnon=1;firebase.auth().signInAnonymously().then(function(){try{if(!sessionStorage.getItem('bn_anon_rl')){sessionStorage.setItem('bn_anon_rl','1');location.reload();}}catch(e){}}).catch(function(e){console.warn('자동 로그인 실패',e&&e.code);});}});} // [10_29 보안] 보이지 않는 자동 로그인 (저장소를 '로그인한 앱만'으로 막아도 지금처럼 쓰이게)
 const db=firebase.database();
 const RECS=db.ref('report/recs');
 const PHOTOS=db.ref('report/photos'); // 사진 별도 저장

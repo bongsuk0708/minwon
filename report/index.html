@@ -41,6 +41,7 @@ input,select,textarea{font-family:inherit;outline:none}
 #login-logo{width:72px;height:72px;border-radius:50%;background:var(--logo) center/cover no-repeat;background-color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);margin-bottom:4px}
 #hdr-right{display:flex;align-items:center;gap:6px}
 #staff-name{font-size:12px;opacity:.85}
+#mw-sw{font-size:12px;font-weight:800;background:#fff;color:var(--blue);padding:4px 10px;border-radius:20px;text-decoration:none;white-space:nowrap} /* [10_29] 민원처리 전환 */
 #logout-btn{font-size:11px;background:rgba(255,255,255,.2);color:#fff;padding:3px 8px;border-radius:20px}
 #net-bar{font-size:11px;padding:3px 0;text-align:center;border-top:1px solid rgba(255,255,255,.15)}
 .net-ok{color:#86efac}.net-err{color:#fca5a5}.net-wait{color:#fde68a}
@@ -318,6 +319,7 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="hdr-top">
       <h1>민원·사고재해예방 관리대장</h1>
       <div id="hdr-right">
+        <a id="mw-sw" href="https://boneco-minwon.web.app/?tester=1" target="bn_minwon" rel="noopener" onclick="this.href='https://boneco-minwon.web.app/?tester=1&amp;name='+encodeURIComponent(localStorage.getItem('rp_staff')||'')">📋 민원처리</a>
         <span id="staff-name"></span>
         <button id="logout-btn" onclick="doLogout()">변경</button>
       </div>

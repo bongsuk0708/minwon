@@ -1237,12 +1237,12 @@ function resetHForm(){
 function setFlt(f,el){curFlt=f;curDriver='';document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');focusId=null;renderList();renderMap();}
 // 사고발생지점·사고재해예방 — 기사 이름으로 나눠 보기
 
-function isDrvFlt(){ return curFlt==='hazard'||curFlt==='occur'; }
+function isDrvFlt(){ return curFlt==='hazard'||curFlt==='occur'||curFlt==='all'; }
 function setDriver(n){ curDriver=n; focusId=null; renderList(); renderMap(); }
 function renderDriverFilter(){
   const box=$('driver-filter'); if(!box)return;
   if(!isDrvFlt()){ box.classList.remove('on'); box.innerHTML=''; return; }
-  const kindRecs=recs.filter(r=>curFlt==='occur'?isOccur(r):(r.recType==='hazard'&&!isOccur(r)));
+  const kindRecs=recs.filter(r=>curFlt==='all'?r.recType==='hazard':curFlt==='occur'?isOccur(r):(r.recType==='hazard'&&!isOccur(r)));
   const names=[...new Set(kindRecs.map(r=>(r.driver||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   const hasNone=kindRecs.some(r=>!(r.driver||'').trim());
   if(curDriver && curDriver!=='__none' && names.indexOf(curDriver)<0) curDriver='';
@@ -1274,9 +1274,9 @@ function filteredRecs(){
   if(curFlt==='hazard') data=data.filter(r=>r.recType==='hazard'&&!isOccur(r));
   else if(curFlt==='occur') data=data.filter(r=>isOccur(r));
   else if(curFlt!=='all') data=data.filter(r=>r.recType==='minwon'&&r.subtype===curFlt);
-  // 기사 이름 필터 (사고발생지점·사고재해예방에서만)
+  // 기사 이름 필터 (전체·사고발생지점·사고재해예방 — 고르면 사고 기록만)
   if(isDrvFlt()&&curDriver){
-    data=data.filter(r=>curDriver==='__none'?!(r.driver||'').trim():(r.driver||'').trim()===curDriver);
+    data=data.filter(r=>r.recType==='hazard'&&(curDriver==='__none'?!(r.driver||'').trim():(r.driver||'').trim()===curDriver));
   }
   // 날짜 필터 (민원: date 필드, 사고예방: inspDate 필드)
   if(fltFrom){

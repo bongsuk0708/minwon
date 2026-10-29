@@ -99,6 +99,11 @@ input,select,textarea{font-family:inherit;outline:none}
 .submit-btn{width:100%;padding:14px;border-radius:var(--radius);font-size:16px;font-weight:800;color:#fff;margin-top:6px}
 .submit-btn.minwon{background:var(--blue)}.submit-btn.hazard{background:var(--red)}
 #list-filter{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}
+#driver-filter{display:none;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:6px;padding:6px 8px;background:#fef2f2;border-radius:10px}
+#driver-filter.on{display:flex}
+.drv-lbl{font-size:12px;font-weight:800;color:var(--red2)}
+.drv-btn{padding:4px 10px;border-radius:16px;font-size:12px;font-weight:700;border:1.5px solid #fecaca;background:#fff;color:var(--sub);cursor:pointer}
+.drv-btn.on{background:var(--red2);border-color:var(--red2);color:#fff}
 #date-filter{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap}
 #date-filter input[type="date"]{padding:5px 8px;border:1.5px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink);background:#fff;flex:1;min-width:120px}
 #date-filter input[type="date"]:focus{border-color:var(--blue)}
@@ -443,6 +448,11 @@ input,select,textarea{font-family:inherit;outline:none}
           <input class="form-input" id="h-inspdate" type="date">
         </div>
         <div class="form-row">
+          <span class="form-label">🚛 기사 이름</span>
+          <input class="form-input" id="h-driver" type="text" list="driver-dl" placeholder="명부에서 고르거나 직접 입력 (예: 오진수)" autocomplete="off">
+          <datalist id="driver-dl"></datalist>
+        </div>
+        <div class="form-row">
           <span class="form-label">📌 행정동 · 동 구분 <button class="loc-mgr-btn" onclick="openLocMgr()">📍 장소 위치 수정</button></span>
           <select class="form-select" id="h-dong-sel" onchange="onDongChange('h')">
             <option value="">행정동 또는 장소 선택</option>
@@ -527,6 +537,7 @@ input,select,textarea{font-family:inherit;outline:none}
       <button class="flt-btn f-발생" onclick="setFlt('occur',this)">🚨 사고발생지점</button>
       <button class="flt-btn f-사고" onclick="setFlt('hazard',this)">⚠️ 사고재해예방</button>
     </div>
+    <div id="driver-filter"></div>
     <div id="date-filter">
       <input type="date" id="flt-from" onchange="renderList();renderMap()" title="시작일">
       <span class="date-sep">~</span>
@@ -667,7 +678,7 @@ const PHOTOS=db.ref('report/photos'); // 사진 별도 저장
 const LOCS=db.ref('report/locs');     // 장소 좌표 보정값 (모든 기기 공유)
 const STAFF=db.ref('report/staff');   // 직원 명부
 
-let recs=[],staff='',curFlt='all',kakaoMap=null,mapPins=[];
+let recs=[],staff='',curFlt='all',curDriver='',kakaoMap=null,mapPins=[];
 let mSub='',mPos=null,hPos=null,curDetailId=null;
 let tmpPhoto={before:null,after:null,hazard:null,extraM:[],extraH:[]};
 let fltFrom='',fltTo='';
@@ -1197,7 +1208,7 @@ async function submitH(){
     addr:$('h-addr').value.trim(),addrPos:hPos||null,riskType:$('h-risktype').value.trim(),
     riskContent:$('h-riskcont').value.trim(),inspResult:'',
     action:$('h-action').value.trim(),inspDate:$('h-inspdate').value,
-    riskLevel:$('h-level').value,note:$('h-note').value.trim(),
+    riskLevel:$('h-level').value,note:$('h-note').value.trim(),driver:$('h-driver').value.trim(),
     staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
   $('photo-progress').classList.add('on');
   try{
@@ -1212,7 +1223,7 @@ async function submitH(){
   finally{$('photo-progress').classList.remove('on');}
 }
 function resetHForm(){
-  ['h-addr','h-risktype','h-riskcont','h-action','h-note','h-preaddr'].forEach(i=>$(i).value='');
+  ['h-addr','h-risktype','h-riskcont','h-action','h-note','h-preaddr','h-driver'].forEach(i=>{if($(i))$(i).value='';});
   $('h-dong').value='';if($('h-dongshow'))$('h-dongshow').textContent='';
   $('h-risktype').value='';$('h-level').value='High';
   $('h-inspdate').value=today();$('h-photo-th').style.display='none';$('h-photo').value='';$('h-extra').value='';
@@ -1223,7 +1234,35 @@ function resetHForm(){
 }
 
 // ── 목록 ──
-function setFlt(f,el){curFlt=f;document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');focusId=null;renderList();renderMap();}
+function setFlt(f,el){curFlt=f;curDriver='';document.querySelectorAll('.flt-btn').forEach(b=>b.classList.remove('on'));if(el)el.classList.add('on');focusId=null;renderList();renderMap();}
+// 사고발생지점·사고재해예방 — 기사 이름으로 나눠 보기
+
+function isDrvFlt(){ return curFlt==='hazard'||curFlt==='occur'; }
+function setDriver(n){ curDriver=n; focusId=null; renderList(); renderMap(); }
+function renderDriverFilter(){
+  const box=$('driver-filter'); if(!box)return;
+  if(!isDrvFlt()){ box.classList.remove('on'); box.innerHTML=''; return; }
+  const kindRecs=recs.filter(r=>curFlt==='occur'?isOccur(r):(r.recType==='hazard'&&!isOccur(r)));
+  const names=[...new Set(kindRecs.map(r=>(r.driver||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  const hasNone=kindRecs.some(r=>!(r.driver||'').trim());
+  if(curDriver && curDriver!=='__none' && names.indexOf(curDriver)<0) curDriver='';
+  let h='<span class="drv-lbl">🚛 기사</span>'
+    +'<button class="drv-btn'+(curDriver?'':' on')+'" onclick="setDriver(\'\')">전체</button>';
+  names.forEach(n=>{
+    const c=kindRecs.filter(r=>(r.driver||'').trim()===n).length;
+    h+='<button class="drv-btn'+(curDriver===n?' on':'')+'" data-n="'+mkEsc(n)+'" onclick="setDriver(this.dataset.n)">'+mkEsc(n)+' '+c+'</button>';
+  });
+  if(hasNone) h+='<button class="drv-btn'+(curDriver==='__none'?' on':'')+'" onclick="setDriver(\'__none\')">이름 없음</button>';
+  if(!names.length) h+='<span style="font-size:11.5px;color:var(--sub)">아직 기사 이름이 붙은 기록이 없습니다 — 상세 → 수정에서 넣을 수 있어요</span>';
+  box.innerHTML=h; box.classList.add('on');
+}
+function driverName(){ return (isDrvFlt()&&curDriver)?(curDriver==='__none'?'기사 이름 없음':'기사 '+curDriver):''; }
+function fillDriverList(){
+  const dl=$('driver-dl'); if(!dl)return;
+  const ns=[...new Set(staffList.filter(s=>s.status!=='퇴사').map(s=>(s.name||'').trim())
+    .concat(recs.map(r=>(r.driver||'').trim())).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  dl.innerHTML=ns.map(n=>'<option value="'+mkEsc(n)+'">').join('');
+}
 function clearDate(){$('flt-from').value='';$('flt-to').value='';renderList();renderMap();}
 
 // 날짜 필터 적용된 데이터 반환
@@ -1235,6 +1274,10 @@ function filteredRecs(){
   if(curFlt==='hazard') data=data.filter(r=>r.recType==='hazard'&&!isOccur(r));
   else if(curFlt==='occur') data=data.filter(r=>isOccur(r));
   else if(curFlt!=='all') data=data.filter(r=>r.recType==='minwon'&&r.subtype===curFlt);
+  // 기사 이름 필터 (사고발생지점·사고재해예방에서만)
+  if(isDrvFlt()&&curDriver){
+    data=data.filter(r=>curDriver==='__none'?!(r.driver||'').trim():(r.driver||'').trim()===curDriver);
+  }
   // 날짜 필터 (민원: date 필드, 사고예방: inspDate 필드)
   if(fltFrom){
     data=data.filter(r=>{
@@ -1255,12 +1298,12 @@ function filteredRecs(){
 function exportExcel(){
   const data=filteredRecs();
   if(!data.length){toast('내보낼 데이터가 없습니다');return;}
-  const rows=[['구분','번호','날짜','시간','주소','폐기물구분/위험요인','민원내용/위험내용','처리상태/위험등급','민원인','연락처','접수경로','방문결과','조치내용','담당자','등록일시']];
+  const rows=[['구분','번호','날짜','시간','주소','폐기물구분/위험요인','민원내용/위험내용','처리상태/위험등급','민원인','연락처','접수경로','방문결과','조치내용','담당자','기사','등록일시']];
   data.forEach(r=>{
     if(r.recType==='hazard'){
-      rows.push([hKindOf(r),r.hazardNo||'',r.inspDate||'','',r.addr||'',r.riskType||'',r.riskContent||'',r.riskLevel||'','','','',r.inspResult||'',r.action||'',r.staff||'',r.createdAt||'']);
+      rows.push([hKindOf(r),r.hazardNo||'',r.inspDate||'','',r.addr||'',r.riskType||'',r.riskContent||'',r.riskLevel||'','','','',r.inspResult||'',r.action||'',r.staff||'',r.driver||'',r.createdAt||'']);
     } else {
-      rows.push(['민원',r.no||'',r.date||'',r.time||'',r.addr||'',r.subtype||'',r.content||'',r.status||'',r.person||'',r.tel||'',r.channel||'',r.inspResult||'',r.actionNote||'',r.staff||'',r.createdAt||'']);
+      rows.push(['민원',r.no||'',r.date||'',r.time||'',r.addr||'',r.subtype||'',r.content||'',r.status||'',r.person||'',r.tel||'',r.channel||'',r.inspResult||'',r.actionNote||'',r.staff||'','',r.createdAt||'']);
     }
   });
   const csv='﻿'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -1287,6 +1330,7 @@ function mkAddr(r){const a=String(r.addr||'').trim();return mkEsc(a.length>13?a.
 
 function renderList(){
   const el=$('rec-list');
+  renderDriverFilter(); fillDriverList();
   const data=filteredRecs();
   const cntEl=$('list-count');
   if(cntEl)cntEl.textContent='총 '+data.length+'건';
@@ -1306,7 +1350,7 @@ function renderList(){
         </span>
       </div>
       <div class="rc-addr">${r.addr}</div>
-      <div class="rc-meta">${r.date||''} ${isH?(r.dong||''):'('+r.subtype+')'}</div>
+      <div class="rc-meta">${r.date||''} ${isH?(r.dong||''):'('+r.subtype+')'}${isH&&r.driver?' · 🚛 '+mkEsc(r.driver):''}</div>
       <div class="rc-cat" style="color:${pinColor(r)}">${isH?'⚠️ '+r.riskType:'📋 '+r.category}</div>
     </div>`;
   }).join('');
@@ -1334,7 +1378,7 @@ function showOnMap(id){
 function clearFocus(){ focusId=null; renderMap(); }
 // 지도에서 바로 구분 필터 해제
 function showAllOnMap(){
-  curFlt='all'; focusId=null;
+  curFlt='all'; curDriver=''; focusId=null;
   document.querySelectorAll('.flt-btn').forEach(function(b){ b.classList.toggle('on', b.classList.contains('f-all')); });
   renderList(); renderMap();
 }
@@ -1345,7 +1389,7 @@ function renderMap(){
   const base=filteredRecs();                       // 목록에 걸린 구분·기간 필터를 그대로 사용
   let list=base.filter(r=>r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
   const miss=base.length-list.length;
-  const fname=(curFlt==='all')?'':(curFlt==='hazard'?'사고재해예방':(curFlt==='occur'?'사고발생지점':curFlt));
+  const fname=((curFlt==='all')?'':(curFlt==='hazard'?'사고재해예방':(curFlt==='occur'?'사고발생지점':curFlt)))+(driverName()?' · '+mkEsc(driverName()):'');
   const fb=$('map-focus');
   const fr=focusId?recs.find(x=>x.id===focusId):null;
   if(fr){
@@ -1420,6 +1464,7 @@ function openDet(id){
       <div class="det-row"><div class="det-label">점검일자</div><div class="det-val">${r.inspDate||'-'}</div></div>
       <div class="det-row"><div class="det-label">담당자</div><div class="det-val">${r.staff||'-'}</div></div>
     </div>
+    <div class="det-row"><div class="det-label">🚛 기사 이름</div><div class="det-val" style="font-weight:800">${r.driver?mkEsc(r.driver):'- <span style="font-weight:400;color:var(--sub)">(✏️ 수정에서 넣을 수 있어요)</span>'}</div></div>
     <div class="det-row"><div class="det-label">비고</div><div class="det-val">${r.note||'-'}</div></div>
     ${posEditRow(r)}
     <div class="det-row"><div class="det-label">현장 사진 (교체·삭제 가능)</div>
@@ -1886,6 +1931,7 @@ function openEdit(id){
           value="${(r.dong&&DONG_NAMES.indexOf(r.dong)<0)?E(r.dong):''}"
           style="margin-top:6px;${(r.dong&&DONG_NAMES.indexOf(r.dong)<0)?'':'display:none'}"></div>
     </div>
+    <div class="form-row"><span class="form-label">🚛 기사 이름</span><input class="form-input" id="e-driver" list="driver-dl" autocomplete="off" placeholder="명부에서 고르거나 직접 입력" value="${E(r.driver)}"></div>
     <div class="form-row"><span class="form-label">위험지점 주소 *</span><input class="form-input" id="e-addr" value="${E(r.addr)}"></div>
     <div class="form-row"><span class="form-label">위험등급</span>
       <select class="form-select" id="e-level">
@@ -1956,6 +2002,7 @@ function saveEdit(id){
     if($('e-insp')) u.inspResult=$('e-insp').value.trim();
     u.action=$('e-action').value.trim();
     u.note=$('e-note').value.trim();
+    if($('e-driver')) u.driver=$('e-driver').value.trim();
     if(!u.riskType){toast('사고위험 요인구분을 입력하세요');return;}
   }else{
     u.date=$('e-date').value;
@@ -2091,7 +2138,7 @@ function printList(){
   const split=!!(splitEl&&splitEl.checked);
   const f=$('flt-from').value, t=$('flt-to').value;
   const period=(f||t)?((f||'처음')+' ~ '+(t||'오늘')):'전체 기간';
-  const fltName=(curFlt==='all')?'전체':(curFlt==='hazard'?'사고재해예방':(curFlt==='occur'?'사고발생지점':curFlt));
+  const fltName=((curFlt==='all')?'전체':(curFlt==='hazard'?'사고재해예방':(curFlt==='occur'?'사고발생지점':curFlt)))+(driverName()?' · '+driverName():'');
 
   // 구분별로 묶기
   const groups={};
@@ -2130,7 +2177,7 @@ function printList(){
       +'<td>'+mkEsc(r.inspResult||r.visitResult||'')+'</td>'
       +'<td>'+mkEsc(isH?(r.action||''):(r.actionNote||''))+'</td>'
       +'<td>'+mkEsc(isH?(r.riskLevel||''):(r.status||''))+'</td>'
-      +'<td>'+mkEsc(r.staff||'')+'</td>'
+      +'<td>'+mkEsc(r.staff||'')+(isH&&r.driver?'<br>기사 '+mkEsc(r.driver):'')+'</td>'
       +'</tr>';
   }
 

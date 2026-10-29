@@ -452,6 +452,7 @@ function openDetail(id){
       ['번호',r.num||r.hazardNo||'-'],
       ['접수일',r.regAt||r.createdAt||'-'],
       ['담당',r.staff||'-'],
+      ['🚛 기사',r.driver||'-'],
       ['행정동',r.dong||'-'],
       ['주소',r.addr||'-'],
       ['위험등급',`<span class="risk-badge r-${r.risk||r.riskLevel}">${r.risk||r.riskLevel||'-'}</span>`],

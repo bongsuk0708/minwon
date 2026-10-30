@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<script>/* [10_29 보안] 보이지 않는 자동 로그인 — 저장소 요청에 로그인 표시(auth)를 붙인다. 로그인 기능이 꺼져 있으면 예전처럼 그냥 보낸다 */
-(function(){var KEY='AIzaSyCrJaARREMDXFfhicjUwWFyqkyTbVMRsYk',H='minwon-c29c2-default-rtdb',LS='bn_anon_tok',of=window.fetch.bind(window),pend=null,failAt=0;
-function sv(t){try{localStorage.setItem(LS,JSON.stringify(t))}catch(e){}}function ld(){try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}}
-function tok(){if(Date.now()-failAt<300000)return Promise.resolve(null);var t=ld();if(t&&t.id&&t.exp>Date.now()+60000)return Promise.resolve(t.id);if(pend)return pend;
-pend=(async function(){try{var r,j;if(t&&t.rf){r=await of('https://securetoken.googleapis.com/v1/token?key='+KEY,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(t.rf)});j=await r.json();if(j.id_token){t={id:j.id_token,rf:j.refresh_token,exp:Date.now()+(+j.expires_in)*1000};sv(t);return t.id;}}
-r=await of('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'});j=await r.json();if(j.idToken){t={id:j.idToken,rf:j.refreshToken,exp:Date.now()+(+j.expiresIn)*1000};sv(t);return t.id;}failAt=Date.now();return null;}catch(e){failAt=Date.now();return null;}finally{pend=null;}})();return pend;}
-window.fetch=function(i,o){var u=typeof i==='string'?i:'';if(u.indexOf(H)<0||/[?&]auth=/.test(u))return of(i,o);return tok().then(function(id){return of(id?u+(u.indexOf('?')>=0?'&':'?')+'auth='+encodeURIComponent(id):u,o);});};})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>계근 대장 · 본에코</title>
@@ -211,7 +204,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v58</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v59</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -945,6 +938,20 @@ function drawGrid(rows){
   </table>`;
 }
 
+/* 전표 목록 차례 — 기사님이 올린 차례가 아니라 계근대에서 단 차례로 세웁니다.
+   날짜는 최근 날부터, 같은 날 안에서는 2차 계량시각이 이른 것부터 (종이 전표 뭉치와 같은 차례). */
+function byTime(rows){
+  const t = r => r.t2 || r.t1 || '';
+  return [...rows].sort((a,b)=>{
+    if(a.date !== b.date) return a.date < b.date ? 1 : -1;   // 최근 날짜 먼저
+    const x=t(a), y=t(b);
+    if(x && y) return x < y ? -1 : (x > y ? 1 : (a.at||0)-(b.at||0));
+    if(x) return -1;            // 시각을 못 읽은 것은 그 날 맨 뒤로 보냅니다
+    if(y) return 1;
+    return (a.at||0)-(b.at||0);
+  });
+}
+
 function render(){
   drawTrash();
   drawXlWarn();
@@ -1036,7 +1043,7 @@ function render(){
   drawPickBar(shown);
   $('#list').innerHTML = shown.length ? `<table>
     <thead><tr>${pickMode?'<th class="pk"></th>':''}<th>날짜</th><th>조</th><th>차량</th><th>성상</th><th>반입처</th><th class="r">실중량</th><th>사진</th><th></th></tr></thead>
-    <tbody>${[...shown].reverse().map(r=>`<tr class="${fl[r.id]?'bad ':''}${pickSet.has(r.id)?'picked':''}"${fl[r.id]?` title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
+    <tbody>${byTime(shown).map(r=>`<tr class="${fl[r.id]?'bad ':''}${pickSet.has(r.id)?'picked':''}"${fl[r.id]?` title="${fl[r.id].join(' / ').replace(/"/g,'')}"`:''}>
       ${pickMode?`<td class="pk"><input type="checkbox" data-pk="${r.id}"${pickSet.has(r.id)?' checked':''}></td>`:''}
       <td class="num">${r.date.slice(5).replace('-','/')}
         ${r.t1||r.t2?`<div class="tm num">${[r.t1,r.t2].filter(Boolean).join('~')}</div>`:''}

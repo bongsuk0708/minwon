@@ -153,6 +153,13 @@ input,select,textarea{font-family:inherit;outline:none}
 .st-edit{margin-top:8px;padding:5px 12px;border-radius:7px;font-size:11.5px;font-weight:800;background:#e0f2fe;color:#0369a1;border:none;cursor:pointer}
 .st-edit:hover{background:#bae6fd}
 #st-empty{text-align:center;padding:40px 16px;color:var(--sub);font-size:14px;line-height:1.8}
+.st-docs{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.st-docs img{width:38px;height:38px;object-fit:cover;border-radius:6px;border:1.5px solid var(--line);cursor:pointer}
+.st-memo{margin-top:6px;padding:6px 8px;background:#fefce8;border-radius:8px;font-size:11.5px;color:var(--ink);text-align:left;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.sp-docs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.sp-doc{position:relative}
+.sp-doc img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);cursor:pointer;display:block}
+.sp-doc button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:12px;font-weight:800;cursor:pointer;line-height:22px;padding:0}
 .sp-prev{width:110px;height:110px;border-radius:50%;object-fit:cover;border:2.5px solid var(--line);display:block;margin:0 auto 8px;background:var(--bg);cursor:pointer}
 .mf-allbtn{padding:2px 9px;border-radius:7px;font-size:11px;font-weight:800;background:#1e40af;color:#fff;border:none;cursor:pointer;margin-left:2px}
 .rec-card:hover{box-shadow:0 2px 14px rgba(30,64,175,.18)}
@@ -754,7 +761,7 @@ function netBar(t,m){const b=$('net-bar');b.textContent=m;b.className='net-'+t}
 
 // ── 사진 압축 ──
 function compressPhoto(file,maxPx=640,q=0.55){
-  return new Promise(res=>{
+  return new Promise((res,rej)=>{
     const img=new Image();
     const url=URL.createObjectURL(file);
     img.onload=()=>{
@@ -765,6 +772,8 @@ function compressPhoto(file,maxPx=640,q=0.55){
       URL.revokeObjectURL(url);
       res(cv.toDataURL('image/jpeg',q));
     };
+    // 못 여는 사진(아이폰 HEIC 등)이면 멈춰 있지 말고 실패로 알림
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('사진을 열 수 없음')); };
     img.src=url;
   });
 }
@@ -1756,7 +1765,8 @@ function renderStaff(){
   }
   el.innerHTML=list.map(function(s){
     const gone=s.status==='퇴사';
-    const rej=String(s.rejoined||'').trim();
+    const docs=s.docs||{};
+    const dKeys=Object.keys(docs).sort();
     return '<div class="st-card'+(gone?' left':'')+'">'
       +(s.photo
         ? '<img class="st-photo" src="'+s.photo+'" data-fn="'+mkEsc(s.name||'직원')+'" onclick="openImg(this)" title="눌러서 크게 보기">'
@@ -1768,9 +1778,13 @@ function renderStaff(){
       +(s.duty?'<div class="st-row">🧰 '+mkEsc(s.duty)+'</div>':'')
       +'<div class="st-row">🚚 '+mkEsc(s.car||'-')+'</div>'
       +'<div class="st-row">📅 입사 '+mkEsc(s.joined||'-')+'</div>'
-      +(rej?'<div class="st-row" style="color:var(--blue)">↩ 재입사 '+mkEsc(rej)+'</div>':'')
       +(gone?'<div class="st-badge">퇴사 '+mkEsc(s.leftAt||'')+'</div>':'')
+      +(dKeys.length?'<div class="st-docs">'+dKeys.map(function(k){
+          return '<img src="'+(docs[k].t||'')+'" title="눌러서 크게 보기" onclick="viewStaffDoc(\''+s.id+'\',\''+k+'\')">';
+        }).join('')+'</div>':'')
+      +(s.memo?'<div class="st-memo">'+mkEsc(s.memo)+'</div>':'')
       +'<br><button class="st-edit" onclick="openStaffEdit(\''+s.id+'\')">✏️ 수정</button>'
+      +' <button class="st-edit" onclick="openStaffMemo(\''+s.id+'\')">📝 메모</button>'
       +'</div>';
   }).join('');
 }
@@ -1806,8 +1820,6 @@ function openStaffEdit(id){
     +'</div>'
     +'<div class="form-row"><span class="form-label">입사일자</span>'
     +'<input class="form-input" id="sp-joined" type="date" value="'+(s?E(s.joined):'')+'"></div>'
-    +'<div class="form-row"><span class="form-label">재입사일 <span style="font-weight:700;color:var(--sub)">(없으면 비워두세요)</span></span>'
-    +'<input class="form-input" id="sp-rejoin" type="date" value="'+(s?E(s.rejoined):'')+'"></div>'
     +'<div class="form-row"><span class="form-label">연락처</span>'
     +'<input class="form-input" id="sp-tel" type="tel" value="'+(s?E(s.tel):'')+'" placeholder="010-0000-0000"></div>'
     +'<div class="form-row"><span class="form-label">재직 상태</span>'
@@ -1818,7 +1830,15 @@ function openStaffEdit(id){
     +'</select></div>'
     +'<div class="form-row" id="sp-left-wrap" style="'+((st0==='퇴사')?'':'display:none')+'">'
     +'<span class="form-label">퇴사일</span>'
-    +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>';
+    +'<input class="form-input" id="sp-left" type="date" value="'+(s?E(s.leftAt):'')+'"></div>'
+    +'<div class="form-row"><span class="form-label">📝 메모</span>'
+    +'<textarea class="form-textarea" id="sp-memo" placeholder="자유롭게 적어 두세요 (여러 줄 가능)">'+(s?E(s.memo):'')+'</textarea></div>'
+    +'<div class="form-row"><span class="form-label">📎 추가 사진 (자격증·면허증 등, 여러 장 가능)</span>'
+    +'<div class="sp-docs" id="sp-docs"></div>'
+    +'<button class="st-edit" onclick="$(\'sp-docfile\').click()">＋ 사진 추가</button>'
+    +'<input type="file" id="sp-docfile" accept="image/*" multiple style="display:none" onchange="onStaffDocs(this)"></div>';
+  stDocs=Object.assign({}, (s&&s.docs)||{}); stNewDocs={}; stDelDocs=[];
+  renderSpDocs();
   $('modal-actions').innerHTML =
     (id?'<button class="act-btn del" onclick="delStaff(\''+id+'\')">🗑 삭제</button>':'')
     +'<button class="act-btn edit" onclick="closeMod()">취소</button>'
@@ -1887,26 +1907,100 @@ function onStStatus(){
 function saveStaff(){
   const name=$('sp-name').value.trim();
   if(!name){toast('이름을 입력하세요');return;}
-  let st=$('sp-status').value;
-  const rj=$('sp-rejoin').value;
-  if(rj && st==='재직') st='재입사';        // 재입사일을 적으면 상태도 같이 맞춤
+  const st=$('sp-status').value;
   const d={name:name, rank:$('sp-rank').value.trim(), duty:$('sp-duty').value.trim(),
            dept:$('sp-dept').value.trim(),
            car:$('sp-car').value.trim(), joined:$('sp-joined').value,
-           tel:$('sp-tel').value.trim(), status:st, rejoined:rj,
+           tel:$('sp-tel').value.trim(), status:st, memo:$('sp-memo').value.trim(),
+           docs:Object.keys(stDocs).length?stDocs:null,
            leftAt:(st==='퇴사')?$('sp-left').value:'', updatedAt:nowStr()};
   if(stTmpPhoto) d.photo=stTmpPhoto;
   const id=stEditId||('s'+Date.now().toString(36));
   const ref=STAFF.child(id);
-  (stEditId?ref.update(d):ref.set(d)).then(function(){
-    toast(stEditId?'✅ 수정 완료':'✅ 직원 추가 완료');
-    closeMod(); stTmpPhoto=null; stEditId=null;
-  }).catch(function(){ toast('⚠️ 저장 실패'); });
+  const isEdit=!!stEditId;
+  $('photo-progress').classList.add('on');
+  (async function(){
+    // 큰 사진은 사진 저장소에 따로 (명부에는 작은 미리보기만)
+    for(const k of Object.keys(stNewDocs)){ await staffDocRef(id).child(k).set(stNewDocs[k]); }
+    for(const k of stDelDocs){ await staffDocRef(id).child(k).remove(); }
+    await (isEdit?ref.update(d):ref.set(d));
+  })().then(function(){
+    toast(isEdit?'✅ 수정 완료':'✅ 직원 추가 완료');
+    closeMod(); stTmpPhoto=null; stEditId=null; stNewDocs={}; stDelDocs=[];
+  }).catch(function(){ toast('⚠️ 저장 실패'); })
+    .finally(function(){ $('photo-progress').classList.remove('on'); });
+}
+
+// ── 직원 추가 사진 (자격증·면허증 등) ──
+let stDocs={}, stNewDocs={}, stDelDocs=[];
+function staffDocRef(id){ return PHOTOS.child('staff_'+id).child('docs'); }
+function renderSpDocs(){
+  const el=$('sp-docs'); if(!el)return;
+  const ks=Object.keys(stDocs).sort();
+  el.innerHTML=ks.length?ks.map(function(k){
+    return '<div class="sp-doc"><img src="'+(stDocs[k].t||'')+'" onclick="viewStaffDoc(stEditId,\''+k+'\')" title="눌러서 크게 보기">'
+      +'<button onclick="delSpDoc(\''+k+'\')" title="이 사진 빼기">✕</button></div>';
+  }).join(''):'<span style="font-size:11.5px;color:var(--sub)">아직 없음</span>';
+}
+async function onStaffDocs(input){
+  const fs=[...input.files]; input.value=''; if(!fs.length)return;
+  $('photo-progress').classList.add('on');
+  let bad=0;
+  for(let i=0;i<fs.length;i++){
+    try{
+      const full=await compressPhoto(fs[i],1280,0.7);   // 글씨가 읽히도록 크게
+      const thumb=await compressPhoto(fs[i],160,0.6);
+      const k='d'+Date.now().toString(36)+'_'+i;
+      stDocs[k]={t:thumb, at:today()}; stNewDocs[k]=full;
+    }catch(e){ bad++; }
+  }
+  $('photo-progress').classList.remove('on');
+  renderSpDocs();
+  toast(bad?('⚠️ '+bad+'장은 열 수 없는 사진입니다 (JPG·PNG로 바꿔 주세요)'):'✅ 사진 추가됨 — 💾저장을 눌러주세요');
+}
+function delSpDoc(k){
+  if(!confirm('이 사진을 뺄까요? (💾저장을 눌러야 지워집니다)'))return;
+  delete stDocs[k];
+  if(stNewDocs[k]) delete stNewDocs[k]; else stDelDocs.push(k);
+  renderSpDocs();
+}
+function viewStaffDoc(id,k){
+  const s=id?staffList.find(function(x){return x.id===id;}):null;
+  const show=function(src){
+    const im=document.createElement('img'); im.src=src;
+    im.dataset.fn=((s&&s.name)||'직원')+'_사진'; openImg(im);
+  };
+  if(stNewDocs[k]){ show(stNewDocs[k]); return; }
+  if(!id)return;
+  staffDocRef(id).child(k).once('value').then(function(snap){
+    const v=snap.val();
+    if(v) show(v);
+    else if(s&&s.docs&&s.docs[k]) show(s.docs[k].t);
+    else toast('사진을 찾을 수 없습니다');
+  }).catch(function(){ toast('⚠️ 사진 불러오기 실패'); });
+}
+
+// ── 직원카드에서 바로 메모 ──
+function openStaffMemo(id){
+  const s=staffList.find(function(x){return x.id===id;}); if(!s)return;
+  $('modal-title').textContent='📝 메모 — '+(s.name||'');
+  $('modal-body').innerHTML='<textarea class="form-textarea" id="sm-memo" style="min-height:160px" placeholder="자유롭게 적어 두세요 (여러 줄 가능)">'+mkEsc(s.memo)+'</textarea>';
+  $('modal-actions').innerHTML='<button class="act-btn edit" onclick="closeMod()">취소</button>'
+    +'<button class="act-btn mod" onclick="saveStaffMemo(\''+id+'\')">💾 저장</button>';
+  $('modal-bg').classList.add('on');
+  curDetailId=null;
+  setTimeout(function(){ const t=$('sm-memo'); if(t) t.focus(); },50);
+}
+function saveStaffMemo(id){
+  STAFF.child(id).update({memo:$('sm-memo').value.trim(), updatedAt:nowStr()})
+    .then(function(){ toast('✅ 메모 저장'); closeMod(); })
+    .catch(function(){ toast('⚠️ 저장 실패'); });
 }
 
 function delStaff(id){
   const s=staffList.find(function(x){return x.id===id;});
   if(!confirm((s&&s.name?s.name+' ':'')+'직원을 명부에서 삭제할까요?'))return;
+  PHOTOS.child('staff_'+id).remove().catch(function(){});
   STAFF.child(id).remove().then(function(){ toast('🗑 삭제 완료'); closeMod(); })
     .catch(function(){ toast('⚠️ 삭제 실패'); });
 }

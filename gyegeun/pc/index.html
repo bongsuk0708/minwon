@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<script>/* [10_29 보안] 보이지 않는 자동 로그인 — 저장소 요청에 로그인 표시(auth)를 붙인다. 로그인 기능이 꺼져 있으면 예전처럼 그냥 보낸다 */
-(function(){var KEY='AIzaSyCrJaARREMDXFfhicjUwWFyqkyTbVMRsYk',H='minwon-c29c2-default-rtdb',LS='bn_anon_tok',of=window.fetch.bind(window),pend=null,failAt=0;
-function sv(t){try{localStorage.setItem(LS,JSON.stringify(t))}catch(e){}}function ld(){try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}}
-function tok(){if(Date.now()-failAt<300000)return Promise.resolve(null);var t=ld();if(t&&t.id&&t.exp>Date.now()+60000)return Promise.resolve(t.id);if(pend)return pend;
-pend=(async function(){try{var r,j;if(t&&t.rf){r=await of('https://securetoken.googleapis.com/v1/token?key='+KEY,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(t.rf)});j=await r.json();if(j.id_token){t={id:j.id_token,rf:j.refresh_token,exp:Date.now()+(+j.expires_in)*1000};sv(t);return t.id;}}
-r=await of('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'});j=await r.json();if(j.idToken){t={id:j.idToken,rf:j.refreshToken,exp:Date.now()+(+j.expiresIn)*1000};sv(t);return t.id;}failAt=Date.now();return null;}catch(e){failAt=Date.now();return null;}finally{pend=null;}})();return pend;}
-window.fetch=function(i,o){var u=typeof i==='string'?i:'';if(u.indexOf(H)<0||/[?&]auth=/.test(u))return of(i,o);return tok().then(function(id){return of(id?u+(u.indexOf('?')>=0?'&':'?')+'auth='+encodeURIComponent(id):u,o);});};})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>계근 대장 · 본에코</title>
@@ -211,7 +204,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v59</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v60</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -378,13 +371,19 @@ const dupKey = r => `${r.date}|${r.veh}|${r.seong}|${r.site}|${r.weight}`;
 
 function buildDup(rows){
   DUP={};
-  rows.forEach(r=>{ (DUP[dupKey(r)]=DUP[dupKey(r)]||[]).push(r.at||0); });
+  rows.forEach(r=>{ (DUP[dupKey(r)]=DUP[dupKey(r)]||[]).push({id:r.id, at:r.at||0, no:r.no||''}); });
 }
 function isDoubleSave(r){
   const a=DUP[dupKey(r)]; if(!a || a.length<2 || !r.at) return false;
-  // 한 번에 올린 전표들은 저장 시각이 같습니다 — 그건 서로 다른 전표이니 넘어갑니다.
-  // 몇 초~몇십 분 뒤에 똑같은 게 또 들어온 것만 '두 번 저장'으로 봅니다.
-  return a.some(t=>{ const d=Math.abs(t-r.at); return t && d>2000 && d<30*60*1000; });
+  return a.some(x=>{
+    if(x.id===r.id) return false;
+    // 전표번호가 둘 다 있는데 서로 다르면 진짜로 두 번 나른 것입니다 — 두 번 저장이 아닙니다.
+    if(r.no && x.no && r.no !== x.no) return false;
+    // 한 번에 올린 전표들은 저장 시각이 같습니다 — 그건 서로 다른 전표이니 넘어갑니다.
+    // 몇 초~몇십 분 뒤에 똑같은 게 또 들어온 것만 '두 번 저장'으로 봅니다.
+    const d=Math.abs(x.at - r.at);
+    return x.at && d>2000 && d<30*60*1000;
+  });
 }
 
 /* 이 전표가 사진·양식과 어긋나는 점들 */

@@ -50,11 +50,6 @@ input,select,textarea{font-family:inherit;outline:none}
 .tab.on{color:#fff;border-bottom:3px solid #fff}
 .pane{display:none;padding:14px}
 .pane.on{display:block}
-#type-toggle{display:flex;gap:8px;margin-bottom:14px}
-.type-btn{flex:1;padding:11px 8px;border-radius:var(--radius);font-size:14px;font-weight:700;border:2.5px solid var(--line);background:var(--card);color:var(--sub)}
-.type-btn.on.minwon{background:var(--blue);border-color:var(--blue);color:#fff}
-.type-btn.on.hazard{background:var(--red);border-color:var(--red);color:#fff}
-.type-btn.on.occur{background:#7f1d1d;border-color:#7f1d1d;color:#fff}
 .submit-btn.occur{background:#7f1d1d}
 .flt-btn.on.f-발생{background:#7f1d1d;border-color:#7f1d1d}
 .form-card{background:var(--card);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:10px}
@@ -373,6 +368,7 @@ input,select,textarea{font-family:inherit;outline:none}
 .lg-empty{padding:30px 14px;text-align:center;color:var(--sub);font-size:13px;line-height:1.8;background:var(--card);border-radius:12px}
 .lg-seed{margin:10px 0;padding:14px;border-radius:12px;background:#eff6ff;border:1.5px dashed var(--blue2);font-size:13px;line-height:1.7;color:var(--ink)}
 .lg-seed button{margin-top:8px}
+.lg-hform-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 12px;font-size:16px}
 #lg-map{width:100%;height:46vh;min-height:300px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:#e5e7eb}
 #lg-stat{font-size:12px;color:var(--sub);font-weight:700;margin-top:6px;line-height:1.6}
 #lg-stat .miss{color:var(--red)}
@@ -444,12 +440,6 @@ input,select,textarea{font-family:inherit;outline:none}
 
   <!-- 접수 -->
   <div class="pane on" id="pane-form">
-    <div id="type-toggle">
-      <button class="type-btn minwon on" onclick="setFT('minwon',this)">📋 민원 접수</button>
-      <button class="type-btn occur" onclick="setFT('occur',this)">🚨 사고발생지점</button>
-      <button class="type-btn hazard" onclick="setFT('hazard',this)">⚠️ 사고재해예방</button>
-    </div>
-
     <div id="form-minwon">
       <div class="form-card">
         <div class="form-2col">
@@ -543,91 +533,6 @@ input,select,textarea{font-family:inherit;outline:none}
       </div>
       <button class="submit-btn minwon" onclick="submitM()">✅ 민원 접수 저장</button>
     </div>
-
-    <div id="form-hazard" style="display:none">
-      <div class="form-card">
-        <div class="form-row">
-          <span class="form-label" id="h-datelabel">점검일자</span>
-          <input class="form-input" id="h-inspdate" type="date">
-        </div>
-        <div class="form-row">
-          <span class="form-label">🚛 기사 이름</span>
-          <input class="form-input" id="h-driver" type="text" list="driver-dl" placeholder="명부에서 고르거나 직접 입력 (예: 오진수)" autocomplete="off">
-          <datalist id="driver-dl"></datalist>
-        </div>
-        <div class="form-row">
-          <span class="form-label">📌 행정동 · 동 구분 <button class="loc-mgr-btn" onclick="openLocMgr()">📍 장소 위치 수정</button></span>
-          <select class="form-select" id="h-dong-sel" onchange="onDongChange('h')">
-            <option value="">행정동 또는 장소 선택</option>
-            <optgroup label="행정동">
-              <option value="잠실동">잠실동</option>
-              <option value="삼전동">삼전동</option>
-              <option value="잠실3동">잠실3동</option>
-              <option value="가락동">가락동</option>
-            </optgroup>
-            <optgroup label="아파트 · 장소">
-              <option value="잠실본동">잠실본동</option>
-              <option value="주공5단지">주공5단지</option>
-              <option value="트리지움">트리지움</option>
-              <option value="레이크">레이크</option>
-              <option value="잠실현대">잠실현대</option>
-              <option value="우성4차">우성4차</option>
-              <option value="석촌호수">석촌호수</option>
-              <option value="롯데월드">롯데월드</option>
-              <option value="자전거포">자전거포</option>
-              <option value="삼전현대">삼전현대</option>
-              <option value="가락시장">가락시장</option>
-            </optgroup>
-            <option value="__etc">기타 (직접 입력)</option>
-          </select>
-          <input type="hidden" id="h-dong">
-          <div id="h-dongshow" style="font-size:11.5px;color:var(--sub);font-weight:700;margin-top:4px"></div>
-        </div>
-        <div class="form-row">
-          <span class="form-label" id="h-addrlabel">위험지점 주소 *</span>
-          <div class="addr-row">
-            <input class="form-input" id="h-addr" type="text" placeholder="동 선택 후 자동 입력 또는 직접 입력" oninput="addrHint('h')">
-            <button class="geo-btn" onclick="geoH()">📍확인</button>
-            <button class="map-btn" onclick="openMapPick('h')">🗺️지도</button>
-          </div>
-          <div class="addr-preview" id="h-addr-ok"></div>
-        </div>
-      </div>
-      <div class="form-card">
-        <div class="form-row">
-          <span class="group-label" id="h-g1">① 위험요인 · 현황 및 점검실태 *</span>
-          <input class="form-input" id="h-risktype" type="text" placeholder="위험요인 (예: 급경사, 교통혼잡, 유리병)" autocomplete="off" style="margin-bottom:7px">
-          <textarea class="form-textarea" id="h-riskcont" placeholder="현재 상태와 점검에서 확인된 사항을 함께 적으세요&#10;예) 내리막 끝 교차로라 수거차 정차 시 추돌 위험. 반사경 없고 야간 가로등 없어 시야 불량" style="min-height:104px"></textarea>
-        </div>
-        <div class="form-row">
-          <span class="group-label" id="h-g2">② 개선 및 안전대책</span>
-          <textarea class="form-textarea" id="h-action" placeholder="예) 반사경 설치 요청, 수거시간 주간 조정, 2인 1조 작업 지시"></textarea>
-        </div>
-        <div class="form-2col">
-          <div><span class="form-label">위험등급 *</span>
-            <select class="form-select" id="h-level"><option value="High">🔴 High (높음)</option><option value="Medium">🔴 Medium (보통)</option><option value="Low">🔴 Low (낮음)</option></select>
-          </div>
-          <div><span class="form-label">비고</span><input class="form-input" id="h-note" type="text" placeholder="메모"></div>
-        </div>
-      </div>
-      <div class="form-card">
-        <span class="form-label">현장 사진</span>
-        <div class="photo-section">
-          <div class="photo-box"><label>위험지점</label>
-            <div class="photo-btn" onclick="$('h-photo').click()">📷</div>
-            <img id="h-photo-th" class="photo-thumb" onclick="$('h-photo').click()" title="눌러서 사진 바꾸기"><button class="pa-btn pa-del" id="h-photo-th-del" style="display:none;margin-top:4px" onclick="clrFormPhoto('h-photo-th','hazard')">🗑 취소</button>
-            <input type="file" id="h-photo" accept="image/*" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
-          </div>
-        </div>
-        <div class="extra-wrap">
-          <div class="extra-hdr"><span class="form-label" style="margin:0">추가 사진 (여러 장 가능)</span>
-            <button class="extra-add" onclick="$('h-extra').click()">＋ 사진 첨부</button></div>
-          <input type="file" id="h-extra" accept="image/*" multiple style="display:none" onchange="onExtraPick(this,'h')">
-          <div class="extra-list" id="h-extra-list"></div>
-        </div>
-      </div>
-      <button class="submit-btn hazard" id="h-submit" onclick="submitH()">✅ 사고재해예방 등록</button>
-    </div>
   </div>
 
   <!-- 목록 -->
@@ -640,6 +545,95 @@ input,select,textarea{font-family:inherit;outline:none}
       <button class="lg-secbtn occur" id="lg-s-occur" onclick="lgSec('occur')">🚨 사고발생지점</button>
       <button class="lg-secbtn hazard" id="lg-s-hazard" onclick="lgSec('hazard')">⚠️ 사고재해예방</button>
     </div>
+    <!-- 사고발생지점·사고재해예방 입력 (＋ 추가를 누르면 목록 자리에 열림) -->
+    <div id="lg-hform" style="display:none">
+      <div class="lg-hform-hd"><b id="lg-hform-ttl"></b><button class="lg-tool" onclick="lgHFormClose()">← 목록으로</button></div>
+      <div id="form-hazard">
+        <div class="form-card">
+          <div class="form-row">
+            <span class="form-label" id="h-datelabel">점검일자</span>
+            <input class="form-input" id="h-inspdate" type="date">
+          </div>
+          <div class="form-row">
+            <span class="form-label">🚛 기사 이름</span>
+            <input class="form-input" id="h-driver" type="text" list="driver-dl" placeholder="명부에서 고르거나 직접 입력 (예: 오진수)" autocomplete="off">
+            <datalist id="driver-dl"></datalist>
+          </div>
+          <div class="form-row">
+            <span class="form-label">📌 행정동 · 동 구분 <button class="loc-mgr-btn" onclick="openLocMgr()">📍 장소 위치 수정</button></span>
+            <select class="form-select" id="h-dong-sel" onchange="onDongChange('h')">
+              <option value="">행정동 또는 장소 선택</option>
+              <optgroup label="행정동">
+                <option value="잠실동">잠실동</option>
+                <option value="삼전동">삼전동</option>
+                <option value="잠실3동">잠실3동</option>
+                <option value="가락동">가락동</option>
+              </optgroup>
+              <optgroup label="아파트 · 장소">
+                <option value="잠실본동">잠실본동</option>
+                <option value="주공5단지">주공5단지</option>
+                <option value="트리지움">트리지움</option>
+                <option value="레이크">레이크</option>
+                <option value="잠실현대">잠실현대</option>
+                <option value="우성4차">우성4차</option>
+                <option value="석촌호수">석촌호수</option>
+                <option value="롯데월드">롯데월드</option>
+                <option value="자전거포">자전거포</option>
+                <option value="삼전현대">삼전현대</option>
+                <option value="가락시장">가락시장</option>
+              </optgroup>
+              <option value="__etc">기타 (직접 입력)</option>
+            </select>
+            <input type="hidden" id="h-dong">
+            <div id="h-dongshow" style="font-size:11.5px;color:var(--sub);font-weight:700;margin-top:4px"></div>
+          </div>
+          <div class="form-row">
+            <span class="form-label" id="h-addrlabel">위험지점 주소 *</span>
+            <div class="addr-row">
+              <input class="form-input" id="h-addr" type="text" placeholder="동 선택 후 자동 입력 또는 직접 입력" oninput="addrHint('h')">
+              <button class="geo-btn" onclick="geoH()">📍확인</button>
+              <button class="map-btn" onclick="openMapPick('h')">🗺️지도</button>
+            </div>
+            <div class="addr-preview" id="h-addr-ok"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-row">
+            <span class="group-label" id="h-g1">① 위험요인 · 현황 및 점검실태 *</span>
+            <input class="form-input" id="h-risktype" type="text" placeholder="위험요인 (예: 급경사, 교통혼잡, 유리병)" autocomplete="off" style="margin-bottom:7px">
+            <textarea class="form-textarea" id="h-riskcont" placeholder="현재 상태와 점검에서 확인된 사항을 함께 적으세요&#10;예) 내리막 끝 교차로라 수거차 정차 시 추돌 위험. 반사경 없고 야간 가로등 없어 시야 불량" style="min-height:104px"></textarea>
+          </div>
+          <div class="form-row">
+            <span class="group-label" id="h-g2">② 개선 및 안전대책</span>
+            <textarea class="form-textarea" id="h-action" placeholder="예) 반사경 설치 요청, 수거시간 주간 조정, 2인 1조 작업 지시"></textarea>
+          </div>
+          <div class="form-2col">
+            <div><span class="form-label">위험등급 *</span>
+              <select class="form-select" id="h-level"><option value="High">🔴 High (높음)</option><option value="Medium">🔴 Medium (보통)</option><option value="Low">🔴 Low (낮음)</option></select>
+            </div>
+            <div><span class="form-label">비고</span><input class="form-input" id="h-note" type="text" placeholder="메모"></div>
+          </div>
+        </div>
+        <div class="form-card">
+          <span class="form-label">현장 사진</span>
+          <div class="photo-section">
+            <div class="photo-box"><label>위험지점</label>
+              <div class="photo-btn" onclick="$('h-photo').click()">📷</div>
+              <img id="h-photo-th" class="photo-thumb" onclick="$('h-photo').click()" title="눌러서 사진 바꾸기"><button class="pa-btn pa-del" id="h-photo-th-del" style="display:none;margin-top:4px" onclick="clrFormPhoto('h-photo-th','hazard')">🗑 취소</button>
+              <input type="file" id="h-photo" accept="image/*" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
+            </div>
+          </div>
+          <div class="extra-wrap">
+            <div class="extra-hdr"><span class="form-label" style="margin:0">추가 사진 (여러 장 가능)</span>
+              <button class="extra-add" onclick="$('h-extra').click()">＋ 사진 첨부</button></div>
+            <input type="file" id="h-extra" accept="image/*" multiple style="display:none" onchange="onExtraPick(this,'h')">
+            <div class="extra-list" id="h-extra-list"></div>
+          </div>
+        </div>
+        <button class="submit-btn hazard" id="h-submit" onclick="submitH()">✅ 사고재해예방 등록</button>
+      </div>
+    </div>
+    <div id="lg-listview">
     <div class="lg-kind" id="lg-kind">
       <button class="lg-kbtn food on" id="lg-k-food" onclick="lgKind('food')">🍚 음식물</button>
       <button class="lg-kbtn recycle" id="lg-k-recycle" onclick="lgKind('recycle')">♻️ 재활용</button>
@@ -664,6 +658,7 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="lg-legend" id="lg-legend"></div>
         <div id="lg-stat"></div>
       </div>
+    </div>
     </div>
   </div>
   <div class="pane" id="pane-list">
@@ -1047,15 +1042,6 @@ function swMap(){ focusId=null; sw('map'); }
 
 // ── 폼 타입 ──
 let hKind='사고재해예방';
-function setFT(t,el){
-  const isH=(t==='hazard'||t==='occur');
-  // 버튼 색부터 바꾼다 — 아래에서 문제가 생겨도 선택 표시는 남도록
-  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('on'));
-  if(el) el.classList.add('on');
-  $('form-minwon').style.display = t==='minwon'?'block':'none';
-  $('form-hazard').style.display = isH?'block':'none';
-  if(isH){ hKind = (t==='occur')?'사고발생지점':'사고재해예방'; applyHKind(); }
-}
 // 사고발생지점 / 사고재해예방 — 같은 양식을 글자만 바꿔 씀
 function applyHKind(){
   const occ = hKind==='사고발생지점';
@@ -1380,6 +1366,7 @@ async function submitH(){
     }
     toast(hPos?('✅ 사고재해예방 등록! ('+rec.hazardNo+')'):('✅ 등록 완료 ('+rec.hazardNo+') — 위치 미지정, 지도 표시 안 됨'));
     resetHForm();
+    lg.dong='all'; lg.use='all'; lg.q=''; $('lg-q').value=''; lgFitKey=''; lgHFormClose();   // 방금 넣은 기록이 보이도록 목록으로
   }catch{toast('⚠️ 저장 실패');}
   finally{$('photo-progress').classList.remove('on');}
 }
@@ -2573,7 +2560,19 @@ function lgLatestYm(){
 }
 
 // ── 구분 바꾸기 ──
-function lgSec(s){ lg.sec=s; lg.dong='all'; lg.use='all'; lg.ym=lgLatestYm(); lgFitKey=''; lgRender(); }
+function lgSec(s){ lg.sec=s; lg.dong='all'; lg.use='all'; lg.ym=lgLatestYm(); lgFitKey=''; lgRender(); lgHFormClose(); }
+// 사고발생지점·사고재해예방 입력 양식 열기/닫기
+function lgHFormOpen(){
+  hKind=lg.sec==='occur'?'사고발생지점':'사고재해예방'; applyHKind();
+  $('lg-hform-ttl').textContent=(lg.sec==='occur'?'🚨 사고발생지점':'⚠️ 사고재해예방')+' 입력';
+  $('lg-listview').style.display='none'; $('lg-hform').style.display='block'; window.scrollTo(0,0);
+}
+function lgHFormClose(){
+  if($('lg-hform').style.display==='none') return;
+  $('lg-hform').style.display='none'; $('lg-listview').style.display=''; window.scrollTo(0,0);
+  lgRender();
+  setTimeout(function(){ if(lgMap){lgMap.relayout(); lgFitKey=''; lgRenderMap(lgFiltered());} },80);
+}
 function lgKind(k){ lg.kind=k; lg.dong='all'; lg.use='all'; lg.ym=lgLatestYm(); lgFitKey=''; lgRender(); }
 function lgSetDong(d){ lg.dong=d; lgFitKey=''; lgRender(); }
 function lgSetUse(u){ lg.use=u; lgFitKey=''; lgRender(); }
@@ -2825,7 +2824,7 @@ function lgRenderMap(list){
 
 // ── 상세·수정 ──
 function lgOpen(id){
-  if(!id&&lgIsH()){ sw('form'); setFT(lg.sec,document.querySelector('.type-btn.'+lg.sec)); window.scrollTo(0,0); toast((lg.sec==='occur'?'🚨 사고발생지점':'⚠️ 사고재해예방')+' 접수 화면입니다'); return; }
+  if(!id&&lgIsH()){ lgHFormOpen(); return; }
   const it=id?lgFind(id):null;
   lgEditId=it?it.id:null;
   const t=it?it._t:(lg.sec==='rfid'?'rfid':'biz');

@@ -314,6 +314,98 @@ input,select,textarea{font-family:inherit;outline:none}
   .pr-gh span{font-weight:700;font-size:9pt;color:#333;float:right}
   @page{size:A4 landscape;margin:11mm}
 }
+/* ══ 📁 관리대장 (RFID · 감량의무사업장) ══ */
+.lg-sec{display:flex;gap:8px;margin-bottom:8px}
+.lg-secbtn{flex:1;padding:12px 8px;border-radius:12px;font-size:14.5px;font-weight:800;border:2px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer;box-shadow:var(--shadow)}
+.lg-secbtn.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.lg-kind{display:none;gap:8px;margin-bottom:8px}
+.lg-kind.on{display:flex}
+.lg-kbtn{flex:1;padding:9px 8px;border-radius:10px;font-size:13.5px;font-weight:800;border:2px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
+.lg-kbtn.on.food{background:#f59e0b;border-color:#f59e0b;color:#fff}
+.lg-kbtn.on.recycle{background:var(--blue2);border-color:var(--blue2);color:#fff}
+.lg-dongs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lg-dbtn{padding:7px 14px;border-radius:20px;font-size:13px;font-weight:800;border:1.5px solid var(--line);background:var(--card);color:var(--sub);cursor:pointer}
+.lg-dbtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.lg-dbtn.none{border-color:#fca5a5;color:var(--red)}
+.lg-dbtn.none.on{background:var(--red);border-color:var(--red);color:#fff}
+.lg-tools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.lg-tools .form-input{flex:1;min-width:140px;padding:8px 10px;font-size:13px}
+.lg-tools input[type=month]{padding:7px 8px;border:1.5px solid var(--line);border-radius:9px;font-size:13px;font-weight:700;font-family:inherit;background:#fff}
+.lg-tool{padding:8px 12px;border-radius:9px;font-size:12.5px;font-weight:800;background:#f1f5f9;color:var(--ink);border:1.5px solid var(--line);cursor:pointer;white-space:nowrap}
+.lg-use{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.lg-ubtn{padding:6px 12px;border-radius:16px;font-size:12.5px;font-weight:800;border:1.5px solid var(--line);background:#fff;color:var(--sub);cursor:pointer}
+.lg-ubtn.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.lg-ubtn.on.use{background:var(--green);border-color:var(--green)}
+.lg-ubtn.on.unuse{background:#64748b;border-color:#64748b}
+#lg-sum{font-size:12.5px;font-weight:700;color:var(--sub);background:#f1f5f9;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.7}
+#lg-sum b{color:var(--ink)}
+#lg-sum .warn{color:var(--red)}
+.lg-body{display:flex;flex-direction:column;gap:10px}
+#lg-list{display:flex;flex-direction:column;gap:6px}
+.lg-row{background:var(--card);border-radius:10px;padding:10px 12px;box-shadow:var(--shadow);cursor:pointer;border-left:5px solid var(--line)}
+.lg-row:hover{background:#f8fafc}
+.lg-row.use{border-left-color:var(--green2)}
+.lg-row.unuse{border-left-color:#94a3b8;background:#f8fafc}
+.lg-row.food{border-left-color:#f59e0b}
+.lg-row.recycle{border-left-color:var(--blue2)}
+.lg-row.ended{border-left-color:#cbd5e1;opacity:.7}
+.lg-row.ended .lg-nm{text-decoration:line-through}
+.lg-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.lg-nm{font-size:14px;font-weight:800;color:var(--ink);line-height:1.35;word-break:break-all}
+.lg-no{font-size:11px;font-weight:800;color:var(--sub);margin-right:4px}
+.lg-num{font-size:13.5px;font-weight:800;color:var(--ink);white-space:nowrap;text-align:right}
+.lg-num small{display:block;font-size:11px;color:var(--sub);font-weight:700}
+.lg-sub{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:3px;line-height:1.5;word-break:break-all}
+.lg-tag{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 7px;border-radius:10px;margin-right:3px;vertical-align:1px}
+.lg-tag.use{background:#dcfce7;color:var(--green)}
+.lg-tag.unuse{background:#e2e8f0;color:#475569}
+.lg-tag.zero{background:#fee2e2;color:var(--red)}
+.lg-tag.warn{background:#fef3c7;color:#b45309}
+.lg-tag.ended{background:#e2e8f0;color:#475569}
+.lg-tag.nopos{background:#fee2e2;color:var(--red)}
+.lg-months{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap}
+.lg-mo{min-width:24px;padding:2px 3px;border-radius:5px;font-size:10px;font-weight:800;text-align:center;background:#f1f5f9;color:#94a3b8}
+.lg-mo.ok{background:#dbeafe;color:var(--blue)}
+.lg-mo.cur{outline:2px solid var(--blue)}
+.lg-empty{padding:30px 14px;text-align:center;color:var(--sub);font-size:13px;line-height:1.8;background:var(--card);border-radius:12px}
+.lg-seed{margin:10px 0;padding:14px;border-radius:12px;background:#eff6ff;border:1.5px dashed var(--blue2);font-size:13px;line-height:1.7;color:var(--ink)}
+.lg-seed button{margin-top:8px}
+#lg-map{width:100%;height:46vh;min-height:300px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:#e5e7eb}
+#lg-stat{font-size:12px;color:var(--sub);font-weight:700;margin-top:6px;line-height:1.6}
+#lg-stat .miss{color:var(--red)}
+.lgp{width:14px;height:14px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45);cursor:pointer}
+.lgp.use{background:#16a34a}
+.lgp.unuse{background:#94a3b8;border-color:#475569}
+.lgp.food{background:#f59e0b}
+.lgp.recycle{background:#3b82f6}
+.lgp.ended{background:#cbd5e1;border-color:#64748b}
+.lgp-lbl{display:flex;align-items:center;gap:4px;cursor:pointer}
+.lgp-lbl span{background:#fff;border:2px solid;border-radius:8px;padding:1px 6px;font-size:11px;font-weight:800;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.lg-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:11.5px;font-weight:700;color:var(--sub);margin-top:4px}
+.lg-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:3px;vertical-align:-1px}
+/* 상세 */
+.lg-mtab{width:100%;border-collapse:collapse;font-size:12px;margin-top:4px}
+.lg-mtab th,.lg-mtab td{border:1px solid var(--line);padding:5px 6px;text-align:right}
+.lg-mtab th{background:#f1f5f9;text-align:center;font-weight:800}
+.lg-mtab td:first-child{text-align:center;font-weight:700}
+.lg-12{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.lg-12 label{font-size:11px;font-weight:800;color:var(--sub);display:block;text-align:center}
+.lg-12 input{width:100%;padding:6px 4px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;text-align:center;font-family:inherit}
+.lg-ph{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+.lg-phi{position:relative}
+.lg-phi img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1.5px solid var(--line);cursor:pointer;display:block}
+.lg-phi button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:2px solid #fff;background:var(--red2);color:#fff;font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+.lg-calc{font-size:12px;color:var(--sub);font-weight:700;background:#f8fafc;border-radius:8px;padding:8px 10px;line-height:1.7;margin-top:6px}
+.lg-calc b{color:var(--ink)}
+@media(min-width:900px){
+  .lg-body{flex-direction:row;align-items:flex-start}
+  #lg-list{flex:0 0 46%;max-height:calc(100vh - 330px);overflow:auto;padding-right:4px}
+  .lg-mapcol{flex:1;position:sticky;top:10px}
+  #lg-map{height:calc(100vh - 340px);min-height:520px}
+}
+
+.tab{white-space:nowrap}.tab-ic{font-style:normal}
+@media(max-width:480px){.tab{font-size:12.5px;letter-spacing:-.3px}.tab-ic{display:none}}
 </style>
 </head>
 <body>
@@ -338,11 +430,12 @@ input,select,textarea{font-family:inherit;outline:none}
     </div>
     <div id="net-bar" class="net-wait">연결 중…</div>
     <div id="tabs">
-      <div class="tab on" onclick="sw('form')" id="tab-form">✏️ 접수</div>
-      <div class="tab" onclick="sw('list')" id="tab-list">📋 목록</div>
-      <div class="tab" onclick="swMap()" id="tab-map">🗺 지도</div>
-      <div class="tab" onclick="sw('photo')" id="tab-photo">📦 보관함</div>
-      <div class="tab" onclick="sw('staff')" id="tab-staff">👷 직원</div>
+      <div class="tab on" onclick="sw('form')" id="tab-form"><i class="tab-ic">✏️</i> 접수</div>
+      <div class="tab" onclick="sw('ledger')" id="tab-ledger"><i class="tab-ic">📁</i> 관리대장</div>
+      <div class="tab" onclick="sw('list')" id="tab-list"><i class="tab-ic">📋</i> 목록</div>
+      <div class="tab" onclick="swMap()" id="tab-map"><i class="tab-ic">🗺</i> 지도</div>
+      <div class="tab" onclick="sw('photo')" id="tab-photo"><i class="tab-ic">📦</i> 보관함</div>
+      <div class="tab" onclick="sw('staff')" id="tab-staff"><i class="tab-ic">👷</i> 직원</div>
     </div>
   </div>
 
@@ -429,13 +522,13 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="photo-section">
           <div class="photo-box"><label>처리 전</label>
             <div class="photo-btn" onclick="$('m-before').click()">📷</div>
-            <img id="m-before-th" class="photo-thumb">
-            <input type="file" id="m-before" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'m-before-th','before')">
+            <img id="m-before-th" class="photo-thumb" onclick="$('m-before').click()" title="눌러서 사진 바꾸기"><button class="pa-btn pa-del" id="m-before-th-del" style="display:none;margin-top:4px" onclick="clrFormPhoto('m-before-th','before')">🗑 취소</button>
+            <input type="file" id="m-before" accept="image/*" style="display:none" onchange="onPhoto(this,'m-before-th','before')">
           </div>
           <div class="photo-box"><label>처리 후</label>
             <div class="photo-btn" onclick="$('m-after').click()">📷</div>
-            <img id="m-after-th" class="photo-thumb">
-            <input type="file" id="m-after" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'m-after-th','after')">
+            <img id="m-after-th" class="photo-thumb" onclick="$('m-after').click()" title="눌러서 사진 바꾸기"><button class="pa-btn pa-del" id="m-after-th-del" style="display:none;margin-top:4px" onclick="clrFormPhoto('m-after-th','after')">🗑 취소</button>
+            <input type="file" id="m-after" accept="image/*" style="display:none" onchange="onPhoto(this,'m-after-th','after')">
           </div>
         </div>
         <div class="extra-wrap">
@@ -519,8 +612,8 @@ input,select,textarea{font-family:inherit;outline:none}
         <div class="photo-section">
           <div class="photo-box"><label>위험지점</label>
             <div class="photo-btn" onclick="$('h-photo').click()">📷</div>
-            <img id="h-photo-th" class="photo-thumb">
-            <input type="file" id="h-photo" accept="image/*" capture="environment" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
+            <img id="h-photo-th" class="photo-thumb" onclick="$('h-photo').click()" title="눌러서 사진 바꾸기"><button class="pa-btn pa-del" id="h-photo-th-del" style="display:none;margin-top:4px" onclick="clrFormPhoto('h-photo-th','hazard')">🗑 취소</button>
+            <input type="file" id="h-photo" accept="image/*" style="display:none" onchange="onPhoto(this,'h-photo-th','hazard')">
           </div>
         </div>
         <div class="extra-wrap">
@@ -535,6 +628,39 @@ input,select,textarea{font-family:inherit;outline:none}
   </div>
 
   <!-- 목록 -->
+
+  <!-- 📁 관리대장 -->
+  <div class="pane" id="pane-ledger">
+    <div class="lg-sec">
+      <button class="lg-secbtn on" id="lg-s-rfid" onclick="lgSec('rfid')">📡 RFID</button>
+      <button class="lg-secbtn" id="lg-s-biz" onclick="lgSec('biz')">🏢 감량의무사업장</button>
+    </div>
+    <div class="lg-kind" id="lg-kind">
+      <button class="lg-kbtn food on" id="lg-k-food" onclick="lgKind('food')">🍚 음식물</button>
+      <button class="lg-kbtn recycle" id="lg-k-recycle" onclick="lgKind('recycle')">♻️ 재활용</button>
+    </div>
+    <div class="lg-dongs" id="lg-dongs"></div>
+    <div class="lg-tools">
+      <label title="몇 월 자료를 볼지">📅 <input type="month" id="lg-ym" onchange="lgSetYm(this.value)"></label>
+      <input class="form-input" id="lg-q" type="text" placeholder="🔍 이름·주소 검색" autocomplete="off" oninput="lg.q=this.value.trim();lgRender()">
+      <button class="st-add" onclick="lgOpen()">＋ 추가</button>
+      <button class="lg-tool" id="lg-upbtn" onclick="$('lg-file').click()">⬆ 엑셀 올리기</button>
+      <input type="file" id="lg-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="lgImport(this)">
+      <button class="lg-tool" onclick="lgLocateAll()">📍 위치 찾기</button>
+      <button class="lg-tool" onclick="lgPrint()">🖨 인쇄</button>
+    </div>
+    <div class="lg-use" id="lg-use"></div>
+    <div id="lg-sum"></div>
+    <div id="lg-seed"></div>
+    <div class="lg-body">
+      <div id="lg-list"></div>
+      <div class="lg-mapcol">
+        <div id="lg-map"></div>
+        <div class="lg-legend" id="lg-legend"></div>
+        <div id="lg-stat"></div>
+      </div>
+    </div>
+  </div>
   <div class="pane" id="pane-list">
     <div id="list-filter">
       <button class="flt-btn on f-all" onclick="setFlt('all',this)">전체</button>
@@ -754,7 +880,7 @@ const FIXED_LOCS=[
 const $=id=>document.getElementById(id);
 function uuid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function nowStr(){return new Date().toISOString().slice(0,16).replace('T',' ')}
-function today(){return new Date().toISOString().slice(0,10)}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}  // 한국 시간 기준 (세계표준시로 하면 오전 9시 전엔 어제 날짜가 됨)
 function now_t(){return new Date().toTimeString().slice(0,5)}
 function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
 function netBar(t,m){const b=$('net-bar');b.textContent=m;b.className='net-'+t}
@@ -779,18 +905,29 @@ function compressPhoto(file,maxPx=640,q=0.55){
 }
 
 async function onPhoto(input,thumbId,field){
-  const f=input.files[0]; if(!f)return;
+  const f=input.files[0]; if(!f){input.value='';return;}
   $('photo-progress').classList.add('on');
   try{
     const b64=await compressPhoto(f);
     $(thumbId).src=b64; $(thumbId).style.display='block';
     tmpPhoto[field]=b64;
+    const del=$(thumbId+'-del'); if(del) del.style.display='inline-block';
     // 상세 편집 중이면 바로 Firebase 저장
     if(curDetailId){
       await PHOTOS.child(curDetailId).child(field).set(b64);
       toast('사진 저장 완료');
+    }else{
+      toast('📷 사진 올림 — 저장을 눌러야 기록됩니다');
     }
-  }finally{$('photo-progress').classList.remove('on');}
+  }catch(e){ toast('⚠️ 사진을 열 수 없습니다 (아이폰 HEIC는 JPG로 바꿔 올려주세요)'); }
+  finally{ $('photo-progress').classList.remove('on'); input.value=''; }
+}
+// 접수폼에 올려둔(아직 저장 전) 사진 지우기
+function clrFormPhoto(thumbId,field){
+  tmpPhoto[field]=null;
+  const t=$(thumbId); if(t){ t.src=''; t.style.display='none'; }
+  const d=$(thumbId+'-del'); if(d) d.style.display='none';
+  toast('🗑 사진 취소됨');
 }
 
 // ── 로그인 ──
@@ -894,8 +1031,9 @@ function nextHNo(){
 
 // ── 탭 ──
 function sw(t){
-  ['form','list','map','photo','staff'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
+  ['form','ledger','list','map','photo','staff'].forEach(x=>{$('pane-'+x).classList.toggle('on',x===t);$('tab-'+x).classList.toggle('on',x===t);});
   if(t==='map')setTimeout(initMap,80);
+  if(t==='ledger')lgShow();
   if(t==='staff')renderStaff();
 }
 // 지도 탭을 직접 누르면 선택 해제하고 전체를 보여줌
@@ -942,6 +1080,7 @@ function openMapPick(form,recId){
   let cur=null;
   if(form==='rec'){ const r=recs.find(x=>x.id===recId); if(r&&r.addrPos)cur=r.addrPos; }
   else if(form==='loc'){ const l=FIXED_LOCS.find(x=>x.name===recId); if(l)cur={lat:l.lat,lng:l.lng}; }
+  else if(form==='lg'){ const it=lgFind(recId); if(it&&it.pos&&it.pos.lat)cur={lat:+it.pos.lat,lng:+it.pos.lng}; }
   else cur = (form==='m') ? mPos : hPos;
   const center = cur ? new kakao.maps.LatLng(cur.lat,cur.lng) : new kakao.maps.LatLng(37.504,127.090);
 
@@ -996,6 +1135,13 @@ function confirmMapPick(){
   if(pickForm==='rec'){
     RECS.child(pickRecId).update({addrPos:{lat:pickPos.lat,lng:pickPos.lng},updatedAt:nowStr()})
       .then(function(){ closeMapPick(); closeMod(); toast('✅ 위치 수정 완료'); })
+      .catch(function(){ toast('⚠️ 저장 실패'); });
+    return;
+  }
+  if(pickForm==='lg'){
+    const it=lgFind(pickRecId); if(!it){closeMapPick();return;}
+    lgRef(it).child(it.id).update({pos:{lat:pickPos.lat,lng:pickPos.lng},posSrc:'지도에서 찍음',updatedAt:nowStr()})
+      .then(function(){ closeMapPick(); toast('✅ 위치 저장됨'); lgOpen(it.id); })
       .catch(function(){ toast('⚠️ 저장 실패'); });
     return;
   }
@@ -1556,7 +1702,7 @@ function loadPhotos(id, isH){
               +'<button class="pa-btn pa-del" onclick="delPhoto(\''+id+'\',\''+ph.key+'\',\''+ph.label+'\')">🗑</button>'
             : '')
         +'</div>'
-        +'<input type="file" id="'+fid+'" accept="image/*" capture="environment" style="display:none" onchange="onDetPhoto(this,\''+ph.key+'\')">'
+        +'<input type="file" id="'+fid+'" accept="image/*" style="display:none" onchange="onDetPhoto(this,\''+ph.key+'\')">'
         +'</div>';
     }).join('')+'</div>';
 
@@ -2075,7 +2221,10 @@ function openEdit(id){
         </select></div>
     </div>`;
   }
+  b+=`<div class="form-row"><span class="form-label">사진 (교체 · 삭제 · 추가 — 누르는 즉시 저장됩니다)</span>
+    <div id="det-photo-area">🔄 사진 로딩 중…</div></div>`;
   $('modal-body').innerHTML=b;
+  loadPhotos(id, isH);
   $('modal-actions').innerHTML=`<button class="act-btn edit" onclick="openDet('${id}')">취소</button><button class="act-btn mod" onclick="saveEdit('${id}')">💾 저장</button>`;
   $('modal-bg').classList.add('on');
 }
@@ -2305,6 +2454,718 @@ function delRec(id){if(!confirm('삭제하시겠습니까?'))return;softDel(id).
 function closeMod(e){if(e&&e.target!==$('modal-bg'))return;$('modal-bg').classList.remove('on');curDetailId=null;}
 
 initLogin();
+
+// ══════════════════════════════════════════════════════════════
+// 📁 관리대장 — 📡 RFID · 🏢 감량의무사업장(🍚 음식물 / ♻️ 재활용)
+//   데이터: report/rfid, report/biz  (사진은 report/rfidPhotos, report/bizPhotos 에 따로)
+// ══════════════════════════════════════════════════════════════
+const RFID=db.ref('report/rfid');
+const RFIDPH=db.ref('report/rfidPhotos');
+const BIZ=db.ref('report/biz');
+const BIZPH=db.ref('report/bizPhotos');
+const LG_DONGS=['잠실동','삼전동'];
+const LG_KIND_NAME={food:'음식물',recycle:'재활용'};
+let rfidList=[], bizList=[], lgLoaded={rfid:false,biz:false};
+let lg={sec:'rfid', kind:'food', dong:'all', use:'all', ym:'', q:''};
+let lgMap=null, lgPins=[], lgSubOn=false, lgFitKey='', lgEditId=null, lgLocBusy=false;
+
+// ── 종이 대장에서 옮긴 처음 자료 (연락처·대표자·사업자번호는 공개 파일에 넣지 않음 → 앱에서 직접 입력) ──
+// 음식물: [상호, 번지, 이전단가, 단가, 신규계약일, 재계약일, 7월ℓ, 8월ℓ, 9월ℓ, 1~9월 배출량계ℓ]
+const LG_SEED_FOOD=[
+ ['백석','180-00','',320,'2023-06-21','2026-01-01',0,0,0,2420],
+ ['몽키뮤직','181-02','250',320,'2019-11-01','2026-01-01',910,890,760,7240],
+ ['헤라','183-01','270',320,'2022-04-18','2026-01-01',470,570,470,4610],
+ ['조개창고','191-01','220',320,'2014-10-21','2026-01-01',85,75,90,900],
+ ['화덕고깃간','191-05','220',320,'2017-02-01','2026-01-01',0,0,0,2240],
+ ['생생아구','198-01','220',320,'2016-08-01','2026-01-01',1290,1040,1070,11660],
+ ['유담들밥','228-08','220',320,'2025-05-05','2026-01-01',670,535,570,2390],
+ ['키즈밀로티스','251-00','220',320,'2015-07-01','2026-01-01',720,840,920,7500],
+ ['강남동태찜','252-08','220',320,'2014-01-01','2026-01-01',2190,2220,2090,19530],
+ ['애플트리(러닝어학원)','305-00','',320,'2022-01-01','2026-01-01',335,220,270,2790],
+ ['투섬플레이㈜','007-06','250',320,'2020-12-01','2026-01-01',290,260,150,2205],
+ ['롯데GRS','009-02','',320,'2024-04-01','2026-01-01',3610,2550,2160,24780],
+ ['강남수병원','038-05','220',320,'2014-07-17','2026-01-01',260,240,240,2200],
+ ['호림일식','130-02','200',300,'2016-05-01','2026-01-01',0,10,0,5680],
+ ['엠에스병원','180-08','신규',320,'2024-10-02','2026-01-01',3850,3810,3890,34000],
+ ['빵샘송파점','181-06','신규',320,'2024-02-01','2026-01-01',225,180,180,1345],
+ ['잠실중앙상가','5단지','200',320,'2014-08-01','2026-01-01',990,720,760,8585]
+];
+// 재활용(삼전동 대장 25~33번): [연번, 계약일, 상호, 주소, 월계약금, 계산서, 확인된 달(1~), 상태, 해지월]
+const LG_SEED_RECYCLE=[
+ [25,'2018-08-01','청림실업㈜','180-2',100000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [26,'2020-10-01','엠에스병원','180-8',100000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [27,'2022-02-01','삼전종합사회복지관','172-02',80000,false,[1,2,3,4,5,6,7,8],'계약',''],
+ [28,'2021-07-01','뷰티살롱','182-13',20000,true,[1,2,3,4,5,6],'해지','2026-07'],
+ [29,'2018-06-01','라티스글로벌커뮤니케이션스','182-13',60000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [30,'2020-11-01','서울카테스 빌딩용역 샘비즈㈜','182-14',70000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [31,'2023-09-01','홈플러스 익스프레스','잠실3동 레이크상가',100000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [32,'2024-11-01','하양빌딩','레이크B상가',50000,true,[1,2,3,4,5,6,7,8],'계약',''],
+ [33,'2026-06-01','(상호 확인 필요 — 손글씨)','182-13',20000,true,[6,7,8],'계약','']
+];
+
+// ── 작은 도우미 ──
+function lgNum(x){ const v=parseFloat(String(x==null?'':x).replace(/[,\s원kgℓ]/gi,'')); return isFinite(v)?v:0; }
+function lgFmt(n,d){ n=+n||0; return n.toLocaleString('ko-KR',{maximumFractionDigits:(d==null?0:d)}); }
+function lgYm(){ return lg.ym||today().slice(0,7); }
+function lgYear(){ return lgYm().slice(0,4); }
+function lgMonN(ym){ return +String(ym||lgYm()).slice(5,7); }
+function lgFind(id){ return rfidList.find(x=>x.id===id)||bizList.find(x=>x.id===id)||null; }
+function lgRef(it){ return it&&it._t==='rfid'?RFID:BIZ; }
+function lgPhRef(it){ return it&&it._t==='rfid'?RFIDPH:BIZPH; }
+function lgDongOf(s){ s=String(s||''); return /삼전/.test(s)?'삼전동':(/잠실/.test(s)?'잠실동':''); }
+function lgIsUse(it){ return it._t==='rfid' ? (it.status||'사용')==='사용' : (it.status||'계약')!=='해지'; }
+function lgNormName(s){ return String(s||'').replace(/\s+/g,'').replace(/[()（）]/g,'').replace(/에코$/,'').toLowerCase(); }
+
+// ── 불러오기 (관리대장 탭을 처음 열 때만 연결 → 평소 데이터 아낌) ──
+function lgSub(){
+  if(lgSubOn) return; lgSubOn=true;
+  RFID.on('value',function(s){
+    const v=s.val()||{}; rfidList=Object.keys(v).map(k=>Object.assign({},v[k],{id:k,_t:'rfid'}));
+    lgLoaded.rfid=true; lgAfterLoad();
+  },lgErr);
+  BIZ.on('value',function(s){
+    const v=s.val()||{}; bizList=Object.keys(v).map(k=>Object.assign({},v[k],{id:k,_t:'biz'}));
+    lgLoaded.biz=true; lgAfterLoad();
+  },lgErr);
+}
+function lgErr(e){
+  toast('⚠️ 관리대장을 불러오지 못했습니다');
+  const s=$('lg-sum'); if(s) s.innerHTML='<span class="warn">⚠️ 저장소에서 읽기가 막혀 있습니다 ('+mkEsc(e&&e.code||'권한')+') — Firebase 규칙에 report/rfid, report/biz 허용이 필요합니다</span>';
+}
+function lgAfterLoad(){
+  if(!lg.ym) lg.ym=lgLatestYm();
+  if($('pane-ledger')&&$('pane-ledger').classList.contains('on')) lgRender();
+}
+function lgShow(){
+  lgSub();
+  if(!lg.ym) lg.ym=lgLatestYm();
+  lgRender();
+  setTimeout(function(){ lgInitMap(); if(lgMap){lgMap.relayout(); lgFitKey=''; lgRenderMap(lgFiltered());} },80);
+  setTimeout(function(){ if(lgMap){lgMap.relayout(); lgFitKey=''; lgRenderMap(lgFiltered());} },400);
+}
+// 가장 최근 자료가 있는 달
+function lgLatestYm(){
+  let best='';
+  lgItems().forEach(function(it){ Object.keys(it.months||{}).forEach(function(k){ if(k>best) best=k; }); });
+  return best||today().slice(0,7);
+}
+
+// ── 구분 바꾸기 ──
+function lgSec(s){ lg.sec=s; lg.dong='all'; lg.use='all'; lg.ym=lgLatestYm(); lgFitKey=''; lgRender(); }
+function lgKind(k){ lg.kind=k; lg.dong='all'; lg.use='all'; lg.ym=lgLatestYm(); lgFitKey=''; lgRender(); }
+function lgSetDong(d){ lg.dong=d; lgFitKey=''; lgRender(); }
+function lgSetUse(u){ lg.use=u; lgFitKey=''; lgRender(); }
+function lgSetYm(v){ lg.ym=v||''; lgRender(); }
+
+function lgItems(){ return lg.sec==='rfid' ? rfidList : bizList.filter(b=>b.kind===lg.kind); }
+function lgByDong(a){
+  if(lg.dong==='all') return a;
+  if(lg.dong==='none') return a.filter(x=>LG_DONGS.indexOf(x.dong)<0);
+  return a.filter(x=>x.dong===lg.dong);
+}
+function lgFiltered(){
+  let a=lgByDong(lgItems());
+  if(lg.use==='use') a=a.filter(lgIsUse);
+  else if(lg.use==='unuse') a=a.filter(x=>!lgIsUse(x));
+  else if(lg.use==='zero') a=a.filter(x=>lgIsUse(x)&&!lgRfidKg(x));
+  if(lg.q){ const q=lg.q.toLowerCase().replace(/\s/g,''); a=a.filter(x=>((x.name||'')+(x.addr||'')).toLowerCase().replace(/\s/g,'').indexOf(q)>=0); }
+  return a.slice().sort(function(p,q){
+    const d=(LG_DONGS.indexOf(p.dong)+1||9)-(LG_DONGS.indexOf(q.dong)+1||9); if(lg.dong==='all'&&d) return d;
+    if(p._t==='biz'){ const u=(lgIsUse(p)?0:1)-(lgIsUse(q)?0:1); if(u) return u; }
+    const n=(+p.no||9999)-(+q.no||9999); if(n) return n;
+    return String(p.name||'').localeCompare(String(q.name||''));
+  });
+}
+
+// ── 계산 ──
+function lgRfidMo(it,ym){ return (it.months||{})[ym||lgYm()]||null; }
+function lgRfidKg(it,ym){ const m=lgRfidMo(it,ym); return m?lgNum(m.kg):0; }
+function lgRfidAmt(it,ym){ const m=lgRfidMo(it,ym); return m?lgNum(m.amt):0; }
+function lgFoodMo(it,ym){ const m=(it.months||{})[ym||lgYm()]; return m==null?null:lgNum(m.l!=null?m.l:m); }
+function lgFoodCum(it,ym){  // 올해 누계(ℓ): 이전 누계(carry) + 고른 달까지의 월별
+  ym=ym||lgYm(); const y=ym.slice(0,4);
+  let s=(it.carry&&it.carry.y===y)?lgNum(it.carry.l):0;
+  Object.keys(it.months||{}).forEach(function(k){ if(k.slice(0,4)===y&&k<=ym) s+=lgFoodMo(it,k)||0; });
+  return s;
+}
+function lgRecyMo(it,ym){ const v=(it.months||{})[ym||lgYm()]; return v?String(v):''; }
+
+// ── 그리기 ──
+function lgRender(){
+  if(!$('pane-ledger')) return;
+  const isR=lg.sec==='rfid';
+  $('lg-s-rfid').classList.toggle('on',isR); $('lg-s-biz').classList.toggle('on',!isR);
+  $('lg-kind').classList.toggle('on',!isR);
+  $('lg-k-food').classList.toggle('on',lg.kind==='food'); $('lg-k-recycle').classList.toggle('on',lg.kind==='recycle');
+  $('lg-upbtn').style.display=isR?'':'none';
+  if($('lg-ym').value!==lgYm()) $('lg-ym').value=lgYm();
+
+  // 동 버튼 (건수 포함)
+  const all=lgItems();
+  const cnt=d=>all.filter(x=>x.dong===d).length;
+  const none=all.filter(x=>LG_DONGS.indexOf(x.dong)<0).length;
+  let dh='<button class="lg-dbtn'+(lg.dong==='all'?' on':'')+'" onclick="lgSetDong(\'all\')">전체 '+all.length+'</button>';
+  LG_DONGS.forEach(function(d){ dh+='<button class="lg-dbtn'+(lg.dong===d?' on':'')+'" onclick="lgSetDong(\''+d+'\')">'+d+' '+cnt(d)+'</button>'; });
+  if(none) dh+='<button class="lg-dbtn none'+(lg.dong==='none'?' on':'')+'" onclick="lgSetDong(\'none\')">⚠ 동 미지정 '+none+'</button>';
+  $('lg-dongs').innerHTML=dh;
+
+  // 사용중/미사용 (RFID) · 계약중/해지 (사업장)
+  const inD=lgByDong(all);
+  const nUse=inD.filter(lgIsUse).length, nOff=inD.length-nUse;
+  let uh='<button class="lg-ubtn'+(lg.use==='all'?' on':'')+'" onclick="lgSetUse(\'all\')">전체 '+inD.length+'</button>'
+    +'<button class="lg-ubtn use'+(lg.use==='use'?' on':'')+'" onclick="lgSetUse(\'use\')">'+(isR?'🟢 사용중 ':'🟢 계약중 ')+nUse+'</button>'
+    +'<button class="lg-ubtn unuse'+(lg.use==='unuse'?' on':'')+'" onclick="lgSetUse(\'unuse\')">'+(isR?'⚪ 미사용 ':'⚪ 해지 ')+nOff+'</button>';
+  if(isR){ const nz=inD.filter(x=>lgIsUse(x)&&!lgRfidKg(x)).length;
+    uh+='<button class="lg-ubtn'+(lg.use==='zero'?' on':'')+'" onclick="lgSetUse(\'zero\')" title="사용중인데 이번 달 0kg — 고장·카드 미사용 확인">🔴 사용중인데 0kg '+nz+'</button>'; }
+  $('lg-use').innerHTML=uh;
+
+  const list=lgFiltered();
+  lgRenderSum(list);
+  lgRenderSeed();
+  lgRenderList(list);
+  lgRenderLegend();
+  lgRenderMap(list);
+}
+
+function lgRenderSum(list){
+  const ym=lgYm(), mn=lgMonN(ym), dn=(lg.dong==='all'?'전체':(lg.dong==='none'?'동 미지정':lg.dong));
+  const loaded=lg.sec==='rfid'?lgLoaded.rfid:lgLoaded.biz;
+  if(!loaded){ $('lg-sum').innerHTML='🔄 불러오는 중…'; return; }
+  let h='';
+  if(lg.sec==='rfid'){
+    const kg=list.reduce((s,x)=>s+lgRfidKg(x),0), amt=list.reduce((s,x)=>s+lgRfidAmt(x),0);
+    const has=list.filter(x=>lgRfidMo(x)).length;
+    h='<b>'+dn+'</b> '+list.length+'대 · <b>'+mn+'월</b> 배출 <b>'+lgFmt(kg,2)+'kg</b> · 금액 <b>'+lgFmt(amt)+'원</b>'
+      +(list.length&&has<list.length?' · <span class="warn">'+mn+'월 자료 없음 '+(list.length-has)+'대</span>':'');
+  }else if(lg.kind==='food'){
+    const mo=list.reduce((s,x)=>s+(lgFoodMo(x)||0),0), moA=list.reduce((s,x)=>s+(lgFoodMo(x)||0)*lgNum(x.unit),0);
+    const cum=list.reduce((s,x)=>s+lgFoodCum(x),0), cumA=list.reduce((s,x)=>s+lgFoodCum(x)*lgNum(x.unit),0);
+    h='<b>'+dn+'</b> '+list.length+'곳 · <b>'+mn+'월</b> <b>'+lgFmt(mo)+'ℓ</b> / '+lgFmt(moA)+'원'
+      +'<br>올해 누계 <b>'+lgFmt(cum)+'ℓ</b> ('+lgFmt(Math.round(cum*0.75))+'kg) · 금액 <b>'+lgFmt(cumA)+'원</b>';
+  }else{
+    const on=list.filter(lgIsUse);
+    const fee=on.reduce((s,x)=>s+lgNum(x.fee),0);
+    const ok=on.filter(x=>lgRecyMo(x)).length;
+    h='<b>'+dn+'</b> 계약 '+on.length+'곳'+(list.length>on.length?' (해지 '+(list.length-on.length)+')':'')
+      +' · 월 계약금 합계 <b>'+lgFmt(fee)+'원</b> · <b>'+mn+'월</b> 확인 <b>'+ok+'</b>/'+on.length
+      +(on.length>ok?' <span class="warn">(미확인 '+(on.length-ok)+')</span>':'');
+  }
+  $('lg-sum').innerHTML=h;
+}
+
+function lgRenderSeed(){
+  const el=$('lg-seed'); let h='';
+  const loaded=lg.sec==='rfid'?lgLoaded.rfid:lgLoaded.biz;
+  if(loaded && !lgItems().length){
+    if(lg.sec==='rfid'){
+      h='📡 <b>등록된 RFID 기계가 없습니다.</b><br>월별 내역 엑셀이 있으면 위 <b>📅 달</b>을 고른 뒤 <b>⬆ 엑셀 올리기</b>로 한 번에 넣을 수 있고, <b>＋ 추가</b>로 한 대씩 넣어도 됩니다.';
+    }else if(lg.kind==='food'){
+      h='🍚 <b>종이 대장 자료를 불러올 수 있습니다</b> — 2026년 음식물 감량의무사업장 17곳 (7~9월 배출량, 1~6월은 합계로)<br>'
+        +'주소가 번지만 있어서, 불러온 뒤 <b>상호·번지로 동과 위치를 자동으로 찾습니다</b>. 못 찾은 곳은 ⚠ 동 미지정으로 남습니다.'
+        +'<br><button class="st-add" onclick="lgSeed(\'food\')">📥 음식물 17곳 불러오기</button>';
+    }else{
+      h='♻️ <b>종이 대장 자료를 불러올 수 있습니다</b> — 2026년 재활용 감량의무사업장 삼전동 25~33번 (9곳, 1~8월 확인 표시)<br>'
+        +'1~24번은 받은 자료에 없어서 직접 추가해 주세요. 대표자·연락처·사업자번호는 각 사업장을 눌러 넣으면 됩니다.'
+        +'<br><button class="st-add" onclick="lgSeed(\'recycle\')">📥 재활용 9곳 불러오기</button>';
+    }
+  }
+  el.innerHTML=h?'<div class="lg-seed">'+h+'</div>':'';
+}
+
+function lgRenderList(list){
+  const el=$('lg-list');
+  if(!list.length){ el.innerHTML='<div class="lg-empty">'+(lgItems().length?'조건에 맞는 항목이 없습니다':'아직 등록된 항목이 없습니다')+'</div>'; return; }
+  const ym=lgYm(), mn=lgMonN(ym), E=mkEsc;
+  el.innerHTML=list.map(function(it){
+    const nopos=!(it.pos&&it.pos.lat);
+    const dongWarn=it.addrDong&&LG_DONGS.indexOf(it.dong)>=0&&it.addrDong!==it.dong;
+    const tags=(LG_DONGS.indexOf(it.dong)<0?'<span class="lg-tag warn">동 미지정</span>':'')
+      +(dongWarn?'<span class="lg-tag warn" title="대장은 '+E(it.dong)+', 실제 주소는 '+E(it.addrDong)+'">주소는 '+E(it.addrDong)+'</span>':'')
+      +(nopos?'<span class="lg-tag nopos">위치 없음</span>':'')
+      +(it.phCount?'<span class="lg-tag use">📷 '+it.phCount+'</span>':'');
+    if(it._t==='rfid'){
+      const use=lgIsUse(it), m=lgRfidMo(it), kg=lgRfidKg(it);
+      return '<div class="lg-row '+(use?'use':'unuse')+'" onclick="lgOpen(\''+it.id+'\')">'
+        +'<div class="lg-top"><div class="lg-nm"><span class="lg-tag '+(use?'use':'unuse')+'">'+(use?'사용중':'미사용')+'</span>'
+          +(use&&m&&!kg?'<span class="lg-tag zero">0kg</span>':'')+E(it.name||'(이름 없음)')+'</div>'
+        +'<div class="lg-num">'+(m?lgFmt(kg,2)+'kg<small>'+lgFmt(lgRfidAmt(it))+'원</small>':'<small>'+mn+'월 자료 없음</small>')+'</div></div>'
+        +'<div class="lg-sub">'+E(it.dong||'')+' · '+E(it.addr||'주소 없음')+(m&&m.n?' · 배출자 '+E(m.n):'')+'</div>'
+        +(tags?'<div class="lg-sub">'+tags+'</div>':'')+'</div>';
+    }
+    if(it.kind==='food'){
+      const mo=lgFoodMo(it), cum=lgFoodCum(it), u=lgNum(it.unit);
+      return '<div class="lg-row '+(lgIsUse(it)?'food':'ended')+'" onclick="lgOpen(\''+it.id+'\')">'
+        +'<div class="lg-top"><div class="lg-nm">'+(it.no?'<span class="lg-no">'+E(it.no)+'</span>':'')+E(it.name||'(상호 없음)')
+          +(lgIsUse(it)?'':' <span class="lg-tag ended">해지</span>')+'</div>'
+        +'<div class="lg-num">'+(mo!=null?lgFmt(mo)+'ℓ':'-')+'<small>'+mn+'월 '+(mo!=null?lgFmt(mo*u)+'원':'자료 없음')+'</small></div></div>'
+        +'<div class="lg-sub">'+E(it.dong||'')+' · '+E(it.addr||'')+' · 단가 '+lgFmt(u)+'원 · 올해 누계 '+lgFmt(cum)+'ℓ</div>'
+        +(tags?'<div class="lg-sub">'+tags+'</div>':'')+'</div>';
+    }
+    // 재활용
+    let mh='';
+    for(let i=1;i<=12;i++){ const k=lgYear()+'-'+String(i).padStart(2,'0'); const v=lgRecyMo(it,k);
+      mh+='<span class="lg-mo'+(v?' ok':'')+(k===ym?' cur':'')+'" title="'+i+'월 '+E(v||'미확인')+'">'+i+(v?'✓':'')+'</span>'; }
+    return '<div class="lg-row '+(lgIsUse(it)?'recycle':'ended')+'" onclick="lgOpen(\''+it.id+'\')">'
+      +'<div class="lg-top"><div class="lg-nm">'+(it.no?'<span class="lg-no">'+E(it.no)+'</span>':'')+E(it.name||'(상호 없음)')
+        +(lgIsUse(it)?'':' <span class="lg-tag ended">해지'+(it.endYm?' '+E(it.endYm.slice(5)*1)+'월':'')+'</span>')+'</div>'
+      +'<div class="lg-num">'+lgFmt(it.fee)+'원<small>월 계약금</small></div></div>'
+      +'<div class="lg-sub">'+E(it.dong||'')+' · '+E(it.addr||'')+(it.contract?' · 계약 '+E(it.contract):'')+(it.invoice?' · 계산서 ○':'')+'</div>'
+      +'<div class="lg-months">'+mh+'</div>'
+      +(tags?'<div class="lg-sub">'+tags+'</div>':'')+'</div>';
+  }).join('');
+}
+
+// ── 지도 ──
+function lgInitMap(){
+  if(lgMap){ return; }
+  if(!window.kakao||!kakao.maps||!kakao.maps.Map||!$('lg-map')) return;
+  lgMap=new kakao.maps.Map($('lg-map'),{center:new kakao.maps.LatLng(37.505,127.088),level:5});
+}
+function lgPinCls(it){
+  if(it._t==='rfid') return lgIsUse(it)?'use':'unuse';
+  return lgIsUse(it)?it.kind:'ended';
+}
+function lgRenderLegend(){
+  const el=$('lg-legend'); if(!el) return;
+  el.innerHTML = lg.sec==='rfid'
+    ? '<span><i style="background:#16a34a"></i>사용중</span><span><i style="background:#94a3b8;border:2px solid #475569"></i>미사용</span><span>· 점을 누르면 상세</span>'
+    : '<span><i style="background:'+(lg.kind==='food'?'#f59e0b':'#3b82f6')+'"></i>계약중</span><span><i style="background:#cbd5e1;border:2px solid #64748b"></i>해지</span>';
+}
+function lgRenderMap(list){
+  if(!lgMap) return;
+  lgPins.forEach(p=>p.setMap(null)); lgPins=[];
+  const pts=list.filter(x=>x.pos&&x.pos.lat&&x.pos.lng);
+  const miss=list.length-pts.length;
+  const st=$('lg-stat');
+  if(st) st.innerHTML='지도 <b>'+pts.length+'</b>곳'+(miss?' · <span class="miss">위치 없음 '+miss+'곳 — 📍 위치 찾기를 누르거나 항목을 눌러 🗺️지도로 찍어주세요</span>':'');
+  if(!pts.length) return;
+  const bounds=new kakao.maps.LatLngBounds();
+  const label = pts.length<=60;   // 적을 때만 이름표 (RFID 수백 대는 점만)
+  pts.forEach(function(it){
+    const pos=new kakao.maps.LatLng(it.pos.lat,it.pos.lng); bounds.extend(pos);
+    const c=lgPinCls(it);
+    const col={use:'#16a34a',unuse:'#475569',food:'#d97706',recycle:'#2563eb',ended:'#64748b'}[c];
+    const nm=mkEsc(String(it.name||'').replace(/\(에코\)/g,''));
+    const html = label
+      ? '<div class="lgp-lbl" onclick="lgOpen(\''+it.id+'\')" title="'+nm+'"><div class="lgp '+c+'"></div><span style="border-color:'+col+';color:'+col+'">'+nm+'</span></div>'
+      : '<div class="lgp '+c+'" onclick="lgOpen(\''+it.id+'\')" title="'+nm+'"></div>';
+    const ov=new kakao.maps.CustomOverlay({position:pos,content:html,xAnchor:label?0.06:0.5,yAnchor:0.5,zIndex:lgIsUse(it)?3:2});
+    ov.setMap(lgMap); lgPins.push(ov);
+  });
+  // 같은 조건이면 화면 위치 유지 (상세 저장할 때마다 튀지 않게)
+  const key=lg.sec+lg.kind+lg.dong+lg.use+lg.q+pts.length;
+  if(key===lgFitKey) return; lgFitKey=key;
+  if(pts.length===1){ lgMap.setCenter(new kakao.maps.LatLng(pts[0].pos.lat,pts[0].pos.lng)); lgMap.setLevel(3); }
+  else lgMap.setBounds(bounds,50,50,50,50);
+}
+
+// ── 상세·수정 ──
+function lgOpen(id){
+  const it=id?lgFind(id):null;
+  lgEditId=it?it.id:null;
+  const t=it?it._t:(lg.sec==='rfid'?'rfid':'biz');
+  const kind=it?it.kind:lg.kind;
+  const E=mkEsc, v=k=>it&&it[k]!=null?E(it[k]):'';
+  const ym=lgYm(), mn=lgMonN(ym);
+  const title = t==='rfid' ? '📡 RFID 기계' : (kind==='food'?'🍚 음식물 감량사업장':'♻️ 재활용 감량사업장');
+  $('modal-title').textContent=(it?'':'＋ ')+title+(it?'':' 추가');
+  const dsel=function(cur){ cur=cur||(lg.dong!=='all'&&lg.dong!=='none'?lg.dong:'');
+    return '<select class="form-select" id="lg-f-dong"><option value="">⚠ 동 미지정</option>'+LG_DONGS.map(d=>'<option'+(cur===d?' selected':'')+'>'+d+'</option>').join('')+'</select>'; };
+  let b='';
+  if(t==='rfid'){
+    const m=it?lgRfidMo(it):null, use=it?lgIsUse(it):true;
+    b+='<div class="form-2col"><div><span class="form-label">동</span>'+dsel(it&&it.dong)+'</div>'
+      +'<div><span class="form-label">사용 여부</span><select class="form-select" id="lg-f-status"><option value="사용"'+(use?' selected':'')+'>🟢 사용중</option><option value="미사용"'+(use?'':' selected')+'>⚪ 미사용</option></select></div></div>'
+      +'<div class="form-row"><span class="form-label">공동주택명 (기계 이름) *</span><input class="form-input" id="lg-f-name" value="'+v('name')+'" placeholder="(일반-BM)잠실본동 215-1(에코)"></div>'
+      +'<div class="form-row"><span class="form-label">주소</span><input class="form-input" id="lg-f-addr" value="'+v('addr')+'" placeholder="서울특별시 송파구 백제고분로11길 28-5"></div>'
+      +'<div class="form-row"><span class="form-label">'+mn+'월 자료 ('+ym+')</span><div class="form-2col" style="grid-template-columns:1fr 1fr 1fr">'
+        +'<div><span class="form-label">배출자수</span><input class="form-input" id="lg-f-n" type="number" value="'+(m&&m.n!=null?E(m.n):'')+'"></div>'
+        +'<div><span class="form-label">배출량(kg)</span><input class="form-input" id="lg-f-kg" type="number" step="0.01" value="'+(m&&m.kg!=null?E(m.kg):'')+'"></div>'
+        +'<div><span class="form-label">금액(원)</span><input class="form-input" id="lg-f-amt" type="number" value="'+(m&&m.amt!=null?E(m.amt):'')+'"></div></div></div>';
+    const ks=Object.keys((it&&it.months)||{}).sort().reverse();
+    if(ks.length) b+='<div class="form-row"><span class="form-label">월별 기록</span><table class="lg-mtab"><tr><th>월</th><th>배출자</th><th>kg</th><th>금액</th></tr>'
+      +ks.map(k=>{const r=it.months[k]||{}; return '<tr><td>'+E(k)+'</td><td>'+E(r.n||0)+'</td><td>'+lgFmt(r.kg,2)+'</td><td>'+lgFmt(r.amt)+'</td></tr>';}).join('')+'</table></div>';
+  }else if(kind==='food'){
+    const mo=it?lgFoodMo(it):null, use=it?lgIsUse(it):true;
+    b+='<div class="form-2col"><div><span class="form-label">동</span>'+dsel(it&&it.dong)+'</div>'
+      +'<div><span class="form-label">상태</span><select class="form-select" id="lg-f-status"><option value="계약"'+(use?' selected':'')+'>🟢 계약중</option><option value="해지"'+(use?'':' selected')+'>⚪ 해지</option></select></div></div>'
+      +'<div class="form-2col"><div><span class="form-label">연번</span><input class="form-input" id="lg-f-no" type="number" value="'+v('no')+'"></div>'
+      +'<div><span class="form-label">상호 *</span><input class="form-input" id="lg-f-name" value="'+v('name')+'"></div></div>'
+      +'<div class="form-row"><span class="form-label">주소 (번지 또는 도로명)</span><input class="form-input" id="lg-f-addr" value="'+v('addr')+'" placeholder="180-08"></div>'
+      +'<div class="form-2col"><div><span class="form-label">단가 (ℓ당, 원)</span><input class="form-input" id="lg-f-unit" type="number" value="'+(it?v('unit'):'320')+'"></div>'
+      +'<div><span class="form-label">이전 단가</span><input class="form-input" id="lg-f-unitold" value="'+v('unitOld')+'"></div></div>'
+      +'<div class="form-2col"><div><span class="form-label">신규 계약일</span><input class="form-input" id="lg-f-contract" type="date" value="'+v('contract')+'"></div>'
+      +'<div><span class="form-label">재계약일</span><input class="form-input" id="lg-f-renew" type="date" value="'+v('renew')+'"></div></div>'
+      +'<div class="form-2col"><div><span class="form-label">'+mn+'월 배출량 (ℓ)</span><input class="form-input" id="lg-f-l" type="number" value="'+(mo!=null?mo:'')+'"></div>'
+      +'<div><span class="form-label">'+lgYear()+'년 이전 누계 (ℓ)</span><input class="form-input" id="lg-f-carry" type="number" value="'+(it&&it.carry&&it.carry.y===lgYear()?E(it.carry.l):'')+'" placeholder="월별이 없는 달 합계"></div></div>';
+    if(it){ const cum=lgFoodCum(it), u=lgNum(it.unit), n=lgMonN(ym);
+      const ks=Object.keys(it.months||{}).sort();
+      b+='<div class="lg-calc">'+(it.carry&&it.carry.y===lgYear()?E(it.carry.label||'이전')+' 합계 '+lgFmt(it.carry.l)+'ℓ · ':'')
+        +ks.map(k=>(+k.slice(5))+'월 '+lgFmt(lgFoodMo(it,k))+'ℓ').join(' · ')
+        +'<br>올해 누계 <b>'+lgFmt(cum)+'ℓ</b> = <b>'+lgFmt(Math.round(cum*0.75))+'kg</b> · 금액 <b>'+lgFmt(cum*u)+'원</b>'
+        +'<br>월평균 ('+n+'개월) <b>'+lgFmt(Math.round(cum/n))+'ℓ</b> · '+lgFmt(Math.round(cum*u/n))+'원</div>'; }
+  }else{
+    const use=it?lgIsUse(it):true;
+    b+='<div class="form-2col"><div><span class="form-label">동</span>'+dsel(it&&it.dong)+'</div>'
+      +'<div><span class="form-label">상태</span><select class="form-select" id="lg-f-status" onchange="$(\'lg-endwrap\').style.display=this.value===\'해지\'?\'block\':\'none\'"><option value="계약"'+(use?' selected':'')+'>🟢 계약중</option><option value="해지"'+(use?'':' selected')+'>⚪ 해지</option></select></div></div>'
+      +'<div class="form-row" id="lg-endwrap" style="'+(use?'display:none':'')+'"><span class="form-label">해지 월</span><input class="form-input" id="lg-f-end" type="month" value="'+v('endYm')+'"></div>'
+      +'<div class="form-2col"><div><span class="form-label">연번</span><input class="form-input" id="lg-f-no" type="number" value="'+v('no')+'"></div>'
+      +'<div><span class="form-label">계약일자</span><input class="form-input" id="lg-f-contract" type="date" value="'+v('contract')+'"></div></div>'
+      +'<div class="form-row"><span class="form-label">상호 및 건물명 *</span><input class="form-input" id="lg-f-name" value="'+v('name')+'"></div>'
+      +'<div class="form-row"><span class="form-label">주소</span><input class="form-input" id="lg-f-addr" value="'+v('addr')+'" placeholder="180-2"></div>'
+      +'<div class="form-2col"><div><span class="form-label">대표자명</span><input class="form-input" id="lg-f-rep" value="'+v('rep')+'"></div>'
+      +'<div><span class="form-label">연락처</span><input class="form-input" id="lg-f-tel" type="tel" value="'+v('tel')+'"></div></div>'
+      +'<div class="form-2col"><div><span class="form-label">사업자등록번호</span><input class="form-input" id="lg-f-bizno" value="'+v('bizNo')+'"></div>'
+      +'<div><span class="form-label">월 계약금액 (원)</span><input class="form-input" id="lg-f-fee" type="number" value="'+v('fee')+'"></div></div>'
+      +'<div class="form-row"><label style="font-size:13px;font-weight:700"><input type="checkbox" id="lg-f-invoice"'+(it&&it.invoice?' checked':'')+'> 계산서 발행</label></div>'
+      +'<div class="form-row"><span class="form-label">'+lgYear()+'년 월별 확인 (날짜 또는 ✓ — 비우면 미확인)</span><div class="lg-12">';
+    for(let i=1;i<=12;i++){ const k=lgYear()+'-'+String(i).padStart(2,'0');
+      b+='<div><label>'+i+'월</label><input id="lg-f-m'+i+'" value="'+E(it?lgRecyMo(it,k):'')+'" placeholder="-"></div>'; }
+    b+='</div></div>';
+  }
+  b+='<div class="form-row"><span class="form-label">메모</span><textarea class="form-textarea" id="lg-f-note" style="min-height:60px">'+v('note')+'</textarea></div>';
+  if(it){
+    const has=it.pos&&it.pos.lat;
+    b+='<div class="form-row"><span class="form-label">지도 위치</span>'
+      +'<div style="font-size:12.5px;font-weight:700;color:'+(has?'var(--green)':'var(--red)')+'">'+(has?'📍 '+(+it.pos.lat).toFixed(5)+', '+(+it.pos.lng).toFixed(5)+(it.posSrc?' ('+E(it.posSrc)+')':''):'❌ 위치 없음 — 지도에 안 나옵니다')
+      +(it.addrDong?' · 실제 주소 동: '+E(it.addrDong):'')+'</div>'
+      +'<div style="display:flex;gap:6px;margin-top:6px"><button class="map-btn" style="flex:1;padding:10px" onclick="openMapPick(\'lg\',\''+it.id+'\')">🗺️ 지도에서 찍기</button>'
+      +'<button class="map-btn" style="flex:1;padding:10px" onclick="lgLocateOne(\''+it.id+'\')">📍 주소로 찾기</button></div></div>'
+      +'<div class="form-row"><span class="form-label">📷 사진 (누르는 즉시 저장 · Ctrl+V 붙여넣기 가능)</span>'
+      +'<div class="lg-ph" id="lg-ph">🔄 사진 불러오는 중…</div>'
+      +'<button class="st-edit" onclick="$(\'lg-phfile\').click()">＋ 사진 추가</button>'
+      +'<input type="file" id="lg-phfile" accept="image/*" multiple style="display:none" onchange="lgAddPhotos(this.files);this.value=\'\'"></div>';
+  }else{
+    b+='<div style="font-size:12px;color:var(--sub);font-weight:700">저장한 뒤 다시 열면 사진과 지도 위치를 넣을 수 있습니다</div>';
+  }
+  $('modal-body').innerHTML=b;
+  $('modal-actions').innerHTML=(it?'<button class="act-btn del" onclick="lgDel(\''+it.id+'\')">🗑 삭제</button>':'')
+    +'<button class="act-btn edit" onclick="closeMod()">닫기</button>'
+    +'<button class="act-btn mod" onclick="lgSave()">💾 저장</button>';
+  $('modal-bg').classList.add('on');
+  curDetailId=null;
+  if(it) lgLoadPhotos(it);
+}
+
+function lgSave(){
+  const old=lgEditId?lgFind(lgEditId):null;
+  const t=old?old._t:(lg.sec==='rfid'?'rfid':'biz');
+  const kind=old?old.kind:lg.kind;
+  const g=id=>($(id)?$(id).value.trim():'');
+  const name=g('lg-f-name'); if(!name){ toast('이름(상호)을 입력하세요'); return; }
+  const ym=lgYm();
+  const d={name:name, addr:g('lg-f-addr'), dong:g('lg-f-dong'), status:g('lg-f-status'), note:g('lg-f-note'), updatedAt:nowStr(), by:staff||''};
+  if(old && old.addr!==d.addr){ d.pos=null; d.addrDong=null; d.posSrc=null; }   // 주소를 바꾸면 위치 다시 찾기
+  const mUpd={};
+  if(t==='rfid'){
+    const n=g('lg-f-n'),kg=g('lg-f-kg'),amt=g('lg-f-amt');
+    if(n!==''||kg!==''||amt!=='') mUpd[ym]={n:lgNum(n),kg:lgNum(kg),amt:lgNum(amt)};
+  }else{
+    d.kind=kind; d.no=g('lg-f-no')?+g('lg-f-no'):null; d.contract=g('lg-f-contract');
+    if(kind==='food'){
+      d.unit=lgNum(g('lg-f-unit')); d.unitOld=g('lg-f-unitold'); d.renew=g('lg-f-renew');
+      const c=g('lg-f-carry'); d.carry=c===''?null:{y:lgYear(),l:lgNum(c),label:(old&&old.carry&&old.carry.label)||'이전 누계'};
+      const l=g('lg-f-l'); if(l!=='') mUpd[ym]={l:lgNum(l)}; else if(old&&old.months&&old.months[ym]!=null) mUpd[ym]=null;
+    }else{
+      d.rep=g('lg-f-rep'); d.tel=g('lg-f-tel'); d.bizNo=g('lg-f-bizno'); d.fee=lgNum(g('lg-f-fee'));
+      d.invoice=!!($('lg-f-invoice')&&$('lg-f-invoice').checked);
+      d.endYm=d.status==='해지'?g('lg-f-end'):'';
+      for(let i=1;i<=12;i++){ const k=lgYear()+'-'+String(i).padStart(2,'0'); const val=g('lg-f-m'+i);
+        if(val) mUpd[k]=val; else if(old&&old.months&&old.months[k]) mUpd[k]=null; }
+    }
+  }
+  const ref=t==='rfid'?RFID:BIZ;
+  const id=old?old.id:((t==='rfid'?'r':'b')+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  const up={};
+  Object.keys(d).forEach(k=>{ up[k]=d[k]; });
+  Object.keys(mUpd).forEach(k=>{ up['months/'+k]=mUpd[k]; });
+  if(!old) up.createdAt=nowStr();
+  ref.child(id).update(up).then(function(){
+    toast(old?'✅ 저장됨':'✅ 추가됨');
+    const fresh=Object.assign({},old||{},d,{id:id,_t:t,kind:(t==='biz'?kind:undefined)});
+    if(!(fresh.pos&&fresh.pos.lat)&&(fresh.addr||fresh.name)) lgLocateOne(id,true,fresh);
+    closeMod(); lgEditId=null;
+  }).catch(function(e){ toast('⚠️ 저장 실패 — '+(e&&e.code||'권한 확인')); });
+}
+
+function lgDel(id){
+  const it=lgFind(id); if(!it) return;
+  if(!confirm((it.name||'이 항목')+' — 삭제할까요? (사진도 함께 지워집니다)')) return;
+  Promise.all([lgRef(it).child(id).remove(), lgPhRef(it).child(id).remove()])
+    .then(function(){ toast('🗑 삭제됨'); closeMod(); })
+    .catch(function(){ toast('⚠️ 삭제 실패'); });
+}
+
+// ── 사진 ──
+function lgLoadPhotos(it){
+  lgPhRef(it).child(it.id).once('value').then(function(s){
+    const el=$('lg-ph'); if(!el||lgEditId!==it.id) return;
+    const v=s.val()||{}, ks=Object.keys(v).sort();
+    el.innerHTML = ks.length ? ks.map(function(k,i){
+      return '<div class="lg-phi"><img src="'+v[k]+'" data-fn="'+mkEsc(String(it.name||'사진').replace(/[\\/:*?"<>|]/g,''))+'_'+(i+1)+'" onclick="openImg(this)">'
+        +'<button onclick="lgDelPhoto(\''+k+'\')" title="삭제">✕</button></div>';
+    }).join('') : '<span style="font-size:12px;color:var(--sub)">사진 없음</span>';
+  }).catch(function(){ const el=$('lg-ph'); if(el) el.textContent='⚠️ 사진을 불러오지 못했습니다'; });
+}
+async function lgAddPhotos(files){
+  const it=lgEditId?lgFind(lgEditId):null; if(!it) return;
+  const fs=Array.from(files||[]).filter(f=>/^image\//.test(f.type)); if(!fs.length) return;
+  $('photo-progress').classList.add('on');
+  let n=0;
+  try{
+    for(let i=0;i<fs.length;i++){
+      try{ const b64=await compressPhoto(fs[i]); await lgPhRef(it).child(it.id).child('p'+Date.now()+'_'+i).set(b64); n++; }
+      catch(e){ toast('⚠️ 열 수 없는 사진이 있습니다 (HEIC는 JPG로)'); }
+    }
+    const s=await lgPhRef(it).child(it.id).once('value');
+    await lgRef(it).child(it.id).update({phCount:Object.keys(s.val()||{}).length});
+    if(n) toast('📷 '+n+'장 저장됨');
+  }catch(e){ toast('⚠️ 사진 저장 실패'); }
+  finally{ $('photo-progress').classList.remove('on'); lgLoadPhotos(it); }
+}
+function lgDelPhoto(k){
+  const it=lgEditId?lgFind(lgEditId):null; if(!it) return;
+  if(!confirm('이 사진을 삭제할까요?')) return;
+  lgPhRef(it).child(it.id).child(k).remove()
+    .then(()=>lgPhRef(it).child(it.id).once('value'))
+    .then(s=>lgRef(it).child(it.id).update({phCount:Object.keys(s.val()||{}).length}))
+    .then(()=>{ toast('🗑 사진 삭제됨'); lgLoadPhotos(it); })
+    .catch(()=>toast('⚠️ 삭제 실패'));
+}
+// Ctrl+V — 관리대장 상세가 열려 있을 때
+document.addEventListener('paste',function(ev){
+  if(!$('lg-ph')||!lgEditId) return;
+  const items=(ev.clipboardData&&ev.clipboardData.items)||[], fs=[];
+  for(let i=0;i<items.length;i++){ if(items[i].type&&items[i].type.indexOf('image/')===0){ const f=items[i].getAsFile(); if(f) fs.push(f); } }
+  if(fs.length){ ev.preventDefault(); lgAddPhotos(fs); }
+});
+
+// ── 위치 찾기 (카카오 주소·장소 검색 결과로만 — 짐작으로 찍지 않음) ──
+function lgAddrQ(q,done){   // 주소검색 → {lat,lng,dong}
+  if(!window.kakao||!kakao.maps.services){done(null);return;}
+  getGeo().addressSearch(q,function(res,st){
+    if(st!==kakao.maps.services.Status.OK||!res.length){done(null);return;}
+    const r=res[0], a=r.address||{}, ra=r.road_address||{};
+    if(((a.address_name||'')+(ra.address_name||'')+(r.address_name||'')).indexOf('송파')<0){done(null);return;}
+    done({lat:+r.y,lng:+r.x,dong:lgDongOf(a.region_3depth_name||a.address_name||r.address_name),full:a.address_name||r.address_name||''});
+  });
+}
+function lgKwQ(q,done){     // 장소검색 → 송파구 결과 목록
+  if(!window.kakao||!kakao.maps.services||!kakao.maps.services.Places){done([]);return;}
+  new kakao.maps.services.Places().keywordSearch(q,function(r,st){
+    if(st!==kakao.maps.services.Status.OK||!r.length){done([]);return;}
+    done(r.filter(x=>/송파구\s+(잠실|삼전)동/.test(x.address_name||'')));   // 우리 구역(잠실동·삼전동) 결과만
+  });
+}
+function lgBunji(s){  // '180-08'→'180-8', '180-00'→'180', '007-06'→'7-6'
+  const m=String(s||'').trim().match(/^0*(\d{1,4})(?:-0*(\d{0,4}))?$/); if(!m) return '';
+  return m[1]+(m[2]&&+m[2]?'-'+(+m[2]):'');
+}
+function lgLocate(it,done){
+  const addr=String(it.addr||'').trim(), name=String(it.name||'').replace(/\(에코\)|\(본에코\)/g,'').trim();
+  const bj=lgBunji(addr);
+  const ok=function(r,src){ done(r?{lat:r.lat,lng:r.lng,dong:r.dong||'',src:src}:null); };
+  if(bj){
+    // ① 상호로 장소검색 → 번지까지 같은 곳만 채택 (동이 겹치는 번지라 이름+번지로 확인)
+    const main=bj.split('-')[0];
+    lgKwQ('송파구 '+name,function(rs){
+      const hit=rs.find(x=>{ const m=String(x.address_name||'').match(/(잠실|삼전)동\s+(\d+(?:-\d+)?)/); return m&&(m[2]===bj); })
+             || rs.find(x=>{ const m=String(x.address_name||'').match(/(잠실|삼전)동\s+(\d+)/); return m&&m[2]===main&&!/-/.test(bj); });
+      if(hit){ ok({lat:+hit.y,lng:+hit.x,dong:lgDongOf(hit.address_name)},'상호+번지'); return; }
+      // ② 동이 정해져 있으면 그 동의 번지로
+      if(LG_DONGS.indexOf(it.dong)>=0){ lgAddrQ('서울 송파구 '+it.dong+' '+bj,r=>ok(r,'번지')); return; }
+      // ③ 동 미지정이면 두 동 모두 확인 → 한 곳만 있을 때만 채택
+      lgAddrQ('서울 송파구 잠실동 '+bj,function(a){ lgAddrQ('서울 송파구 삼전동 '+bj,function(b){
+        if(a&&!b) ok(a,'번지'); else if(b&&!a) ok(b,'번지'); else done(null,'두 동에 같은 번지가 있어 직접 정해야 합니다');
+      }); });
+    });
+    return;
+  }
+  const byKw=function(q,src,next){ lgKwQ(q,rs=>{ if(rs.length) ok({lat:+rs[0].y,lng:+rs[0].x,dong:lgDongOf(rs[0].address_name)},src); else next(); }); };
+  const road=/[가-힣0-9]+(로|길)\s*\d/.test(addr);
+  if(addr&&road){   // 도로명 주소 (RFID 등) → 주소검색이 정확
+    const q=/서울|송파/.test(addr)?addr:'서울 송파구 '+addr;
+    lgAddrQ(q,r=>{ if(r) ok(r,'주소'); else byKw('송파구 '+name,'상호',()=>done(null)); });
+    return;
+  }
+  if(addr){         // '레이크B상가', '5단지' 같은 글자 주소 → 상호 먼저, 그다음 주소 글자
+    byKw('송파구 '+name,'상호',function(){
+      byKw('송파구 '+addr.replace(/^서울(특별시)?\s*(송파구)?\s*/,''),'장소',()=>done(null));
+    });
+    return;
+  }
+  lgKwQ('송파구 '+name,rs=>{ if(rs.length) ok({lat:+rs[0].y,lng:+rs[0].x,dong:lgDongOf(rs[0].address_name)},'상호'); else done(null); });
+}
+function lgApplyLoc(it,r){
+  const u={pos:{lat:r.lat,lng:r.lng},posSrc:r.src,updatedAt:nowStr()};
+  if(r.dong){ u.addrDong=r.dong; if(LG_DONGS.indexOf(it.dong)<0) u.dong=r.dong; }
+  return lgRef(it).child(it.id).update(u);
+}
+function lgLocateOne(id,quiet,fresh){
+  const it=fresh||lgFind(id); if(!it) return;
+  lgLocate(it,function(r,why){
+    if(!r){ if(!quiet) toast('⚠️ 위치를 못 찾았습니다'+(why?' — '+why:'')+' · 🗺️지도에서 찍어주세요'); return; }
+    lgApplyLoc(it,r).then(function(){ if(!quiet){ toast('📍 위치 찾음 ('+r.src+')'); if(lgEditId===id) lgOpen(id); } });
+  });
+}
+function lgLocateAll(){
+  if(lgLocBusy){ toast('위치 찾는 중입니다…'); return; }
+  const todo=lgFiltered().filter(x=>!(x.pos&&x.pos.lat));
+  if(!todo.length){ toast('위치 없는 항목이 없습니다'); return; }
+  if(!window.kakao||!kakao.maps||!kakao.maps.services){ toast('지도가 아직 준비되지 않았습니다'); return; }
+  lgLocBusy=true; let i=0, ok=0, fail=0;
+  (function next(){
+    if(i>=todo.length){ lgLocBusy=false; toast('📍 위치 찾기 끝 — 찾음 '+ok+' · 못 찾음 '+fail); lgFitKey=''; lgRender(); return; }
+    const it=todo[i++]; const st=$('lg-stat'); if(st) st.textContent='📍 위치 찾는 중… '+i+' / '+todo.length;
+    lgLocate(it,function(r){ if(r){ ok++; lgApplyLoc(it,r); } else fail++; setTimeout(next,180); });
+  })();
+}
+
+// ── 종이 대장 자료 불러오기 (비어 있을 때만) ──
+function lgSeed(kind){
+  BIZ.once('value').then(function(s){
+    const v=s.val()||{};
+    if(Object.keys(v).some(k=>v[k]&&v[k].kind===kind)){ toast('이미 자료가 있어서 불러오지 않았습니다'); return; }
+    const up={}, now=nowStr(), y='2026';
+    if(kind==='food'){
+      LG_SEED_FOOD.forEach(function(r,i){
+        const [name,addr,uo,unit,con,ren,m7,m8,m9,tot]=r;
+        const carry=tot-(m7+m8+m9);
+        up['f'+(i+1)+'_'+Date.now().toString(36)]={kind:'food',no:i+1,name:name,addr:addr,dong:'',unitOld:uo,unit:unit,
+          contract:con,renew:ren,status:'계약',carry:{y:y,l:carry,label:'1~6월'},
+          months:{'2026-07':{l:m7},'2026-08':{l:m8},'2026-09':{l:m9}},
+          note:'2026.10.1 종이 대장(이정미 계장)에서 옮김',createdAt:now,updatedAt:now};
+      });
+    }else{
+      LG_SEED_RECYCLE.forEach(function(r){
+        const [no,con,name,addr,fee,inv,mos,st,end]=r;
+        const months={}; mos.forEach(m=>{ months[y+'-'+String(m).padStart(2,'0')]='✓'; });
+        up['c'+no+'_'+Date.now().toString(36)]={kind:'recycle',no:no,name:name,addr:addr,dong:'삼전동',fee:fee,invoice:inv,
+          contract:con,status:st,endYm:end,months:months,
+          note:'2026년 재활용 감량의무사업장 계약현황(삼전동) 종이 대장에서 옮김 — 월별 날짜는 ✓로만 표시'+(no===33?' · 상호 손글씨라 확인 필요':''),
+          createdAt:now,updatedAt:now};
+      });
+    }
+    return BIZ.update(up).then(function(){
+      toast('📥 '+Object.keys(up).length+'곳 불러옴 — 위치를 찾습니다');
+      lg.ym=kind==='food'?'2026-09':'2026-08';
+      setTimeout(function(){ lgFitKey=''; lgRender(); lgLocateAll(); },700);
+    });
+  }).catch(function(e){ toast('⚠️ 불러오기 실패 — '+(e&&e.code||'권한 확인')); });
+}
+
+// ── RFID 엑셀(.xlsx/.csv) 올리기 ──
+function lgLoadXLSX(){
+  if(window.XLSX) return Promise.resolve();
+  return new Promise(function(res,rej){
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=res; s.onerror=()=>rej(new Error('엑셀 도구를 불러오지 못했습니다'));
+    document.head.appendChild(s);
+  });
+}
+function lgParseRows(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/주소/.test(String(c)))&&r.some(c=>/배출량|kg/i.test(String(c))));
+  if(hi<0) return {err:'머리글(주소·배출량)이 있는 줄을 찾지 못했습니다'};
+  const H=rows[hi].map(c=>String(c).replace(/\s/g,''));
+  const col=re=>H.findIndex(h=>re.test(h));
+  const cN=col(/공동주택|주택명|건물|명칭|이름|상호/), cA=col(/주소/), cP=col(/배출자/), cK=col(/배출량|kg/i), cM=col(/금액/), cD=col(/^동$|행정동|법정동/);
+  if(cN<0||cK<0) return {err:'공동주택명·배출량 칸을 찾지 못했습니다'};
+  const out=[]; let pend=[];
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i], nm=String(r[cN]||'').trim(), line=r.map(String).join(' ');
+    if(/합\s*계/.test(line)||/\(\s*[\d,]+\s*건\s*\)/.test(nm)){ const d=lgDongOf(line); if(d) pend.forEach(p=>{ if(!p.dong) p.dong=d; }); pend=[]; continue; }
+    if(!nm) continue;
+    const p={name:nm, addr:cA>=0?String(r[cA]||'').trim():'', n:cP>=0?lgNum(r[cP]):0, kg:lgNum(r[cK]), amt:cM>=0?lgNum(r[cM]):0, dong:cD>=0?lgDongOf(r[cD]):''};
+    out.push(p); pend.push(p);
+  }
+  out.forEach(p=>{ if(!p.dong) p.dong=lgDongOf(p.name)||lgDongOf(p.addr); });
+  return {rows:out};
+}
+async function lgImport(input){
+  const f=input.files&&input.files[0]; input.value=''; if(!f) return;
+  const ym=lgYm();
+  try{
+    await lgLoadXLSX();
+    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
+    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+    const p=lgParseRows(rows);
+    if(p.err){ toast('⚠️ '+p.err); return; }
+    const byKey={}; rfidList.forEach(x=>{ byKey[lgNormName(x.name)]=x; });
+    let nNew=0,nUpd=0; const up={}, now=nowStr();
+    p.rows.forEach(function(r,i){
+      const ex=byKey[lgNormName(r.name)], mo={n:r.n,kg:r.kg,amt:r.amt};
+      if(ex){ up[ex.id+'/months/'+ym]=mo; if(!ex.addr&&r.addr) up[ex.id+'/addr']=r.addr; nUpd++; }
+      else{ const id='r'+Date.now().toString(36)+'_'+i;
+        up[id]={name:r.name,addr:r.addr,dong:r.dong,status:r.kg>0?'사용':'미사용',months:{[ym]:mo},createdAt:now,updatedAt:now,by:staff||''};
+        byKey[lgNormName(r.name)]={id:id}; nNew++; }
+    });
+    const tKg=p.rows.reduce((s,r)=>s+r.kg,0), tAmt=p.rows.reduce((s,r)=>s+r.amt,0);
+    if(!confirm(ym+' 자료로 올립니다\n\n• '+p.rows.length+'건 (새로 '+nNew+' · 기존 '+nUpd+')\n• 배출량 '+lgFmt(tKg,2)+'kg · 금액 '+lgFmt(tAmt)+'원\n\n종이 대장 합계와 맞는지 확인하고 [확인]을 누르세요.\n(새 기계는 0kg이면 미사용, 아니면 사용중으로 들어갑니다)')) return;
+    await RFID.update(up);
+    toast('⬆ '+p.rows.length+'건 올림 — 위치를 찾습니다');
+    setTimeout(function(){ lgFitKey=''; lgRender(); lgLocateAll(); },800);
+  }catch(e){ toast('⚠️ 올리기 실패 — '+(e&&e.message||e&&e.code||'')); }
+}
+
+// ── 인쇄 (종이 대장 모양) ──
+function lgPrint(){
+  const list=lgFiltered(), ym=lgYm(), mn=lgMonN(ym), E=mkEsc;
+  if(!list.length){ toast('인쇄할 항목이 없습니다'); return; }
+  const groups = lg.dong==='all' ? LG_DONGS.concat(['']).map(d=>({d:d||'동 미지정',a:list.filter(x=>d?x.dong===d:LG_DONGS.indexOf(x.dong)<0)})).filter(g=>g.a.length)
+                                 : [{d:lg.dong==='none'?'동 미지정':lg.dong,a:list}];
+  let title='', head='', body='';
+  if(lg.sec==='rfid'){
+    title=ym.slice(0,4)+'년 '+mn+'월분 RFID 일반주택내역';
+    head='<tr><th>연번</th><th>공동주택명</th><th>주소</th><th>상태</th><th>배출자수</th><th>배출량(kg)</th><th>금액(원)</th></tr>';
+    let gk=0,ga=0,gn=0;
+    groups.forEach(g=>{ let k=0,a=0;
+      g.a.forEach((x,i)=>{ const m=lgRfidMo(x)||{}; k+=lgNum(m.kg); a+=lgNum(m.amt);
+        body+='<tr><td>'+(i+1)+'</td><td class="l">'+E(x.name)+'</td><td class="l">'+E(x.addr)+'</td><td>'+(lgIsUse(x)?'사용':'미사용')+'</td><td>'+E(m.n||'')+'</td><td>'+lgFmt(m.kg,2)+'</td><td>'+lgFmt(m.amt)+'</td></tr>'; });
+      body+='<tr class="sum"><td colspan="5">'+E(g.d)+' 합계 ('+g.a.length+'건)</td><td>'+lgFmt(k,2)+'</td><td>'+lgFmt(a)+'</td></tr>'; gk+=k; ga+=a; gn+=g.a.length; });
+    if(groups.length>1) body+='<tr class="sum tot"><td colspan="5">총 합계 ('+gn+'건)</td><td>'+lgFmt(gk,2)+'</td><td>'+lgFmt(ga)+'</td></tr>';
+  }else if(lg.kind==='food'){
+    title=ym.slice(0,4)+'년 음식물 감량의무사업장 배출량';
+    const ms=[2,1,0].map(o=>{ const d=new Date(+ym.slice(0,4),lgMonN(ym)-1-o,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); });
+    head='<tr><th rowspan="2">연번</th><th rowspan="2">상호</th><th rowspan="2">주소</th><th rowspan="2">단가</th><th rowspan="2">신규<br>계약일</th><th rowspan="2">재계약일</th>'
+      +ms.map(k=>'<th colspan="2">'+(+k.slice(5))+'월</th>').join('')+'<th rowspan="2">배출량계</th><th rowspan="2">배출량(kg)</th><th rowspan="2">금액합계</th><th rowspan="2">배출량<br>평균</th><th rowspan="2">배출합계<br>평균</th></tr>'
+      +'<tr>'+ms.map(()=>'<th>배출량</th><th>총금액</th>').join('')+'</tr>';
+    const n=mn, tot={c:0,a:0,m:ms.map(()=>[0,0])};
+    groups.forEach(g=>{ const s={c:0,a:0,m:ms.map(()=>[0,0])};
+      g.a.forEach((x,i)=>{ const u=lgNum(x.unit), c=lgFoodCum(x);
+        body+='<tr><td>'+(x.no||i+1)+'</td><td class="l">'+E(x.name)+(lgIsUse(x)?'':' (해지)')+'</td><td>'+E(x.addr)+'</td><td>'+lgFmt(u)+'</td><td>'+E(x.contract||'')+'</td><td>'+E(x.renew||'')+'</td>'
+          +ms.map((k,j)=>{ const l=lgFoodMo(x,k); if(l!=null){s.m[j][0]+=l; s.m[j][1]+=l*u;} return '<td>'+(l?lgFmt(l):'-')+'</td><td>'+(l?lgFmt(l*u):'-')+'</td>'; }).join('')
+          +'<td>'+lgFmt(c)+'</td><td>'+lgFmt(Math.round(c*0.75))+'</td><td>'+lgFmt(c*u)+'</td><td>'+lgFmt(Math.round(c/n))+'</td><td>'+lgFmt(Math.round(c*u/n))+'</td></tr>';
+        s.c+=c; s.a+=c*u; });
+      body+='<tr class="sum"><td colspan="6">'+E(g.d)+' 계 ('+g.a.length+'곳)</td>'+s.m.map(v=>'<td>'+lgFmt(v[0])+'</td><td>'+lgFmt(v[1])+'</td>').join('')
+        +'<td>'+lgFmt(s.c)+'</td><td>'+lgFmt(Math.round(s.c*0.75))+'</td><td>'+lgFmt(s.a)+'</td><td>'+lgFmt(Math.round(s.c/n))+'</td><td>'+lgFmt(Math.round(s.a/n))+'</td></tr>';
+      tot.c+=s.c; tot.a+=s.a; s.m.forEach((v,j)=>{tot.m[j][0]+=v[0];tot.m[j][1]+=v[1];}); });
+    if(groups.length>1) body+='<tr class="sum tot"><td colspan="6">총 계</td>'+tot.m.map(v=>'<td>'+lgFmt(v[0])+'</td><td>'+lgFmt(v[1])+'</td>').join('')
+      +'<td>'+lgFmt(tot.c)+'</td><td>'+lgFmt(Math.round(tot.c*0.75))+'</td><td>'+lgFmt(tot.a)+'</td><td>'+lgFmt(Math.round(tot.c/n))+'</td><td>'+lgFmt(Math.round(tot.a/n))+'</td></tr>';
+  }else{
+    title=lgYear()+'년 재활용품 감량의무사업장 계약 현황';
+    head='<tr><th>연번</th><th>계약일자</th><th>상호명 및 건물명</th><th>주소</th><th>연락처</th><th>대표자명</th><th>사업자등록번호</th><th>계산서</th><th>월계약금액</th>'
+      +[1,2,3,4,5,6,7,8,9,10,11,12].map(i=>'<th>'+i+'월</th>').join('')+'</tr>';
+    let gt=0;
+    groups.forEach(g=>{ let t=0;
+      g.a.forEach(x=>{ if(lgIsUse(x)) t+=lgNum(x.fee);
+        body+='<tr'+(lgIsUse(x)?'':' class="ended"')+'><td>'+E(x.no||'')+'</td><td>'+E(x.contract||'')+'</td><td class="l">'+E(x.name)+'</td><td>'+E(x.addr)+'</td><td>'+E(x.tel||'')+'</td><td>'+E(x.rep||'')+'</td><td>'+E(x.bizNo||'')+'</td><td>'+(x.invoice?'○':'')+'</td><td>'+lgFmt(x.fee)+'</td>'
+          +[1,2,3,4,5,6,7,8,9,10,11,12].map(i=>{ const k=lgYear()+'-'+String(i).padStart(2,'0'); return '<td>'+E(lgRecyMo(x,k)||(x.endYm===k?'해지':''))+'</td>'; }).join('')+'</tr>'; });
+      body+='<tr class="sum"><td colspan="8">'+E(g.d)+' 계 (계약 '+g.a.filter(lgIsUse).length+'곳)</td><td>'+lgFmt(t)+'</td><td colspan="12"></td></tr>'; gt+=t; });
+    if(groups.length>1) body+='<tr class="sum tot"><td colspan="8">총 계</td><td>'+lgFmt(gt)+'</td><td colspan="12"></td></tr>';
+  }
+  const w=window.open('','_blank'); if(!w){ toast('팝업이 막혀 있습니다 — 허용해 주세요'); return; }
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>'+E(title)+'</title><style>'
+    +'@page{size:A4 '+(lg.sec==='rfid'?'portrait':'landscape')+';margin:10mm}body{font-family:"Malgun Gothic",sans-serif;font-size:10.5px;color:#000}'
+    +'h1{text-align:center;font-size:18px;margin:0 0 4px}.meta{text-align:right;font-size:10px;margin-bottom:6px}'
+    +'table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:3px 4px;text-align:center}th{background:#e5e7eb}'
+    +'td.l{text-align:left}tr.sum td{background:#f3f4f6;font-weight:700}tr.tot td{background:#dbeafe}tr.ended td{color:#888;text-decoration:line-through}'
+    +'thead{display:table-header-group}tr{page-break-inside:avoid}</style></head><body>'
+    +'<h1>'+E(title)+'</h1><div class="meta">'+(lg.dong!=='all'?E(lg.dong==='none'?'동 미지정':lg.dong)+' · ':'')+'출력 '+today()+' · '+E(staff||'')+'</div>'
+    +'<table><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'
+    +'<script>setTimeout(function(){window.print();},300)<\/script></body></html>');
+  w.document.close();
+}
 </script>
 </body>
 </html>

@@ -211,7 +211,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v61</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v62</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -791,19 +791,21 @@ const today = ()=>{ const d=new Date();
 function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on '+(k||''); clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400); }
 
 /* ---------- 불러오기 ---------- */
+let phMap=null;   // 서버에 사진이 있는 전표 묶음 (못 읽으면 null)
 let loadSeq=0, lastLoad=0, liveDirty=false, liveTimer=null;
 async function load(){
   const seq=++loadSeq;   // 겹쳐서 불러올 때 늦게 도착한 옛 자료가 새 자료를 덮지 않게 합니다
   lastLoad=Date.now(); liveDirty=false;
   $('#st').textContent='불러오는 중';
   try{
-    const [rRes,mRes,cRes,oRes,tRes,gRes] = await Promise.all([
+    const [rRes,mRes,cRes,oRes,tRes,gRes,pRes] = await Promise.all([
       fetch(`${DB}/gyegeun/records.json`),
       fetch(`${DB}/gyegeun/rot.json`),
       fetch(`${DB}/gyegeun/chk.json`),
       fetch(`${DB}/gyegeun/ok.json`),
       fetch(`${DB}/gyegeun/trash.json`),
-      fetch(`${DB}/gyegeun/picgone.json`)
+      fetch(`${DB}/gyegeun/picgone.json`),
+      fetch(`${DB}/gyegeun/photos.json?shallow=true`)
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
@@ -812,8 +814,9 @@ async function load(){
     const okD  = (oRes.ok ? await oRes.json() : null) || {};
     const gonD = (gRes.ok ? await gRes.json() : null) || {};
     const td = (tRes.ok ? await tRes.json() : null) || {};
+    const phD = pRes.ok ? ((await pRes.json()) || {}) : null;
     if(seq!==loadSeq) return;
-    rots=rotD; chk=chkD; okm=okD; pgone=gonD;
+    rots=rotD; chk=chkD; okm=okD; pgone=gonD; phMap=phD;
     trash = Object.entries(td).map(([id,v])=>({id,...v}))
                   .sort((a,b)=> (b.delAt||0)-(a.delAt||0));
     all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
@@ -1092,6 +1095,7 @@ function picCell(r){
     ? '<span class="picgone" style="border-color:#E4B4AE;color:#A32E22" title="전표번호·시각은 읽혔는데 사진이 안 올라왔습니다. 현장에서 사진을 지우고 저장하면 이렇게 됩니다. 숫자는 그대로입니다.">사진 없이 올라옴</span>'
     : '<span style="color:var(--dim)" title="직접 입력한 전표입니다">없음</span>';
   if(pgone[r.batch]) return `<span class="picgone" title="${pgone[r.batch]} 에 사진만 지웠습니다. 날짜·차량·성상·중량·전표번호는 그대로 남아 있습니다.">사진 지움</span>`;
+  if(phMap && !phMap[r.batch]) return `<button class="mini pic" style="border-color:#E4B4AE;color:#A32E22" data-pic="${r.batch}" title="숫자는 올라왔는데 사진이 서버에 없습니다. 그 차량 폰에서 계근앱을 열면 폰에 남은 사진을 다시 보냅니다.">사진 없음</button>`;
   return `<button class="mini pic" data-pic="${r.batch}">보기</button>`;
 }
 
@@ -1126,14 +1130,19 @@ async function showPic(batch){
   if(pgone[batch]){ toast(`${pgone[batch]} 에 사진만 지운 전표입니다 — 숫자 기록은 그대로 있습니다`,'err'); return; }
   vw={batch, rot:rots[batch]||0, zoom:1, x:0, y:0, base:1};
   $('#vCap').textContent='사진 불러오는 중';
-  $('#vImg').src=''; $('#viewer').classList.add('on');
+  $('#vImg').src=''; $('#vImg').style.visibility='hidden'; $('#viewer').classList.add('on');
   try{
     if(!picCache[batch]){
       const res=await fetch(`${DB}/gyegeun/photos/${batch}.json`);
+      if(!res.ok) throw new Error(res.status);
       picCache[batch]=await res.json();
     }
-    if(!picCache[batch]) throw new Error();
+    if(!picCache[batch]){
+      $('#vCap').textContent='이 전표의 사진이 서버에 없습니다. 숫자는 그대로입니다. 그 차량 폰에서 계근앱을 열면 폰에 남은 사진을 다시 보냅니다.';
+      return;
+    }
     const img=$('#vImg');
+    img.style.visibility='';
     img.onload=fit;
     img.src=picCache[batch];
     const n=all.filter(r=>r.batch===batch);

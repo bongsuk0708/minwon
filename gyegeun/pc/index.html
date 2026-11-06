@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script>/* [10_29 보안] 보이지 않는 자동 로그인 — 저장소 요청에 로그인 표시(auth)를 붙인다. 로그인 기능이 꺼져 있으면 예전처럼 그냥 보낸다 */
+(function(){var KEY='AIzaSyCrJaARREMDXFfhicjUwWFyqkyTbVMRsYk',H='minwon-c29c2-default-rtdb',LS='bn_anon_tok',of=window.fetch.bind(window),pend=null,failAt=0;
+function sv(t){try{localStorage.setItem(LS,JSON.stringify(t))}catch(e){}}function ld(){try{return JSON.parse(localStorage.getItem(LS)||'null')}catch(e){return null}}
+function tok(){if(Date.now()-failAt<300000)return Promise.resolve(null);var t=ld();if(t&&t.id&&t.exp>Date.now()+60000)return Promise.resolve(t.id);if(pend)return pend;
+pend=(async function(){try{var r,j;if(t&&t.rf){r=await of('https://securetoken.googleapis.com/v1/token?key='+KEY,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token='+encodeURIComponent(t.rf)});j=await r.json();if(j.id_token){t={id:j.id_token,rf:j.refresh_token,exp:Date.now()+(+j.expires_in)*1000};sv(t);return t.id;}}
+r=await of('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+KEY,{method:'POST',headers:{'Content-Type':'application/json'},body:'{"returnSecureToken":true}'});j=await r.json();if(j.idToken){t={id:j.idToken,rf:j.refreshToken,exp:Date.now()+(+j.expiresIn)*1000};sv(t);return t.id;}failAt=Date.now();return null;}catch(e){failAt=Date.now();return null;}finally{pend=null;}})();return pend;}
+window.fetch=function(i,o){var u=typeof i==='string'?i:'';if(u.indexOf(H)<0||/[?&]auth=/.test(u))return of(i,o);return tok().then(function(id){return of(id?u+(u.indexOf('?')>=0?'&':'?')+'auth='+encodeURIComponent(id):u,o);});};})();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>계근 대장 · 본에코</title>
@@ -204,7 +211,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v60</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v61</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -784,7 +791,10 @@ const today = ()=>{ const d=new Date();
 function toast(m,k){ const t=$('#toast'); t.textContent=m; t.className='toast on '+(k||''); clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2400); }
 
 /* ---------- 불러오기 ---------- */
+let loadSeq=0, lastLoad=0, liveDirty=false, liveTimer=null;
 async function load(){
+  const seq=++loadSeq;   // 겹쳐서 불러올 때 늦게 도착한 옛 자료가 새 자료를 덮지 않게 합니다
+  lastLoad=Date.now(); liveDirty=false;
   $('#st').textContent='불러오는 중';
   try{
     const [rRes,mRes,cRes,oRes,tRes,gRes] = await Promise.all([
@@ -797,11 +807,13 @@ async function load(){
     ]);
     if(!rRes.ok) throw new Error(rRes.status);
     const data = await rRes.json();
-    rots = (mRes.ok ? await mRes.json() : null) || {};
-    chk  = (cRes.ok ? await cRes.json() : null) || {};
-    okm  = (oRes.ok ? await oRes.json() : null) || {};
-    pgone= (gRes.ok ? await gRes.json() : null) || {};
+    const rotD = (mRes.ok ? await mRes.json() : null) || {};
+    const chkD = (cRes.ok ? await cRes.json() : null) || {};
+    const okD  = (oRes.ok ? await oRes.json() : null) || {};
+    const gonD = (gRes.ok ? await gRes.json() : null) || {};
     const td = (tRes.ok ? await tRes.json() : null) || {};
+    if(seq!==loadSeq) return;
+    rots=rotD; chk=chkD; okm=okD; pgone=gonD;
     trash = Object.entries(td).map(([id,v])=>({id,...v}))
                   .sort((a,b)=> (b.delAt||0)-(a.delAt||0));
     all = data ? Object.entries(data).map(([id,v])=>({id,...v})) : [];
@@ -810,6 +822,7 @@ async function load(){
     $('#st').textContent = `전표 ${comma(all.length)}건 · ${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 기준`;
     fillSelects(); render();
   }catch(e){
+    if(seq!==loadSeq) return;
     $('#msg').innerHTML='<div class="msg err">데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침하세요.</div>';
     $('#st').textContent='연결 실패';
   }
@@ -1137,7 +1150,7 @@ async function saveRot(){
 $('#vTop').onclick = e=>{
   const b=e.target.closest('[data-v]'); if(!b) return;
   const a=b.dataset.v;
-  if(a==='x'){ $('#viewer').classList.remove('on'); return; }
+  if(a==='x'){ $('#viewer').classList.remove('on'); if(liveDirty) refreshSoon(); return; }
   if(a==='rl'){ vw.rot=(vw.rot+270)%360; fit(); saveRot(); return; }
   if(a==='rr'){ vw.rot=(vw.rot+90)%360;  fit(); saveRot(); return; }
   if(a==='in'){ vw.zoom=Math.min(vw.zoom*1.3,12); apply(); return; }
@@ -1157,7 +1170,7 @@ window.addEventListener('mouseup', ()=>{ drag=null; stage.classList.remove('drag
 stage.addEventListener('dblclick', fit);
 window.addEventListener('keydown', e=>{
   if(!$('#viewer').classList.contains('on')) return;
-  if(e.key==='Escape') $('#viewer').classList.remove('on');
+  if(e.key==='Escape'){ $('#viewer').classList.remove('on'); if(liveDirty) refreshSoon(); }
   if(e.key==='+'||e.key==='=') { vw.zoom=Math.min(vw.zoom*1.3,12); apply(); }
   if(e.key==='-') { vw.zoom=Math.max(vw.zoom/1.3,.3); apply(); }
 });
@@ -1701,7 +1714,23 @@ function fixBarTop(){
 fixBarTop();
 window.addEventListener('resize', fixBarTop);
 load();
-setInterval(()=>{ if(!$('#viewer').classList.contains('on')) load(); }, 120000);
+/* 전표가 바뀌면 서버가 바로 알려 줍니다 — 몇 초 안에 대장에 보입니다.
+   사진을 보는 중이거나 탭이 뒤에 있으면 기다렸다가 돌아올 때 받습니다. 2분마다 받기는 알림이 끊겼을 때를 위해 남겨 둡니다. */
+function canRefresh(){ return !document.hidden && !$('#viewer').classList.contains('on'); }
+function refreshSoon(){
+  clearTimeout(liveTimer);
+  liveTimer=setTimeout(()=>{ if(canRefresh()) load(); else liveDirty=true; }, 1500);
+}
+if(window.EventSource){
+  const es=new EventSource(`${DB}/gyegeun/records.json`);
+  let first=true;   // 연결하자마자 오는 첫 자료는 이미 받은 것입니다
+  es.addEventListener('put', ()=>{ if(first){ first=false; return; } refreshSoon(); });
+  es.addEventListener('patch', refreshSoon);
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(canRefresh() && (liveDirty || Date.now()-lastLoad>120000)) load();
+});
+setInterval(()=>{ if(canRefresh()) load(); }, 120000);
 </script>
 </body>
 </html>

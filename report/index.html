@@ -43,7 +43,7 @@ input,select,textarea{font-family:inherit;outline:none}
 #login-logo{width:72px;height:72px;border-radius:50%;background:var(--logo) center/cover no-repeat;background-color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18);margin-bottom:4px}
 #hdr-right{display:flex;align-items:center;gap:6px}
 #staff-name{font-size:12px;opacity:.85}
-#mw-sw{font-size:12px;font-weight:800;background:#fff;color:var(--blue);padding:4px 10px;border-radius:20px;text-decoration:none;white-space:nowrap} /* [10_29] 민원처리 전환 */
+#mw-sw,.mw-swx{font-size:12px;font-weight:800;background:#fff;color:var(--blue);padding:4px 10px;border-radius:20px;text-decoration:none;white-space:nowrap} /* [10_29] 민원처리 전환 · [11_10] 현장 화면 버튼도 같은 모양 */
 #logout-btn{font-size:11px;background:rgba(255,255,255,.2);color:#fff;padding:3px 8px;border-radius:20px}
 #net-bar{font-size:11px;padding:3px 0;text-align:center;border-top:1px solid rgba(255,255,255,.15)}
 .net-ok{color:#86efac}.net-err{color:#fca5a5}.net-wait{color:#fde68a}
@@ -491,7 +491,9 @@ input,select,textarea{font-family:inherit;outline:none}
     <div id="hdr-top">
       <h1>종합예방관리대장</h1>
       <div id="hdr-right">
-        <a id="mw-sw" href="https://boneco-minwon.web.app/?from=risk" target="bn_minwon" rel="noopener">📋 민원처리</a>
+        <a id="mw-sw" href="https://boneco-minwon.web.app/?from=risk" target="bn_minwon" rel="noopener">📋 민원처리 화면</a>
+        <a class="mw-swx" href="https://boneco-minwon.web.app/field.html?view=1" target="bn_minwon_field" rel="noopener" title="민원 현장 근무자 화면 보기 (보기 전용)">🚛 민원 현장 화면</a>
+        <a class="mw-swx" href="https://boneco-co.github.io/sugeorapp/?view=1" target="bn_sugeo_view" rel="noopener" title="대형 수거 현장 화면 보기 (보기 전용)">🚚 대형 현장 화면</a>
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
         <button class="hdr-sbtn" id="hb-staff" onclick="swSide('staff')">👷 직원</button>
         <span id="staff-name"></span>
@@ -3039,6 +3041,7 @@ function lgOpen(id){
       +'<div><span class="form-label">사용 여부</span><select class="form-select" id="lg-f-status"><option value="사용"'+(use?' selected':'')+'>🟢 사용중</option><option value="미사용"'+(use?'':' selected')+'>⚪ 미사용</option></select></div></div>'
       +'<div class="form-row"><span class="form-label">공동주택명 (기계 이름) *</span><input class="form-input" id="lg-f-name" value="'+v('name')+'" placeholder="(일반-BM)잠실본동 215-1(에코)"></div>'
       +'<div class="form-row"><span class="form-label">주소</span><input class="form-input" id="lg-f-addr" value="'+v('addr')+'" placeholder="서울특별시 송파구 백제고분로11길 28-5"></div>'
+      +'<div class="form-row"><span class="form-label">모델명 (기계)</span><input class="form-input" id="lg-f-model" value="'+v('model')+'" placeholder="예: RF-200K"></div>'   // [11_10]
       +'<div class="form-row"><span class="form-label">'+mn+'월 자료 ('+ym+')</span><div class="form-2col" style="grid-template-columns:1fr 1fr 1fr">'
         +'<div><span class="form-label">배출자수</span><input class="form-input" id="lg-f-n" type="number" value="'+(m&&m.n!=null?E(m.n):'')+'"></div>'
         +'<div><span class="form-label">배출량(kg)</span><input class="form-input" id="lg-f-kg" type="number" step="0.01" value="'+(m&&m.kg!=null?E(m.kg):'')+'"></div>'
@@ -3096,6 +3099,14 @@ function lgOpen(id){
     b+='</div></div>';
   }
   b+='<div class="form-row"><span class="form-label">메모</span><textarea class="form-textarea" id="lg-f-note" style="min-height:60px">'+v('note')+'</textarea></div>';
+  // [11_10] 현장(수거앱·민원앱 [🗂 관리대장])에서 남긴 점검·변경 이력 — 날짜순
+  if(it&&(it.hist||it.lastInsp)){
+    const hs=Object.values(it.hist||{}).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
+    b+='<div class="form-row"><span class="form-label">📜 현장 점검·변경 이력'+(it.lastInsp?' (최근 '+E(it.lastInsp.at||'')+' '+E(it.lastInsp.by||'')+')':'')+'</span>'
+      +'<div style="background:#f8fafc;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.7;max-height:220px;overflow:auto">'
+      +(hs.map(x=>'<div><b>'+E(String(x.at||'').slice(0,16))+'</b> '+E(x.type||'')+(x.from||x.to?' '+E(x.from||'')+' → '+E(x.to||''):'')+(x.why?' · 사유: '+E(x.why):'')+(x.memo?' · '+E(x.memo):'')+(x.photos?' · 📷'+x.photos:'')+' <span style="color:#6b7280">'+E(x.by||'')+'</span></div>').join('')||'기록 없음')
+      +'</div></div>';
+  }
   if(it){
     const has=it.pos&&it.pos.lat;
     b+='<div class="form-row"><span class="form-label">지도 위치</span>'
@@ -3130,6 +3141,7 @@ function lgSave(){
   if(old && old.addr!==d.addr){ d.pos=null; d.addrDong=null; d.posSrc=null; }   // 주소를 바꾸면 위치 다시 찾기
   const mUpd={};
   if(t==='rfid'){
+    d.model=g('lg-f-model');   // [11_10]
     const n=g('lg-f-n'),kg=g('lg-f-kg'),amt=g('lg-f-amt');
     if(n!==''||kg!==''||amt!=='') mUpd[ym]={n:lgNum(n),kg:lgNum(kg),amt:lgNum(amt)};
   }else{

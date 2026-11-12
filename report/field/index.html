@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>현장앱 – 민원·사고재해예방</title>
+<title>현장 사진 – 예방관리</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#f97316">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="현장앱">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<link rel="icon" type="image/png" href="../icon-192.png">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=4421ecfa7ea279c190db811c789e450d&libraries=services"></script>
 <style>
 :root{--logo:url("data:image/png;base64,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")}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -203,68 +206,41 @@ button{cursor:pointer;border:none;outline:none;font-family:inherit;}
 #imgview-img{max-width:100%;max-height:100%;object-fit:contain;cursor:zoom-in;border-radius:6px;background:#fff;}
 #imgview-img.zoom{max-width:none;max-height:none;cursor:zoom-out;}
 #imgview-tip{text-align:center;font-size:11.5px;color:#94a3b8;padding:0 0 10px;}
+/* ── 현장 사진 화면 ── */
+#main{padding-top:58px;}
+.fbtn .cnt{opacity:.75;font-weight:600;margin-left:3px;}
+.ph-head{font-size:15px;font-weight:800;margin-bottom:4px;color:var(--text);}
+.ph-addr{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.ph-desc{font-size:12px;color:var(--sub);margin-bottom:12px;line-height:1.5;white-space:pre-wrap;word-break:break-all;}
+.photo-box .chg{position:absolute;left:6px;bottom:6px;z-index:2;background:rgba(15,23,42,.72);color:#fff;font-size:11px;font-weight:700;padding:3px 7px;border-radius:6px;}
+.photo-box .new{position:absolute;right:6px;top:6px;z-index:2;background:var(--green);color:#fff;font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;}
+.photo-box .lbl2{position:absolute;left:6px;top:6px;z-index:2;background:rgba(255,255,255,.92);color:var(--text);font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px;}
+.ph-tip{font-size:12px;color:var(--sub);text-align:center;margin:10px 0 4px;}
 </style>
 </head>
 <body>
 
 <!-- 헤더 -->
 <div id="hdr">
-  <div class="logo">📱 현장앱 <span>민원·사고재해예방</span></div>
+  <div class="logo">📷 현장 사진 <span>처리 전·후</span></div>
   <div id="hdr-right">
-    <a id="office-link" href="../">🖥️ 사무실</a>
     <button id="staff-name" onclick="changeStaff()">이름 설정</button>
   </div>
 </div>
 
-<!-- 탭 -->
-<div id="tabs">
-  <div class="tab on" data-tab="list">📋 목록</div>
-  <div class="tab" data-tab="map">🗺 지도</div>
-  <div class="tab" data-tab="update">🔄 업데이트</div>
-</div>
-
 <div id="main">
-
-  <!-- ══ 목록 탭 ══ -->
   <div class="page on" id="tab-list">
     <div class="filter-bar">
-      <div class="fbtn on" data-f="전체" onclick="setFilter(this)">전체</div>
+      <div class="fbtn on" data-f="진행" onclick="setFilter(this)">진행 중</div>
       <div class="fbtn" data-f="민원" onclick="setFilter(this)">민원</div>
-      <div class="fbtn" data-f="사고예방" onclick="setFilter(this)">사고예방</div>
-      <div class="fbtn" data-f="접수" onclick="setFilter(this)">접수</div>
-      <div class="fbtn" data-f="처리중" onclick="setFilter(this)">처리중</div>
-      <div class="fbtn" data-f="완료" onclick="setFilter(this)">완료</div>
-      <div class="fbtn" data-f="High" onclick="setFilter(this)">🔴 High</div>
+      <div class="fbtn" data-f="사고" onclick="setFilter(this)">사고</div>
+      <div class="fbtn" data-f="전체" onclick="setFilter(this)">전체</div>
     </div>
     <div id="rec-list"><div class="loading"><div class="spinner"></div><br>불러오는 중...</div></div>
   </div>
-
-  <!-- ══ 지도 탭 ══ -->
-  <div class="page" id="tab-map" style="padding:0;">
-    <div id="map-legend">
-      <div class="leg"><div class="leg-dot" style="background:#22c55e"></div>생활</div>
-      <div class="leg"><div class="leg-dot" style="background:#eab308"></div>음식물</div>
-      <div class="leg"><div class="leg-dot" style="background:#3b82f6"></div>재활용</div>
-      <div class="leg"><div class="leg-dot" style="background:#b91c1c"></div>사고High</div>
-      <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>사고Mid</div>
-      <div class="leg"><div class="leg-dot" style="background:#f87171"></div>사고Low</div>
-    </div>
-    <div id="map-container"></div>
-  </div>
-
-  <!-- ══ 업데이트 탭 ══ -->
-  <div class="page" id="tab-update">
-    <div class="card" style="text-align:center;color:var(--sub);font-size:13px;">
-      <div style="font-size:32px;margin-bottom:8px;">📋</div>
-      <p style="margin-bottom:6px;font-weight:600;color:var(--text);">목록에서 항목을 선택하세요</p>
-      <p style="font-size:12px;">목록 탭 → 항목 선택 → <strong style="color:var(--accent)">현장 업데이트</strong> 버튼</p>
-    </div>
-    <div id="update-area"></div>
-  </div>
-
 </div>
 
-<!-- 모달 -->
+<!-- 사진 올리기 창 -->
 <div id="modal-bg" onclick="closeMBg(event)">
   <div id="modal">
     <div class="modal-handle"></div>
@@ -290,11 +266,12 @@ const db=firebase.database();
 const RECS=db.ref('report/recs');
 const PHOTOS=db.ref('report/photos');
 
+// 현장앱은 처리 전·후 사진만 올린다. 기록 내용·상태·민원인 정보는 사무실(PC)에서만 보고 고친다.
 let staff='';
 let allRecs=[];
-let curFilter='전체';
-let updateTarget=null;
-let updateTmpPhoto={};
+let curFilter='진행';
+let curId=null;
+let tmpPhoto={};
 
 function nowStr(){
   const d=new Date(),p=n=>String(n).padStart(2,'0');
@@ -305,7 +282,7 @@ function toast(msg,ms=2000){
   t.textContent=msg;t.classList.add('show');
   clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),ms);
 }
-function triggerPhoto(id){document.getElementById(id).click();}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 /* ── 저장소: localStorage가 막히거나 꽉 차도 쿠키로 유지 ── */
 function lsGet(k){
@@ -319,14 +296,10 @@ function lsSet(k,v){
   try{ document.cookie=k+'='+encodeURIComponent(v)+';path=/;max-age=31536000;SameSite=Lax'; ok=true; }catch(e){}
   return ok;
 }
-// 옛 버전이 localStorage에 쌓아 둔 사진 찌꺼기 정리 — 용량이 차면 이름 저장이 조용히 실패함
 function purgeOldPhotos(){
   try{
     const del=[];
-    for(let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k&&/^rp_[bah]_/.test(k))del.push(k);
-    }
+    for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&/^rp_[bah]_/.test(k))del.push(k); }
     del.forEach(function(k){ try{localStorage.removeItem(k);}catch(e){} });
   }catch(e){}
 }
@@ -336,486 +309,190 @@ function initStaff(){
   purgeOldPhotos();
   staff=lsGet('rp_field_staff')||'';
   const el=document.getElementById('staff-name');
-  if(staff){
-    if(el)el.textContent=staff;
-    document.getElementById('name-screen').classList.remove('on');
-  }else{
-    showNameScreen();
-  }
+  if(staff){ if(el)el.textContent=staff; document.getElementById('name-screen').classList.remove('on'); }
+  else showNameScreen();
 }
 function showNameScreen(){
-  const ns=document.getElementById('name-screen');
-  const i=document.getElementById('ns-input');
+  const ns=document.getElementById('name-screen'), i=document.getElementById('ns-input');
   if(i)i.value=staff||'';
   ns.classList.add('on');
   setTimeout(function(){ if(i){i.focus();i.select();} },250);
 }
 function saveStaffName(){
-  const i=document.getElementById('ns-input');
-  const n=(i.value||'').trim();
+  const i=document.getElementById('ns-input'), n=(i.value||'').trim();
   if(!n){ alert('이름을 입력해 주세요'); i.focus(); return; }
   staff=n;
   const ok=lsSet('rp_field_staff',staff);
-  const el=document.getElementById('staff-name');
-  if(el)el.textContent=staff;
+  const el=document.getElementById('staff-name'); if(el)el.textContent=staff;
   document.getElementById('name-screen').classList.remove('on');
   if(!ok)alert('이름이 저장되지 않았습니다.\n브라우저 설정에서 쿠키·사이트 데이터를 허용해 주세요.');
 }
 function changeStaff(){ showNameScreen(); }
 
-/* ── 탭 ── */
-document.querySelectorAll('.tab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on');
-    document.getElementById('tab-'+t.dataset.tab).classList.add('on');
-    if(t.dataset.tab==='list') renderList();
-    if(t.dataset.tab==='map') setTimeout(initFieldMap,80);
-  });
-});
-
-/* ── 필터 ── */
+/* ── 목록 ── */
+const isHazard=r=>(r.type==='사고예방')||(r.recType==='hazard');
+const isDone=r=>r.status==='완료'||r.status==='처리완료';
+function filtered(f){
+  let a=allRecs.filter(r=>!r.del);
+  if(f==='진행') a=a.filter(r=>!isDone(r));
+  else if(f==='민원') a=a.filter(r=>!isHazard(r));
+  else if(f==='사고') a=a.filter(isHazard);
+  return a;
+}
 function setFilter(el){
   document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
-  el.classList.add('on');
-  curFilter=el.dataset.f;
-  renderList();
+  el.classList.add('on'); curFilter=el.dataset.f; renderList();
 }
-
-/* ── 목록 렌더 ── */
+function recNo(r){ return r.num||r.no||r.hazardNo||String(r.id||'').slice(0,8); }
+function recDesc(r){
+  if(isHazard(r)) return (r.hKind||'사고재해예방')+(r.factor||r.riskType?' · '+(r.factor||r.riskType):'');
+  const w=r.waste||r.subtype||'';
+  return '민원'+(w?' · '+w:'')+(r.mtype||r.category?' · '+(r.mtype||r.category):'');
+}
 function renderList(){
-  const list=document.getElementById('rec-list');
-  let recs=allRecs.filter(r=>!r.del);
-
-  const isHazard=r=>(r.type==='사고예방')||(r.recType==='hazard');
-
-  if(curFilter==='민원') recs=recs.filter(r=>!isHazard(r));
-  else if(curFilter==='사고예방') recs=recs.filter(r=>isHazard(r));
-  else if(['접수','처리중','완료','보류'].includes(curFilter)) recs=recs.filter(r=>r.status===curFilter);
-  else if(['High','Medium','Low'].includes(curFilter)) recs=recs.filter(r=>(r.risk||r.riskLevel)===curFilter);
-
-  recs.sort((a,b)=>{
-    const da=a.regAt||a.createdAt||'';
-    const db2=b.regAt||b.createdAt||'';
-    return db2>da?1:-1;
+  document.querySelectorAll('.fbtn').forEach(function(b){
+    const n=filtered(b.dataset.f).length;
+    b.innerHTML=b.dataset.f==='진행'?'진행 중':b.dataset.f;
+    b.innerHTML+='<span class="cnt">'+n+'</span>';
   });
-
-  if(!recs.length){
-    list.innerHTML=`<div class="empty"><div class="empty-ico">📭</div>해당 항목 없음</div>`;
-    return;
-  }
-
-  list.innerHTML=recs.map(r=>{
-    const isH=isHazard(r);
-    const waste=r.waste||r.subtype||'';
-    const wasteClass=waste==='음식물'?'food':waste==='생활'?'life':waste==='재활용'?'recycle':'';
-    const itemClass=isH?'accident':wasteClass;
-    const typeLabel=isH?'사고예방':'민원';
-    const typeClass=isH?'type-사고':'type-민원';
-    const status=r.status||'접수';
-    const addr=r.addr||'-';
-    const num=r.num||r.no||r.hazardNo||r.id.slice(0,8);
-    const date=(r.regAt||r.createdAt||'').slice(5,16);
-    const desc=isH
-      ?(r.factor||r.riskType||'')+(r.detail||r.riskContent?' | '+(r.detail||r.riskContent):'')
-      :(waste?waste+' · ':'')+(r.mtype||r.category||'')+(r.detail||r.content?' | '+(r.detail||r.content):'');
-    const wasteEmoji=waste==='음식물'?'🟡':waste==='생활'?'🟢':waste==='재활용'?'🔵':'';
-
-    return `<div class="rec-item ${itemClass}" onclick="openDetail('${r.id}')">
-      <div class="rec-top">
-        <span class="rec-num">${num}</span>
-        <span class="rec-type ${typeClass}">${typeLabel}</span>
-      </div>
-      <div class="rec-addr">${addr}</div>
-      <div class="rec-desc">${desc}</div>
-      <div class="rec-footer">
-        <span class="status-badge s-${status}">${status}</span>
-        ${r.risk||r.riskLevel?`<span class="risk-badge r-${r.risk||r.riskLevel}">${r.risk||r.riskLevel}</span>`:''}
-        ${waste&&!isH?`<span class="waste-tag waste-${waste}">${wasteEmoji} ${waste}</span>`:''}
-        <span class="rec-date">${date}</span>
-      </div>
-    </div>`;
+  const list=document.getElementById('rec-list');
+  const recs=filtered(curFilter).sort((a,b)=>String(b.regAt||b.createdAt||'')>String(a.regAt||a.createdAt||'')?1:-1);
+  if(!recs.length){ list.innerHTML='<div class="empty"><div class="empty-ico">📭</div>해당 항목 없음</div>'; return; }
+  list.innerHTML=recs.map(function(r){
+    const isH=isHazard(r), w=r.waste||r.subtype||'';
+    const cls=isH?'accident':(w==='음식물'?'food':w==='생활'?'life':w==='재활용'?'recycle':'');
+    const st=r.status==='처리완료'?'완료':(r.status||'접수');
+    return '<div class="rec-item '+cls+'" onclick="openPhoto(\''+esc(r.id)+'\')">'
+      +'<div class="rec-top"><span class="rec-num">'+esc(recNo(r))+'</span>'
+      +'<span class="rec-type '+(isH?'type-사고':'type-민원')+'">'+(isH?'사고':'민원')+'</span></div>'
+      +'<div class="rec-addr">'+esc(r.addr||'-')+'</div>'
+      +'<div class="rec-desc">'+esc(recDesc(r))+'</div>'
+      +'<div class="rec-footer"><span class="status-badge s-'+esc(st)+'">'+esc(st)+'</span>'
+      +'<span class="rec-date">📷 눌러서 사진 올리기</span></div>'
+      +'</div>';
   }).join('');
 }
 
-/* ── 상세 모달 ── */
-function openDetail(id){
-  const r=allRecs.find(x=>x.id===id);
-  if(!r)return;
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  const waste=r.waste||r.subtype||'';
-
-  let rows=[];
-  if(isH){
-    rows=[
-      ['번호',r.num||r.hazardNo||'-'],
-      ['접수일',r.regAt||r.createdAt||'-'],
-      ['담당',r.staff||'-'],
-      ['🚛 기사',r.driver||'-'],
-      ['행정동',r.dong||'-'],
-      ['주소',r.addr||'-'],
-      ['위험등급',`<span class="risk-badge r-${r.risk||r.riskLevel}">${r.risk||r.riskLevel||'-'}</span>`],
-      ['위험요인',r.factor||r.riskType||'-'],
-      ['내용',r.detail||r.riskContent||'-'],
-      ['조치사항',r.action||'-'],
-      ['점검결과',r.inspResult||'-'],
-      ['상태',`<span class="status-badge s-${r.status||'접수'}">${r.status||'접수'}</span>`],
-    ];
-  } else {
-    const wTag=waste?`<span class="waste-tag waste-${waste}">${waste==='음식물'?'🟡':waste==='생활'?'🟢':'🔵'} ${waste}</span>`:'';
-    rows=[
-      ['번호',r.num||r.no||'-'],
-      ['접수일',r.regAt||r.date||'-'],
-      ['담당',r.staff||'-'],
-      ['구분',wTag||'-'],
-      ['주소',r.addr||'-'],
-      ['민원인',`${r.cname||r.person||'-'} ${(r.ctel||r.tel)?'('+(r.ctel||r.tel)+')':''}`],
-      ['내용구분',r.mtype||r.category||'-'],
-      ['내용',r.detail||r.content||'-'],
-      ['확인결과',r.visitResult||r.inspResult||'-'],
-      ['조치내용',r.actionNote||r.action||'-'],
-      ['상태',`<span class="status-badge s-${r.status||'접수'}">${r.status||'접수'}</span>`],
-    ];
-  }
-
+/* ── 사진 올리기 ── */
+// 사진 칸: 민원 = 처리 전(before)·처리 후(after) / 사고 = 처리 전(hazard)·처리 후(after) — 사무실앱과 같은 칸
+function slots(r){ return isHazard(r)?[['hazard','처리 전'],['after','처리 후']]:[['before','처리 전'],['after','처리 후']]; }
+function openPhoto(id){
+  const r=allRecs.find(x=>x.id===id); if(!r) return;
+  curId=id; tmpPhoto={};
   const mc=document.getElementById('modal-content');
-  mc.innerHTML=`
-    <div class="modal-title">${isH?'⚠️ 사고예방':'📋 민원'} – ${r.num||r.no||r.hazardNo||r.id.slice(0,8)}</div>
-    ${rows.map(([k,v])=>`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v||'-'}</span></div>`).join('')}
-    <div id="photo-area-${id}" style="margin-top:12px;"><div class="loading"><div class="spinner"></div></div></div>
-    <div style="margin-top:16px;display:flex;gap:8px;">
-      <button class="btn-sm btn-blue" style="flex:1" onclick="openFieldUpdate('${id}')">🔄 현장 업데이트</button>
-      <button class="btn-sm" style="flex:1" onclick="closeModal()">닫기</button>
-    </div>
-  `;
+  mc.innerHTML='<div class="ph-head">'+(isHazard(r)?'⚠️ 사고':'📋 민원')+' · '+esc(recNo(r))+'</div>'
+    +'<div class="ph-addr">'+esc(r.addr||'-')+'</div>'
+    +'<div class="ph-desc">'+esc(recDesc(r))+'</div>'
+    +'<div class="photo-row">'+slots(r).map(function(s){
+      return '<div class="photo-box" onclick="document.getElementById(\'u-'+s[0]+'\').click()">'
+        +'<span class="lbl2">'+s[1]+'</span>'
+        +'<span class="ico">📷</span><span class="lbl">눌러서 찍기</span>'
+        +'<img id="p-'+s[0]+'" style="display:none">'
+        +'<span class="chg" id="c-'+s[0]+'" style="display:none">눌러서 다시 찍기</span>'
+        +'<span class="new" id="n-'+s[0]+'" style="display:none">새 사진</span>'
+        +'<input type="file" id="u-'+s[0]+'" accept="image/*" capture="environment" onchange="onPick(this,\''+s[0]+'\')">'
+        +'</div>';
+    }).join('')+'</div>'
+    +'<div class="field" style="margin-top:14px"><label>처리 상태</label>'
+    +'<select id="u-status"><option value="접수">접수</option><option value="처리중">처리중</option><option value="처리완료">완료</option></select></div>'
+    +'<div class="field"><label>한 줄 메모 (선택)</label>'
+    +'<input id="u-memo" type="text" maxlength="60" placeholder="예) 수거 완료" autocomplete="off"></div>'
+    +'<p class="ph-tip">사진·상태·메모를 바꾼 뒤 <b>올리기</b>를 눌러야 사무실로 전송됩니다</p>'
+    +'<button class="btn-primary" id="ph-save" onclick="savePhotos()">📤 올리기</button>'
+    +'<button class="btn-sm" style="width:100%;margin-top:8px;text-align:center;" onclick="closeModal()">닫기</button>';
+  document.getElementById('u-status').value=normSt(r.status);
   openModal();
-  loadPhotos(id,isH);
-}
-
-function loadPhotos(id,isH){
-  const area=document.getElementById(`photo-area-${id}`);
-  if(!area)return;
-  PHOTOS.child(id).once('value',snap=>{
+  // 이미 올라간 사진은 미리 보여 줌
+  PHOTOS.child(id).once('value',function(snap){
+    if(curId!==id) return;
     const p=snap.val()||{};
-    if(!p.before&&!p.after&&!p.hazard){
-      p.before=localStorage.getItem('rp_b_'+id);
-      p.after=localStorage.getItem('rp_a_'+id);
-      p.hazard=localStorage.getItem('rp_h_'+id);
-    }
-    const keys=isH?['hazard','after']:['before','after'];
-    const lbls={before:'접수 전',after:'처리 후',hazard:'위험 현장'};
-    var items=keys.filter(k=>p[k]).map(function(k){ return {src:p[k],label:lbls[k]}; });
-    // 사무실에서 올린 추가 사진도 함께 표시
-    const ex=p.extra||{};
-    Object.keys(ex).forEach(function(k,i){ items.push({src:ex[k],label:'추가 '+(i+1)}); });
-    if(!items.length){area.innerHTML='<p style="font-size:12px;color:var(--sub);padding:8px 0;">사진 없음</p>';return;}
-    area.innerHTML=`<div class="photo-grid">${items.map(function(it){return `
-      <div>
-        <p style="font-size:11px;font-weight:700;color:var(--sub);margin-bottom:4px;">${it.label}</p>
-        <img src="${it.src}" data-fn="${it.label}_${id.slice(0,8)}" onclick="openImg(this)" title="눌러서 크게 보기">
-      </div>`;}).join('')}</div>`;
+    slots(r).forEach(function(s){
+      if(tmpPhoto[s[0]]||!p[s[0]]) return;
+      const im=document.getElementById('p-'+s[0]); if(!im) return;
+      im.src=p[s[0]]; im.style.display='block';
+      document.getElementById('c-'+s[0]).style.display='block';
+    });
   });
 }
-
-/* ── 사진 크게 보기 / 저장 ── */
-function openImg(imgEl){
-  const src=imgEl.src, fn=(imgEl.dataset.fn||'photo')+'.jpg';
-  document.getElementById('imgview-img').src=src;
-  document.getElementById('imgview-img').classList.remove('zoom');
-  const a=document.getElementById('imgview-dl'); a.href=src; a.setAttribute('download',fn);
-  document.getElementById('imgview-name').textContent=fn;
-  document.getElementById('imgview-bg').classList.add('on');
-}
-function closeImg(e){
-  if(e&&e.target&&e.target.id!=='imgview-bg')return;
-  document.getElementById('imgview-bg').classList.remove('on');
-  document.getElementById('imgview-img').src='';
-}
-function toggleZoom(){ document.getElementById('imgview-img').classList.toggle('zoom'); }
-document.addEventListener('keydown',function(e){
-  const bg=document.getElementById('imgview-bg');
-  if(e.key==='Escape'&&bg&&bg.classList.contains('on')){ bg.classList.remove('on'); document.getElementById('imgview-img').src=''; }
-});
-
-/* ── 현장 업데이트 ── */
-function openFieldUpdate(id){
-  const r=allRecs.find(x=>x.id===id);
-  if(!r)return;
-  updateTarget=r;
-  updateTmpPhoto={};
-  closeModal();
-
-  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-  document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));
-  document.querySelector('[data-tab="update"]').classList.add('on');
-  document.getElementById('tab-update').classList.add('on');
-
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  const area=document.getElementById('update-area');
-  area.innerHTML=`
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span style="font-size:14px;font-weight:800;color:var(--accent);">🔄 현장 업데이트</span>
-        <span style="font-size:11px;font-weight:700;color:var(--sub);">${r.num||r.no||r.hazardNo||r.id.slice(0,8)}</span>
-      </div>
-      <p style="font-size:13px;margin-bottom:14px;color:var(--sub);font-weight:600;">${r.addr||'-'}</p>
-
-      ${isH?`
-      <div class="field">
-        <label>점검 결과</label>
-        <textarea id="u-result" placeholder="점검 결과 입력">${r.visitResult||r.inspResult||''}</textarea>
-      </div>
-      <div class="field">
-        <label>조치 사항</label>
-        <textarea id="u-action" placeholder="조치 사항 입력">${r.action||''}</textarea>
-      </div>
-      `:`
-      <div class="field">
-        <label>민원인</label>
-        <input id="u-person" type="text" placeholder="홍길동" value="${(r.cname||r.person||'').replace(/"/g,'&quot;')}">
-      </div>
-      <div class="field">
-        <label>연락처</label>
-        <input id="u-tel" type="tel" inputmode="tel" placeholder="010-0000-0000" value="${(r.ctel||r.tel||'').replace(/"/g,'&quot;')}">
-      </div>
-      <div class="field">
-        <label>방문 확인 결과</label>
-        <textarea id="u-result" placeholder="방문 확인 결과 입력">${r.visitResult||r.inspResult||''}</textarea>
-      </div>
-      `}
-      <div class="field">
-        <label>처리 상태</label>
-        <select id="u-status">
-          <option ${r.status==='접수'?'selected':''}>접수</option>
-          <option ${r.status==='처리중'?'selected':''}>처리중</option>
-          <option ${r.status==='완료'||r.status==='처리완료'?'selected':''}>완료</option>
-          <option ${r.status==='보류'?'selected':''}>보류</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">📸 사진 추가</div>
-      <div class="photo-row">
-        ${isH?`
-        <div class="photo-box" onclick="triggerPhoto('u-photo-haz')">
-          <span class="ico">📷</span><span class="lbl">위험 현장</span>
-          <img id="u-prev-haz" style="display:none">
-          <input type="file" id="u-photo-haz" accept="image/*" capture="environment" onchange="onUpdatePhoto(this,'u-prev-haz','hazard')">
-        </div>
-        `:`
-        <div class="photo-box" onclick="triggerPhoto('u-photo-before')">
-          <span class="ico">📷</span><span class="lbl">접수 전</span>
-          <img id="u-prev-before" style="display:none">
-          <input type="file" id="u-photo-before" accept="image/*" capture="environment" onchange="onUpdatePhoto(this,'u-prev-before','before')">
-        </div>
-        `}
-        <div class="photo-box" onclick="triggerPhoto('u-photo-after')">
-          <span class="ico">📷</span><span class="lbl">처리 후</span>
-          <img id="u-prev-after" style="display:none">
-          <input type="file" id="u-photo-after" accept="image/*" capture="environment" onchange="onUpdatePhoto(this,'u-prev-after','after')">
-        </div>
-      </div>
-    </div>
-
-    <button class="btn-primary" onclick="saveFieldUpdate()">💾 저장</button>
-    <button class="btn-sm" style="width:100%;margin-top:8px;text-align:center;" onclick="clearUpdateArea()">취소</button>
-  `;
-}
-
 function compressPhoto(file,maxPx=640,q=0.55){
-  return new Promise(res=>{
-    const img=new Image();
-    const url=URL.createObjectURL(file);
+  return new Promise((res,rej)=>{
+    const img=new Image(), url=URL.createObjectURL(file);
     img.onload=()=>{
       const sc=Math.min(1,maxPx/Math.max(img.width,img.height));
       const cv=document.createElement('canvas');
-      cv.width=img.width*sc;cv.height=img.height*sc;
+      cv.width=img.width*sc; cv.height=img.height*sc;
       cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
       URL.revokeObjectURL(url);
       res(cv.toDataURL('image/jpeg',q));
     };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error('사진을 열 수 없습니다')); };
     img.src=url;
   });
 }
-
-async function onUpdatePhoto(input,prevId,field){
-  if(!input.files[0])return;
-  const data=await compressPhoto(input.files[0]);
-  updateTmpPhoto[field]=data;
-  const prev=document.getElementById(prevId);
-  if(prev){prev.src=data;prev.style.display='block';}
-}
-
-async function saveFieldUpdate(){
-  if(!updateTarget){toast('업데이트 대상이 없습니다');return;}
-  const id=updateTarget.id;
+async function onPick(input,key){
+  const f=input.files&&input.files[0]; if(!f) return;
   try{
-    const rEl=document.getElementById('u-result');
-    const result=rEl?rEl.value.trim():'';
-    const updates={
-      status:document.getElementById('u-status').value,
-      inspResult:result,     // 사무실앱과 같은 칸에 저장 (전에는 visitResult라 PC에서 안 보였음)
-      visitResult:result,    // 옛 기록 호환
-      updatedAt:nowStr(),
-      updatedBy:staff
-    };
-    const isH=(updateTarget.type==='사고예방')||(updateTarget.recType==='hazard');
-    if(isH){
-      const ua=document.getElementById('u-action');
-      if(ua) updates.action=ua.value.trim();
-    }else{
-      const up=document.getElementById('u-person'), ut=document.getElementById('u-tel');
-      if(up) updates.person=up.value.trim();
-      if(ut) updates.tel=ut.value.trim();
-    }
-    await RECS.child(id).update(updates);
-
-    for(const [field,data] of Object.entries(updateTmpPhoto)){
-      await PHOTOS.child(id).child(field).set(data);
-    }
-
-    toast('✅ 저장 완료!',2000);
-    clearUpdateArea();
-
-    const idx=allRecs.findIndex(r=>r.id===id);
-    if(idx>=0) allRecs[idx]={...allRecs[idx],...updates};
+    const data=await compressPhoto(f);
+    tmpPhoto[key]=data;
+    const im=document.getElementById('p-'+key); im.src=data; im.style.display='block';
+    document.getElementById('c-'+key).style.display='block';
+    document.getElementById('n-'+key).style.display='block';
+  }catch(e){ toast('⚠️ 이 사진은 열 수 없습니다. 다시 찍어 주세요',3000); }
+  input.value='';
+}
+// 사무실앱은 완료를 '처리완료'로 저장한다 — 같은 값으로 맞춤
+function normSt(s){ return s==='완료'||s==='처리완료'?'처리완료':(s==='처리중'?'처리중':'접수'); }
+function memoText(){ const m=document.getElementById('u-memo'); return m?m.value.trim():''; }
+async function savePhotos(){
+  const keys=Object.keys(tmpPhoto);
+  if(!curId) return;
+  const r=allRecs.find(x=>x.id===curId)||{};
+  const st=document.getElementById('u-status').value, memo=memoText();
+  const stChanged=st!==normSt(r.status);
+  if(!keys.length&&!stChanged&&!memo){ toast('사진·상태·메모 중 하나를 바꿔 주세요'); return; }
+  const btn=document.getElementById('ph-save'); btn.disabled=true; btn.textContent='올리는 중...';
+  try{
+    for(const k of keys) await PHOTOS.child(curId).child(k).set(tmpPhoto[k]);
+    const now=nowStr(), up={updatedAt:now,updatedBy:staff};
+    if(keys.length){ up.photoAt=now; up.photoBy=staff; }
+    if(stChanged) up.status=st;
+    // 메모는 지우지 않고 아래로 쌓음: "11-12 14:05 홍길동: 수거 완료"
+    if(memo) up.fieldMemo=(r.fieldMemo?r.fieldMemo+'\n':'')+now.slice(5)+' '+staff+': '+memo;
+    await RECS.child(curId).update(up);
+    toast('✅ 올렸습니다'+(keys.length?' (사진 '+keys.length+'장)':''),2200);
+    tmpPhoto={}; document.getElementById('u-memo').value=''; closeModal();
   }catch(e){
-    toast('저장 실패: '+e.message,3000);
+    toast('⚠️ 올리기 실패 — 다시 눌러 주세요',3000);
+    btn.disabled=false; btn.textContent='📤 올리기';
   }
 }
-
-function clearUpdateArea(){
-  updateTarget=null;updateTmpPhoto={};
-  document.getElementById('update-area').innerHTML=`
-    <div class="card" style="text-align:center;color:var(--sub);font-size:13px;">
-      <div style="font-size:32px;margin-bottom:8px;">📋</div>
-      <p style="margin-bottom:6px;font-weight:600;color:var(--text);">목록에서 항목을 선택하세요</p>
-      <p style="font-size:12px;">목록 탭 → 항목 선택 → <strong style="color:var(--accent)">현장 업데이트</strong> 버튼</p>
-    </div>`;
-}
-
 function openModal(){document.getElementById('modal-bg').classList.add('on');}
-function closeModal(){document.getElementById('modal-bg').classList.remove('on');}
+function closeModal(){
+  if((Object.keys(tmpPhoto).length||memoText())&&!confirm('올리지 않은 사진·메모가 있습니다. 닫을까요?')) return;
+  tmpPhoto={}; curId=null;
+  document.getElementById('modal-bg').classList.remove('on');
+}
 function closeMBg(e){if(e.target===document.getElementById('modal-bg'))closeModal();}
 
-/* ── 지도 ── */
-// 하드코딩 좌표 — geocoding 불필요
-const FIXED_LOCS=[
-  {name:'레이크팰리스', dong:'잠실동', lat:37.5083, lng:127.0899},
-  {name:'트리지움',     dong:'잠실동', lat:37.5095, lng:127.0855},
-  {name:'잠실현대',     dong:'잠실동', lat:37.5090, lng:127.0872},
-  {name:'우성4차',      dong:'잠실동', lat:37.5082, lng:127.0867},
-  {name:'삼전현대',     dong:'삼전동', lat:37.5062, lng:127.0921},
-  {name:'가락시장',     dong:'가락동', lat:37.4926, lng:127.1214},
-];
-let fieldMap=null, fieldMapInited=false, fieldPins=[], fixedPins=[];
-
-function fieldPinColor(r){
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return (r.risk||r.riskLevel)==='High'?'#b91c1c':(r.risk||r.riskLevel)==='Medium'?'#ef4444':'#f87171';
-  const w=r.waste||r.subtype||'';
-  return w==='생활'?'#22c55e':w==='음식물'?'#eab308':'#3b82f6';
-}
-// 라벨용 진한 색 (흰 배경 위 가독성)
-function fieldPinColorDark(r){
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return (r.risk||r.riskLevel)==='High'?'#991b1b':(r.risk||r.riskLevel)==='Medium'?'#dc2626':'#ef4444';
-  const w=r.waste||r.subtype||'';
-  return w==='생활'?'#16a34a':w==='음식물'?'#ca8a04':'#2563eb';
-}
-// 배지 안 2글자
-function fieldPinBadge(r){
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return '사고';
-  const w=r.waste||r.subtype||'';
-  return w==='생활'?'생활':w==='음식물'?'음식':'재활';
-}
-function mkEsc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function mkAddr(r){const a=String(r.addr||'').trim();return mkEsc(a.length>13?a.slice(0,13)+'…':(a||'주소없음'));}
-function fieldPinLabel(r){
-  const isH=(r.type==='사고예방')||(r.recType==='hazard');
-  if(isH) return r.factor||r.riskType||'위험';
-  const w=r.waste||r.subtype||'';
-  return w||'민원';
-}
-
-function initFieldMap(){
-  if(fieldMapInited){renderFieldMap();return;}
-  fieldMap=new kakao.maps.Map(document.getElementById('map-container'),{
-    center:new kakao.maps.LatLng(37.504,127.090),level:5
-  });
-  fieldMapInited=true;
-  initFixedPins();
-  renderFieldMap();
-}
-
-function initFixedPins(){}
-
-function renderFieldMap(){
-  if(!fieldMap)return;
-  fieldPins.forEach(p=>p.setMap(null)); fieldPins=[];
-  const list=allRecs.filter(r=>!r.del&&r.addrPos&&r.addrPos.lat&&r.addrPos.lng);
-  if(!list.length)return;
-  const bounds=new kakao.maps.LatLngBounds();
-  list.forEach(r=>{
-    const c=fieldPinColor(r);
-    const pos=new kakao.maps.LatLng(r.addrPos.lat,r.addrPos.lng);
-    bounds.extend(pos);
-    const ov=new kakao.maps.CustomOverlay({
-      position:pos,
-      content:`<div class="mk-wrap" onclick="openDetail('${r.id}')"><span class="mk-lbl" style="border-color:${fieldPinColorDark(r)};color:${fieldPinColorDark(r)}">${mkAddr(r)}</span><span class="mk-badge" style="background:${c}">${fieldPinBadge(r)}</span></div>`,
-      yAnchor:0.5,zIndex:2
-    });
-    ov.setMap(fieldMap); fieldPins.push(ov);
-  });
-  // 모든 마커가 보이도록 자동 맞춤
-  if(list.length===1){
-    fieldMap.setCenter(new kakao.maps.LatLng(list[0].addrPos.lat,list[0].addrPos.lng));
-    fieldMap.setLevel(4);
-  }else{
-    fieldMap.setBounds(bounds,70,70,70,70);
-  }
-}
-
-/* ── Firebase 구독 ── */
+/* ── 저장소 구독 ── */
 RECS.on('value',snap=>{
   const val=snap.val()||{};
-  allRecs=Object.values(val).filter(r=>!r.del);
-  const activeTab=document.querySelector('.tab.on');
-  const t=activeTab?activeTab.dataset.tab:'list';
-  if(t==='list') renderList();
-  if(t==='map') renderFieldMap();
+  allRecs=Object.keys(val).map(k=>Object.assign({id:k},val[k])).filter(r=>!r.del);
+  renderList();
 });
 
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
-}
-
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}); }
 window.addEventListener('DOMContentLoaded',()=>{ initStaff(); });
 </script>
 <div id="name-screen">
   <div class="ns-box">
     <div class="ns-logo"></div>
-    <h2>현장앱</h2>
+    <h2>현장 사진</h2>
     <p>이름을 한 번만 입력하면<br>다음부터 바로 열립니다</p>
     <input id="ns-input" type="text" placeholder="이름 (예: 홍길동)" maxlength="10"
            onkeydown="if(event.key==='Enter')saveStaffName()">
     <button onclick="saveStaffName()">시작하기</button>
   </div>
-</div>
-
-<div id="imgview-bg" onclick="closeImg(event)">
-  <div id="imgview-bar">
-    <span id="imgview-name"></span>
-    <div id="imgview-btns">
-      <a id="imgview-dl" href="#" download><button class="iv-btn dl">⬇ 저장</button></a>
-      <button class="iv-btn cl" onclick="closeImg()">✕ 닫기</button>
-    </div>
-  </div>
-  <div id="imgview-wrap"><img id="imgview-img" onclick="toggleZoom()"></div>
-  <div id="imgview-tip">사진을 누르면 원본 크기로 확대 · 바깥을 누르면 닫힘</div>
 </div>
 </body>
 </html>

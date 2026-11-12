@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="예방관리대장">
 <meta name="theme-color" content="#1e40af">
 <title>종합예방관리대장</title>
+<script>/* 폰에서는 현장앱(사진 올리기)만 — 사무실 화면은 PC·태블릿에서만 */(function(){try{if(/iPhone|iPod|Android.+Mobile|Mobile.+Android|Windows Phone/i.test(navigator.userAgent)){var p=location.pathname;if(p.slice(-1)!=='/'&&!/\.html$/.test(p))p+='/';location.replace(p.slice(0,p.lastIndexOf('/')+1)+'field/'+location.search);}}catch(e){}})();</script>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="favicon-tab.png">
@@ -1720,6 +1721,13 @@ function posEditRow(r){
 }
 
 // ── 상세 모달 ──
+// 현장앱에서 남긴 한 줄 메모(쌓임)와 사고 기록의 처리 상태
+function fieldMemoHtml(r){
+  const m=String(r.fieldMemo||'').trim();
+  const s=(r.recType==='hazard'&&r.status)?'처리 상태: <b>'+mkEsc(r.status==='처리완료'?'완료':r.status)+'</b>':'';
+  const out=s+(s&&m?'<br>':'')+(m?mkEsc(m).split(String.fromCharCode(10)).join('<br>'):'');
+  return out||'-';
+}
 function openDet(id){
   const r=recs.find(x=>x.id===id); if(!r)return;
   curDetailId=id;
@@ -1742,6 +1750,7 @@ function openDet(id){
     </div>
     <div class="det-row"><div class="det-label">🚛 기사 이름</div><div class="det-val" style="font-weight:800">${r.driver?mkEsc(r.driver):'- <span style="font-weight:400;color:var(--sub)">(✏️ 수정에서 넣을 수 있어요)</span>'}</div></div>
     <div class="det-row"><div class="det-label">비고</div><div class="det-val">${r.note||'-'}</div></div>
+    <div class="det-row"><div class="det-label">📱 현장 메모</div><div class="det-val">${fieldMemoHtml(r)}</div></div>
     ${posEditRow(r)}
     <div class="det-row"><div class="det-label">현장 사진 (교체·삭제 가능)</div>
       <div id="det-photo-area">🔄 사진 로딩 중…</div>
@@ -1767,6 +1776,7 @@ function openDet(id){
     <div class="det-row"><div class="det-label">민원내용</div><div class="det-val">${r.content||'-'}</div></div>
     <div class="det-row"><div class="det-label">방문 확인결과 및 조치내용</div>
       <div class="det-val">${(r.inspResult||r.visitResult)||''}${((r.inspResult||r.visitResult)&&r.actionNote)?'<br>':''}${r.actionNote||''}${(!(r.inspResult||r.visitResult)&&!r.actionNote)?'-':''}</div></div>
+    <div class="det-row"><div class="det-label">📱 현장 메모</div><div class="det-val">${fieldMemoHtml(r)}</div></div>
     <div class="det-row"><div class="det-label">처리 상태 변경</div>
       <div class="status-btn-row">
         <button class="st-btn ${r.status==='접수'?'on 접수':''}" onclick="chSt('${id}','접수')">접수</button>
@@ -1792,7 +1802,7 @@ function openDet(id){
 }
 
 function photoSlots(isH){
-  return isH?[{key:'hazard',label:'현장'}]
+  return isH?[{key:'hazard',label:'현장 (처리 전)'},{key:'after',label:'처리 후'}]
             :[{key:'before',label:'처리 전'},{key:'after',label:'처리 후'}];
 }
 

@@ -1,12 +1,15 @@
 {
-  "name":"민원·사고예방 현장",
+  "id":"./",
+  "name":"현장 사진 (예방관리)",
   "short_name":"현장앱",
   "start_url":"./",
+  "scope":"./",
   "display":"standalone",
-  "background_color":"#0f172a",
+  "background_color":"#ffffff",
   "theme_color":"#f97316",
   "icons":[
-    {"src":"../../../icon-192.png","sizes":"192x192","type":"image/png"},
-    {"src":"../../../icon-512.png","sizes":"512x512","type":"image/png"}
+    {"src":"../icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"../icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
+    {"src":"../icon-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
   ]
 }

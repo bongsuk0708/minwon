@@ -146,7 +146,7 @@ table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v4';
+const VER='v5';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -259,7 +259,7 @@ V.home=async m=>{
   <a href="help.html" class="item" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;border:1.5px solid #F2A33A"><span style="font-size:22px">📖</span><span style="flex:1"><span class="t">사용 방법 보기</span><span class="m" style="display:block">신고·서명·점검·평가 하는 법 (그림 설명)</span></span><span class="muted">›</span></a>
   <div class="grid2" style="margin-bottom:12px">
     <button class="big acc" data-go="reportForm"><b>⚠ 아차사고 신고</b><span>사진 한 장이면 됩니다</span></button>
-    <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>참석자 손가락 서명</span></button>
+    <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>폰 서명 · 종이 서명지 올리기</span></button>
   </div>
   <button class="item" data-go="award" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🏆</span><span style="flex:1"><span class="t">우수근로자 포상</span><span class="m" style="display:block">추천하기 · 심사 점수 · 분기(${AW_MONTHS.join('·')}월)·연말 결과</span></span><span class="muted">›</span></button>
   <div class="card"><div class="between"><h2 style="margin:0">${cy?cy+'년 평가 진행':'2026년 정기평가'}</h2><span class="tag ${cy?'st':'lv-낮음'}">${cy?'진행중':'완료 · 보관'}</span></div>
@@ -622,7 +622,7 @@ V.eduList=async m=>{
 };
 V.eduForm=async m=>{
   setHead('교육·TBM 기록','참석자 서명');if(!needUser()){back();return}
-  const st={kind:'TBM',att:[],photos:[]};
+  const st={kind:'TBM',att:[],photos:[],sheets:[]};
   m.innerHTML=`<div class="card"><label class="f" style="margin-top:0">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="ek">${['TBM','정기 안전교육','위험성평가 교육'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
   <label class="f" for="et">제목</label><input class="i" id="et" placeholder="예: 작업 전 안전점검 회의">
   <div class="grid2"><div><label class="f" for="ed">날짜</label><input class="i" type="date" id="ed" value="${today()}"></div><div><label class="f" for="etm">시간</label><input class="i" id="etm" placeholder="21:00~21:15"></div></div>
@@ -630,15 +630,19 @@ V.eduForm=async m=>{
   <label class="f" for="ec">교육 내용 / 오늘의 위험요인</label><textarea class="i" id="ec" placeholder="한 줄에 하나씩"></textarea>
   <label class="f">평가 결과 공유</label><label style="display:flex;gap:8px;align-items:center;min-height:40px"><input type="checkbox" id="esh" style="width:20px;height:20px;accent-color:#B53C0C"> 위험성평가 결과(위험요인·감소대책)를 근로자에게 알림</label>
   <label class="f">사진</label><div id="pp"></div></div>
-  <div class="card"><div class="between"><h2 style="margin:0">참석자 서명 <span class="muted" id="ac">0명</span></h2><button class="btn sm pri" id="addSig">+ 서명 받기</button></div><div id="al" style="margin-top:8px"></div></div>
+  <div class="card"><div class="between"><h2 style="margin:0">참석자 서명 <span class="muted" id="ac">0명</span></h2><button class="btn sm pri" id="addSig">+ 폰으로 서명</button></div><div id="al" style="margin-top:8px"></div></div>
+  <div class="card"><div class="between"><h2 style="margin:0">종이 서명지 올리기</h2><button class="btn sm" id="blank">빈 서명지 인쇄</button></div><div id="shb" style="margin-top:8px"></div></div>
   <button class="btn dark block" id="es">저장</button>`;
   $('#ek').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.kind=b.dataset.k;$('#ek').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
   photoPicker($('#pp'),st.photos);
-  const drawAtt=()=>{$('#ac').textContent=st.att.length+'명';$('#al').innerHTML=st.att.map((a,k)=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span><b>${esc(a.name)}</b> <span class="muted">${esc(a.team||'')}</span></span><span class="row"><img class="sigimg" src="${a.sig}" alt="${esc(a.name)} 서명"><button class="btn sm" data-rm="${k}">삭제</button></span></div>`).join('');$('#al').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.att.splice(+b.dataset.rm,1);drawAtt()})};
+  const drawAtt=()=>{$('#ac').textContent=st.att.length+'명';$('#al').innerHTML=st.att.map((a,k)=>attRow(a,k)).join('');$('#al').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.att.splice(+b.dataset.rm,1);drawAtt()})};
   $('#addSig').onclick=()=>sigModal(a=>{st.att.push(a);drawAtt()});
+  sheetBox($('#shb'),st,drawAtt);
+  const info=()=>({kind:st.kind,title:$('#et').value.trim()||st.kind,date:$('#ed').value,time:$('#etm').value.trim(),place:$('#ep').value.trim(),by:$('#eb').value.trim()});
+  $('#blank').onclick=()=>printSignSheet(info(),st.att);
   $('#es').onclick=async()=>{const title=$('#et').value.trim()||st.kind;
     const b=$('#es');b.disabled=true;b.textContent='저장 중…';
-    try{const ph=await savePhotos(st.photos);const rec={kind:st.kind,title,date:$('#ed').value,time:$('#etm').value.trim(),place:$('#ep').value.trim(),by:$('#eb').value.trim(),content:$('#ec').value.trim(),shared:$('#esh').checked,att:st.att,t:nowStr()};if(ph.length)rec.photos=ph;
+    try{const ph=await savePhotos(st.photos);const sh=await saveSheets(st.sheets);const rec={...info(),content:$('#ec').value.trim(),shared:$('#esh').checked,att:st.att,t:nowStr()};if(ph.length)rec.photos=ph;if(sh.length)rec.sheets=sh;
       const r=await post('edu',rec);await log('교육 기록: '+title);inval('edu');toast('저장했습니다');S.stack.pop();S.cur={view:'eduView',arg:r.name};render()}
     catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='저장'}};
 };
@@ -658,10 +662,61 @@ function sigModal(done){
 V.eduView=async(m,id)=>{
   const x=(await load('edu',true))[id];setHead(x.title,fmtD(x.date)+' · '+x.kind);
   m.innerHTML=`<div class="card"><dl class="kv"><dt>일시</dt><dd>${fmtD(x.date)} ${esc(x.time||'')}</dd><dt>장소</dt><dd>${esc(x.place||'-')}</dd><dt>교육자</dt><dd>${esc(x.by||'-')}</dd><dt>결과 공유</dt><dd>${x.shared?'위험성평가 결과 공유함':'-'}</dd></dl>${x.content?`<h3>교육 내용</h3><div class="pre" style="line-height:1.6">${esc(x.content)}</div>`:''}${thumbs(x.photos)}</div>
-  <div class="card"><h2>참석자 ${(x.att||[]).length}명</h2>${(x.att||[]).map(a=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span><b>${esc(a.name)}</b> <span class="muted">${esc(a.team||'')}</span></span><img class="sigimg" src="${a.sig}" alt="${esc(a.name)} 서명"></div>`).join('')||'<div class="empty">서명 없음</div>'}</div>
+  <div class="card"><h2>참석자 ${(x.att||[]).length}명</h2>${(x.att||[]).map(a=>attRow(a)).join('')||'<div class="empty">서명 없음</div>'}</div>
+  <div class="card"><div class="between"><h2 style="margin:0">종이 서명지 ${(x.sheets||[]).length?`<span class="muted">${x.sheets.length}개</span>`:''}</h2><button class="btn sm" id="blank">빈 서명지 인쇄</button></div>${sheetList(x.sheets)||'<div class="muted" style="margin-top:8px">올린 서명지 없음</div>'}
+  <button class="btn pri block" style="margin-top:10px" id="addSh">서명지 올리기 · 명단 넣기</button><div id="shw"></div></div>
   <button class="btn block" id="pr">교육 실행서 인쇄 / PDF</button>`;
-  fillThumbs(m);$('#pr').onclick=()=>printEduOne(x);
+  fillThumbs(m);$('#pr').onclick=()=>printEduOne(x);$('#blank').onclick=()=>printSignSheet(x,x.att);
+  $('#addSh').onclick=()=>{if(!needUser())return;const st={att:[],sheets:[]};$('#addSh').remove();
+    $('#shw').innerHTML=`<div id="shb" style="margin-top:10px"></div><div id="nat" style="margin-top:6px"></div><button class="btn dark block" style="margin-top:10px" id="shs">올리기 저장</button>`;
+    const drawNew=()=>{$('#nat').innerHTML=st.att.length?`<div class="muted">새로 넣을 명단 ${st.att.length}명</div>`+st.att.map((a,k)=>attRow(a,k)).join(''):'';$('#nat').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.att.splice(+b.dataset.rm,1);drawNew()})};
+    sheetBox($('#shb'),st,()=>{const have=new Set((x.att||[]).map(a=>a.name));st.att=st.att.filter(a=>!have.has(a.name));drawNew()});
+    $('#shs').onclick=async()=>{if(!st.sheets.length&&!st.att.length){toast('올릴 파일이나 명단이 없습니다');return}const b=$('#shs');b.disabled=true;b.textContent='저장 중…';
+      try{const sh=await saveSheets(st.sheets);const up={};if(sh.length)up.sheets=(x.sheets||[]).concat(sh);if(st.att.length)up.att=(x.att||[]).concat(st.att);await patch('edu/'+id,up);await log('교육 서명지 올림: '+x.title);inval('edu');toast('저장했습니다');render()}
+      catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='올리기 저장'}}};
 };
+
+/* ---------- 종이 서명지 (PC에서 올리기) ---------- */
+function fileData(f){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(f)})}
+function parseRoster(txt){const out=[];
+  for(const ln of String(txt||'').split(/\r?\n/)){let c=ln.split(/\t|,/).map(s=>s.replace(/^"|"$/g,'').trim()).filter(Boolean);if(c.length===1)c=c[0].split(/\s+/);
+    c=c.filter(s=>!/^\d+[.)]?$/.test(s));if(!c.length||/^(번호|성명|이름|순번|no)$/i.test(c[0]))continue;
+    const name=c[0];if(name.length>12)continue;const rest=c.slice(1);const team=rest.find(s=>TEAMS.includes(s))||rest.find(s=>/팀$/.test(s))||'';out.push({name,team})}
+  return out}
+function loadXlsx(){if(window.XLSX)return Promise.resolve();return new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';s.onload=res;s.onerror=()=>rej(new Error('엑셀 읽기 도구를 못 불러왔습니다'));document.head.appendChild(s)})}
+async function rosterFromFile(f){if(/\.csv$/i.test(f.name)){const t=await f.text();return parseRoster(t)}
+  await loadXlsx();const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});let out=[];for(const n of wb.SheetNames){out=out.concat(parseRoster(XLSX.utils.sheet_to_csv(wb.Sheets[n],{FS:'\t'})))}return out}
+function attRow(a,k){return `<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span><b>${esc(a.name)}</b> <span class="muted">${esc(a.team||'')}</span></span><span class="row">${a.sig?`<img class="sigimg" src="${a.sig}" alt="${esc(a.name)} 서명">`:'<span class="tag">종이 서명</span>'}${k!=null?` <button class="btn sm" data-rm="${k}">삭제</button>`:''}</span></div>`}
+// st.sheets=[{d,type,name}] 새로 고른 파일, st.att 참석자. onAtt: 명단 바뀌면 다시 그리기
+function sheetBox(holder,st,onAtt){
+  const draw=()=>{holder.innerHTML=`<p class="muted" style="margin:0 0 8px;line-height:1.6">교육 때 종이에 사인을 받고, 그 서명지를 <b>스캔(PDF)이나 사진</b>으로 올리세요. 올린 원본이 서명 증빙이 됩니다.</p>
+    <div>${st.sheets.map((s,k)=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span>${s.type==='pdf'?'📄':'🖼'} ${esc(s.name)}</span><button class="btn sm" data-srm="${k}">빼기</button></div>`).join('')}</div>
+    <label class="btn block" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;border-style:dashed"><input type="file" id="shf" accept="image/*,application/pdf" multiple hidden>📄 서명지 파일 올리기 (PDF·사진)</label>
+    <label class="f" for="rost">참석자 명단 넣기 <span class="muted">— 엑셀에서 이름·팀 칸을 복사해 붙여넣기</span></label>
+    <textarea class="i" id="rost" placeholder="한 줄에 한 명: 이름 팀&#10;예) 홍길동	생활팀"></textarea>
+    <div class="grid2" style="margin-top:8px"><button class="btn" id="rostAdd">붙여넣은 명단 넣기</button><label class="btn" style="display:flex;align-items:center;justify-content:center"><input type="file" id="rostF" accept=".xlsx,.xls,.csv" hidden>엑셀 파일로 넣기</label></div>
+    <div class="muted" id="rmsg" style="margin-top:6px"></div>`;
+    holder.querySelectorAll('[data-srm]').forEach(b=>b.onclick=()=>{st.sheets.splice(+b.dataset.srm,1);draw()});
+    holder.querySelector('#shf').onchange=async e=>{for(const f of e.target.files){try{
+        if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){if(f.size>8e6){toast('PDF가 너무 큽니다 (8MB까지): '+f.name);continue}st.sheets.push({d:await fileData(f),type:'pdf',name:f.name})}
+        else st.sheets.push({d:await compress(f,2000,0.8),type:'img',name:f.name})}catch(_){toast('파일을 읽지 못했습니다: '+f.name)}}draw()};
+    const add=list=>{const have=new Set(st.att.map(a=>a.name));let n=0;for(const p of list){if(have.has(p.name))continue;have.add(p.name);st.att.push({name:p.name,team:p.team,paper:true,t:nowStr()});n++}
+      onAtt();return n};
+    holder.querySelector('#rostAdd').onclick=()=>{const l=parseRoster(holder.querySelector('#rost').value);if(!l.length){toast('넣을 이름이 없습니다');return}const n=add(l);holder.querySelector('#rost').value='';holder.querySelector('#rmsg').textContent=`${n}명 넣었습니다${l.length>n?` (이미 있는 ${l.length-n}명 제외)`:''}`};
+    holder.querySelector('#rostF').onchange=async e=>{const f=e.target.files[0];if(!f)return;holder.querySelector('#rmsg').textContent='엑셀 읽는 중…';
+      try{const l=await rosterFromFile(f);const n=add(l);holder.querySelector('#rmsg').textContent=l.length?`${f.name}: ${n}명 넣었습니다${l.length>n?` (이미 있는 ${l.length-n}명 제외)`:''}`:'이름을 찾지 못했습니다. 첫 칸이 이름인지 확인해 주세요'}catch(err){holder.querySelector('#rmsg').textContent='읽기 실패: '+err.message}e.target.value=''};
+  };draw();
+}
+async function saveSheets(arr){const out=[];for(const s of arr){const id='f'+uid();await put('photos/'+id,s.d);S.photoCache[id]=s.d;out.push({id,type:s.type,name:s.name})}return out}
+async function openPdf(id){const w=window.open('','_blank');try{const d=await photoSrc(id);const b=await (await fetch(d)).blob();const u=URL.createObjectURL(b);if(w)w.location=u;else location.href=u}catch(e){if(w)w.close();toast('열기 실패: '+e.message)}}
+function sheetList(sh){if(!sh||!sh.length)return '';const im=sh.filter(s=>s.type==='img').map(s=>s.id);
+  return `${thumbs(im)}${sh.filter(s=>s.type==='pdf').map(s=>`<button class="btn block" style="margin-top:6px" data-pdf="${s.id}">📄 ${esc(s.name)} 열기</button>`).join('')}`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pdf]');if(b)openPdf(b.dataset.pdf)});
+function printSignSheet(x,att){const rows=(att||[]).map(a=>({name:a.name,team:a.team}));
+  const n=Math.max(20,rows.length);while(rows.length<n)rows.push({});
+  doPrint(`<h1 style="text-align:center">교육 참석자 서명지</h1><table><tr><th style="width:18%">구분</th><td>${esc(x.kind||'')}</td><th style="width:18%">교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육명</th><td colspan="3">${esc(x.title||'')}</td></tr><tr><th>장소</th><td>${esc(x.place||'')}</td><th>교육자</th><td>${esc(x.by||'')}</td></tr></table>
+  <table style="margin-top:8px"><thead><tr><th style="width:8%">번호</th><th style="width:25%">성명</th><th style="width:22%">팀</th><th>서명</th></tr></thead><tbody>${rows.map((a,i)=>`<tr style="height:30px"><td>${i+1}</td><td>${esc(a.name||'')}</td><td>${esc(a.team||'')}</td><td></td></tr>`).join('')}</tbody></table>
+  <p>위 교육에 참석하였음을 확인합니다.</p>`)}
 
 /* ---------- 설정 ---------- */
 V.settings=async m=>{
@@ -699,7 +754,8 @@ function printAward(x){const sc=x.score||{};
   <table style="margin-top:6px"><tr><th style="width:20%">결과</th><td>${esc(x.status)}${awOut(x)?' (제외 기준 해당)':''}</td></tr><tr><th>심사위원 의견</th><td style="white-space:pre-line;height:60px">${esc(x.opinion||'')}</td></tr></table>`)}
 async function printEdu(){let h=`<h1>${A.company} 2026년 위험성평가 관련 교육 기록</h1>`;for(const e of A.education){h+=`<h2>${fmtD(e.date)} ${esc(e.time)} · ${esc(e.title)} (${esc(e.team)})</h2><div>장소: ${esc(e.place||'-')}</div>${e.items.map(i=>`<div>● ${esc(i)}</div>`).join('')}<div>${(await Promise.all(e.photos.slice(0,2).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean).map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}</div>`}doPrint(h)}
 async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0,4).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean);
-  doPrint(`<h1 style="text-align:center">교 육 실 행 서</h1><table><tr><th style="width:20%">구분</th><td>${esc(x.kind)}</td></tr><tr><th>교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육장소</th><td>${esc(x.place||'')}</td></tr><tr><th>교육자</th><td>${esc(x.by||'')}</td></tr><tr><th>교육내용</th><td style="white-space:pre-line">${esc(x.content||x.title)}${x.shared?'\n● 위험성평가 결과 공유':''}</td></tr></table><h2>교육 사진</h2>${ph.map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}<h2>참석자 서명 (${(x.att||[]).length}명)</h2><table><thead><tr><th>번호</th><th>성명</th><th>팀</th><th>서명</th></tr></thead><tbody>${(x.att||[]).map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.team||'')}</td><td><img src="${a.sig}" style="height:28px"></td></tr>`).join('')}</tbody></table>`)}
+  const shImg=(await Promise.all((x.sheets||[]).filter(s=>s.type==='img').map(s=>photoSrc(s.id).catch(()=>null)))).filter(Boolean),shPdf=(x.sheets||[]).filter(s=>s.type==='pdf');
+  doPrint(`<h1 style="text-align:center">교 육 실 행 서</h1><table><tr><th style="width:20%">구분</th><td>${esc(x.kind)}</td></tr><tr><th>교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육장소</th><td>${esc(x.place||'')}</td></tr><tr><th>교육자</th><td>${esc(x.by||'')}</td></tr><tr><th>교육내용</th><td style="white-space:pre-line">${esc(x.content||x.title)}${x.shared?'\n● 위험성평가 결과 공유':''}</td></tr></table><h2>교육 사진</h2>${ph.map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}<h2>참석자 서명 (${(x.att||[]).length}명)</h2><table><thead><tr><th>번호</th><th>성명</th><th>팀</th><th>서명</th></tr></thead><tbody>${(x.att||[]).map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.team||'')}</td><td>${a.sig?`<img src="${a.sig}" style="height:28px">`:'종이 서명지 별첨'}</td></tr>`).join('')}</tbody></table>${shPdf.length?`<p>별첨 서명지(PDF): ${shPdf.map(s=>esc(s.name)).join(', ')}</p>`:''}${shImg.map(s=>`<div style="page-break-before:always"><h2>별첨 — 종이 서명지</h2><img src="${s}" style="width:100%;max-height:250mm;object-fit:contain"></div>`).join('')}`)}
 
 /* ---------- start ---------- */
 S.cur={view:'home'};drawNav();render();

@@ -545,6 +545,29 @@ button.lg-stat.on{border-color:var(--blue);background:#eff6ff}
 .lg-voltab th:first-child,.lg-voltab td:first-child{text-align:left}
 .lg-voltab tr.click{cursor:pointer}.lg-voltab tr.click:hover td{background:#eff6ff}
   .lg-clu{cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25))}   /* [11_12] 뭉침 원 */
+/* [11_13] 지도 주소 핀·글씨 키우기 (수거앱 주소 표시 참조) */
+.lgp{width:18px;height:18px;border-width:3px}
+.lgp-lbl{gap:5px}
+.lgp-lbl span{font-size:15px;padding:4px 10px;border-width:2.5px;border-radius:10px;box-shadow:0 2px 5px rgba(0,0,0,.28)}
+.lgp-n{top:-11px;right:-11px;min-width:22px;height:22px;border-radius:11px;font-size:12.5px;border:2px solid #fff}
+@media(max-width:700px){.lgp-lbl span{font-size:13.5px;padding:3px 8px}}
+/* [11_13] 대장 목록: 첫 줄만 굵게, 둘째 줄은 보통 */
+#lg-list .lg-sub{font-weight:400}
+/* [11_13] 디지털원장·접수페이지와 같은 청록 스킨 — 색·헤더만 (배치·기능 그대로) */
+:root{--blue:#0f7a86;--blue2:#0f7a86;--ink:#1f2328;--sub:#4b5563;--line:#d6e2f0;--bg:#eaf2fb}
+body{background:var(--bg)}
+#hdr{background:#fff;color:var(--ink);box-shadow:none;border-bottom:1px solid var(--line)}
+#hdr h1 .build-tag{background:#f1f6fc;color:#4b5563}
+#hdr h1 .h-logo{box-shadow:0 0 0 1.5px rgba(15,122,134,.35)}
+#mw-sw,.mw-swx{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+.hdr-sbtn{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}
+.hdr-sbtn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+#logout-btn{background:#f1f6fc;color:#4b5563}
+#staff-name{color:var(--ink);opacity:1}
+#lg-ledwrap{background:#fff;border-bottom:1px solid var(--line);padding-top:8px}
+#lg-ledwrap .lg-led{background:#fff;color:#4b5563;border:1.5px solid var(--line)}
+#lg-ledwrap .lg-led.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.lg-led.on,button.lg-stat.on{border-color:var(--blue);background:#dff2f5}
 </style>
 </head>
 <body>
@@ -560,7 +583,7 @@ button.lg-stat.on{border-color:var(--blue);background:#eff6ff}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1112b</span><span id="net-dot" class="net-dot"></span></h1>
+      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113a</span><span id="net-dot" class="net-dot"></span></h1>
       <div id="hdr-right">
         <a id="mw-sw" href="https://boneco-minwon.web.app/?from=risk" target="bn_minwon" rel="noopener">📋 민원접수</a>
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
@@ -3317,6 +3340,7 @@ function lgDrawPts(){
     list.forEach(it=>{ const k=lgAddrKey(it); if(!g[k]){ g[k]=[]; order.push(k); } g[k].push(it); });
     order.forEach(k=>{ const rows=g[k]; if(rows.length===1){ pin(rows[0]); return; } lgAddrGroups.push(rows); pin(lgRecent(rows),rows.length,lgAddrGroups.length-1); });
   };
+  if(lgItems().filter(x=>lgPos(x)).length<50){ pinAll(pts); return; }   // [11_13] 지도 자료 50곳 미만 대장(사고·감량 등)은 뭉치지 않고 주소 핀
   const b=lgMap.getBounds(), sw=b.getSouthWest(), ne=b.getNorthEast(), el=$('lg-map'), lv=lgMap.getLevel();
   const inView=pts.filter(it=>{ const P=lgPos(it); return P.lat>=sw.getLat()&&P.lat<=ne.getLat()&&P.lng>=sw.getLng()&&P.lng<=ne.getLng(); }).length;
   if(pts.length===1||lv<=2||(lv===3&&inView<=40)){ pinAll(pts); return; }   // 가까이: 주소 핀 (3단계는 화면에 40곳 이하일 때만)

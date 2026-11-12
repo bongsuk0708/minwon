@@ -98,6 +98,25 @@ canvas.sig{width:100%;height:180px;border:1.5px dashed #8C96A3;border-radius:10p
 .note{background:#EEF0F2;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.5;color:#2E3A49}
 .pre{white-space:pre-line}
 #print{display:none}
+.pc-only{display:none}
+table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7F8F6}
+/* PC: 넓은 화면은 왼쪽 메뉴 + 넓은 본문 */
+@media (min-width:1000px){
+  #app{max-width:none;display:grid;grid-template-columns:200px minmax(0,1fr);grid-template-rows:auto 1fr}
+  header.top{grid-column:1/3;padding-left:24px;padding-right:24px}
+  nav.bot{position:sticky;top:64px;left:auto;right:auto;bottom:auto;align-self:start;grid-column:1;grid-row:2;height:calc(100vh - 64px);border-top:none;border-right:1px solid var(--line)}
+  nav.bot .in{display:flex;flex-direction:column;gap:4px;padding:14px 10px}
+  nav.bot button{flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:10px}
+  nav.bot button:hover{background:#F3F4F1}
+  nav.bot button.on{background:#FBE6DC}
+  main{grid-column:2;grid-row:2;padding:22px 32px 40px;width:100%;max-width:1180px}
+  .pc-only{display:block}.m-only{display:none}
+  .thumbs{grid-template-columns:repeat(6,1fr)}
+  .item:hover{outline:1.5px solid #CBD1D8}
+  .toast{bottom:30px}
+  .modal{align-items:center}.modal .sheet{border-radius:16px;max-width:600px}
+  canvas.sig{height:220px}
+}
 @media print{
   body{background:#fff}
   #app,.toast,.modal,.lightbox{display:none!important}
@@ -127,7 +146,7 @@ canvas.sig{width:100%;height:180px;border:1.5px dashed #8C96A3;border-radius:10p
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v3';
+const VER='v4';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -439,7 +458,8 @@ V.kras=async(m,yearArg)=>{
   let rows=year===2026?A.kras.slice():[];{const k=await load('kras/'+year,true).catch(()=>({}));rows=rows.concat(Object.entries(k).map(([id,v])=>({id,...v})).filter(r=>!r.deleted))}
   S.kf=S.kf||{};const f=S.kf[year]||(S.kf[year]={proc:'',lv:''});
   const draw=()=>{const R=rows.filter(r=>(!f.proc||r.proc===f.proc)&&(!f.lv||lvl(r.risk)===f.lv));
-    $('#kl').innerHTML=R.map(r=>krasCard(r,year)).join('')||'<div class="empty">해당 항목이 없습니다</div>';$('#kc').textContent=R.length+'건'};
+    const wide=matchMedia('(min-width:1000px)').matches,tg=v=>v?`<span class="tag lv-${lvl(v)}">${v} ${lvl(v)}</span>`:'-';
+    $('#kl').innerHTML=!R.length?'<div class="empty">해당 항목이 없습니다</div>':wide?`<div class="card" style="padding:6px 10px"><table class="t kt"><thead><tr><th>공정</th><th>세부작업</th><th style="width:34%">위험 발생 상황 및 결과</th><th>위험성</th><th style="width:26%">감소대책</th><th>개선 후</th><th>완료일</th><th>담당자</th></tr></thead><tbody>${R.map(r=>`<tr data-go="krasView" data-arg="${year}|${r.id}"><td style="white-space:nowrap">${esc(r.proc)}</td><td>${esc(r.task||'')}</td><td>${esc(r.hazard)}</td><td>${tg(r.risk)}</td><td class="muted">${esc((r.plan||'').replace(/\s*⦁\s*/g,' · ').replace(/^ · /,'').slice(0,90))}</td><td>${tg(r.after)}</td><td style="white-space:nowrap">${r.done?fmtD(r.done):'<b style="color:#8E1F14">미완료</b>'}</td><td>${esc(r.owner||'')}</td></tr>`).join('')}</tbody></table></div>`:R.map(r=>krasCard(r,year)).join('');$('#kc').textContent=R.length+'건'};
   m.innerHTML=`<div class="chips">${[2026,...ys.filter(y=>y!==2026)].map(y=>`<button class="chip ${y===year?'on':''}" data-go="kras" data-arg="${y}">${y}년</button>`).join('')}<button class="chip" data-go="newYear">+ 새 연도</button></div>
   <div class="chips" id="pf"><button class="chip ${!f.proc?'on':''}" data-p="">전체</button>${PROC.map(([k,n])=>`<button class="chip ${f.proc===k?'on':''}" data-p="${k}">${k}</button>`).join('')}</div>
   <div class="chips" id="lf"><button class="chip ${!f.lv?'on':''}" data-l="">모든 위험도</button>${['높음','보통','낮음'].map(l=>`<button class="chip ${f.lv===l?'on':''}" data-l="${l}">${l}</button>`).join('')}</div>

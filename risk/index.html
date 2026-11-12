@@ -127,7 +127,7 @@ canvas.sig{width:100%;height:180px;border:1.5px dashed #8C96A3;border-radius:10p
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v2';
+const VER='v3';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -136,6 +136,12 @@ const PROCN=Object.fromEntries(PROC);
 const TEAMS=['생활팀','수송팀','재활팀','음식팀','대형팀','건물청소팀','사무실'];
 const CLS=['작업환경 요인','작업특성 요인','기계적 요인','화학(물질)적 요인','전기적 요인','생물학적 요인'];
 const RSTAT=['접수','검토중','평가 반영','조치완료'];
+/* 우수근로자 통합 포상 규정(안) 2025.11.19 — 원문 그대로 */
+const AW_ITEMS=[['기여도','작업개선, 업무효율 향상, 현장 협조',10],['안전수칙 준수','보호구 착용·사용, 교통법규, 작업안전 준수',15],['아차사고 예방','사고 예방 아이디어 제안, 실행',15],['친절 및 민원예방','주민응대, 칭찬, 민원 예방, 감소',15],['법규준수','폐기물관리법, 도로교통법, 사규 이행',10],['모범사례','선행, 협동, 현장질서 유지',10],['업무소통(BAND)','지시사항 확인, 보고, 사진등록',15],['청소·청결유지','휴게실·개인사물함·샤워장(탈의실) 작업복·차량 청결 등',10]];
+const AW_CATS=[['안전 우수자','분기',500000],['아차사고 예방 아이디어 우수자','분기',500000],['친절·칭찬 우수자','분기',500000],['최우수근로자(연간 최고 성과자)','연말',1000000],['모범근로자(우수)','연말',500000],['특별공로자','수시',0]];
+const AW_MONTHS=[1,4,8,12];
+const AW_EXCL=['징계 또는 경고 조치가 있는 자','안전규정 위반, 근무태만이 확인된 자','정당한 사유 없이 지각·무단결근이 지속된 자','지시사항 위반으로 행정조치 또는 교통사고 70%이하 가해자'];
+const AW_STAT=['추천 접수','심사중','선정','대표 승인','지급 완료','미선정'];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const lvl=n=>n>=6?'높음':(n>=3?'보통':'낮음');
@@ -236,6 +242,7 @@ V.home=async m=>{
     <button class="big acc" data-go="reportForm"><b>⚠ 아차사고 신고</b><span>사진 한 장이면 됩니다</span></button>
     <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>참석자 손가락 서명</span></button>
   </div>
+  <button class="item" data-go="award" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🏆</span><span style="flex:1"><span class="t">우수근로자 포상</span><span class="m" style="display:block">추천하기 · 심사 점수 · 분기(${AW_MONTHS.join('·')}월)·연말 결과</span></span><span class="muted">›</span></button>
   <div class="card"><div class="between"><h2 style="margin:0">${cy?cy+'년 평가 진행':'2026년 정기평가'}</h2><span class="tag ${cy?'st':'lv-낮음'}">${cy?'진행중':'완료 · 보관'}</span></div>
    ${cy?`<p class="muted">평가표 ${Object.keys(S.cache['kras/'+cy]||{}).length}건 · 미완료 ${open.length}건</p><button class="btn block" data-go="kras" data-arg="${cy}">${cy}년 평가표 열기</button>`:
    `<div class="steps" style="margin-top:8px">${steps.map(s=>`<div class="s"><span class="dot" style="background:var(--ink);color:#fff">${s[0]}</span><div style="flex:1"><div style="font-weight:600;font-size:14px">${s[1]}</div><div class="muted">${s[2]}</div></div><span class="tag lv-낮음">완료</span></div>`).join('')}</div>
@@ -335,11 +342,94 @@ V.reportView=async(m,id)=>{
   <div class="card"><h2>처리</h2><label class="f" for="rs">상태</label><select class="i" id="rs">${RSTAT.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
   <label class="f" for="rn">조치 내용</label><textarea class="i" id="rn">${esc(x.action||'')}</textarea>
   <div class="grid2" style="margin-top:10px"><button class="btn" id="tok">평가표로 보내기</button><button class="btn dark" id="rsv">저장</button></div>
+  ${x.kind==='아차사고'&&!x.anon&&x.by?'<button class="btn block" id="toaw" style="margin-top:8px">🏆 신고자를 포상 추천</button>':''}
   ${(x.hist||[]).length?`<h3>처리 이력</h3>${x.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}`:''}</div>`;
   fillThumbs(m);
   $('#rsv').onclick=async()=>{if(!needUser())return;const st=$('#rs').value,ac=$('#rn').value.trim();const hist=(x.hist||[]).concat([{t:nowStr(),u:S.user,what:st+(ac?' / '+ac.slice(0,40):'')}]);
     try{await patch('reports/'+id,{status:st,action:ac,hist});await log('신고 처리: '+st);inval('reports');toast('저장했습니다');render()}catch(e){toast('저장 실패: '+e.message)}};
   $('#tok').onclick=()=>go('krasForm',`|new|${JSON.stringify({proc:'수시',hazard:x.text,photos:x.photos||[],from:id})}`);
+  const ta=$('#toaw');if(ta)ta.onclick=()=>go('awardForm',JSON.stringify({name:x.by,team:x.team,cat:'아차사고 예방 아이디어 우수자',summary:x.text.slice(0,200),report:id}));
+};
+
+/* ---------- 포상 (우수근로자) ---------- */
+const awKind=cat=>(AW_CATS.find(c=>c[0]===cat)||[,'분기'])[1];
+const awRnd=(cat,y,mo)=>{const k=awKind(cat);return k==='분기'?`${y}-${String(mo).padStart(2,'0')}`:`${y}-${k}`};
+const awRndN=r=>{const [y,k]=String(r||'').split('-');return /^\d+$/.test(k)?`${y}년 ${+k}월 분기`:`${y}년 ${k}`};
+const awNext=()=>{const d=new Date();const mo=AW_MONTHS.find(x=>x>=d.getMonth()+1);return mo?[d.getFullYear(),mo]:[d.getFullYear()+1,AW_MONTHS[0]]};
+const awSum=sc=>AW_ITEMS.reduce((s,_,i)=>s+(+((sc||{})[i])||0),0);
+const awOut=x=>(x.excl||[]).some(Boolean);
+function awCard(x){const sc=x.score?awSum(x.score):null;
+  return `<button class="item" data-go="awardView" data-arg="${x.id}" style="background:#F7F8F6"><div class="between"><span class="muted">추천 ${esc(x.by||'')} · ${esc((x.t||'').slice(0,10))}</span><span class="tag ${x.status==='미선정'||awOut(x)?'lv-높음':(['선정','대표 승인','지급 완료'].includes(x.status)?'lv-낮음':'st')}">${awOut(x)?'제외':esc(x.status)}</span></div><div class="t">${esc(x.name)} <span class="muted">${esc(x.team||'')}</span>${sc!=null?` · <b>${sc}점</b>`:''}</div><div class="m">${esc((x.summary||'').split('\n')[0].slice(0,50))}</div></button>`}
+V.award=async(m,rArg)=>{
+  setHead('우수근로자 포상','성과·안전·친절 통합 포상 규정(안)');
+  const all=Object.entries(await load('awards',true)).map(([id,v])=>({id,...v})).filter(x=>!x.deleted);
+  const [ny,nm]=awNext();const rnds=[...new Set([`${ny}-${String(nm).padStart(2,'0')}`,...all.map(x=>x.rnd)])].sort().reverse();
+  const r=rArg||S.awR||rnds[0];S.awR=r;
+  const list=all.filter(x=>x.rnd===r).sort((a,b)=>(b.score?awSum(b.score):-1)-(a.score?awSum(a.score):-1));
+  const byCat={};list.forEach(x=>(byCat[x.cat]=byCat[x.cat]||[]).push(x));
+  m.innerHTML=`<button class="btn pri block" data-go="awardForm" style="margin-bottom:12px">+ 우수근로자 추천하기</button>
+  <div class="chips">${rnds.map(k=>`<button class="chip ${k===r?'on':''}" data-go="award" data-arg="${k}">${awRndN(k)}</button>`).join('')}</div>
+  <div class="card"><h2>${awRndN(r)} <span class="muted">추천 ${list.length}건</span></h2>
+   ${Object.keys(byCat).length?Object.entries(byCat).map(([c,xs])=>`<div class="cat">${esc(c)}</div>${xs.map(awCard).join('')}`).join(''):'<div class="empty">아직 추천이 없습니다</div>'}
+   <p class="muted" style="margin:8px 0 0">점수 높은 순 · 해당자가 없으면 다음으로 이월</p></div>
+  <div class="card"><h2>포상 기준</h2>
+   <h3 style="margin-top:0">연 4회 분기별 (${AW_MONTHS.join('·')}월) · 각 1명</h3>${AW_CATS.filter(c=>c[1]==='분기').map(c=>`<div class="between" style="padding:4px 0"><span>${esc(c[0])}</span><span class="muted" style="white-space:nowrap">${won(c[2])} + 표창장</span></div>`).join('')}
+   <h3>연 1회 (연말)</h3>${AW_CATS.filter(c=>c[1]==='연말').map(c=>`<div class="between" style="padding:4px 0"><span>${esc(c[0])}</span><span class="muted" style="white-space:nowrap">${won(c[2])} + 표창장</span></div>`).join('')}
+   <h3>특별공로자 (수시)</h3><div class="muted">포상금 별도 · 대표이사 승인 후 즉시</div>
+   <h3>평가 항목 (100점)</h3><table class="t"><tbody>${AW_ITEMS.map((it,i)=>`<tr><td style="white-space:nowrap">${'①②③④⑤⑥⑦⑧'[i]} <b>${esc(it[0])}</b></td><td class="muted">${esc(it[1])}</td><td style="text-align:right">${it[2]}</td></tr>`).join('')}</tbody></table>
+   <h3>포상 제외</h3>${AW_EXCL.map((e,i)=>`<div class="muted">${'①②③④'[i]} ${esc(e)}</div>`).join('')}
+   <h3>절차</h3><div class="muted" style="line-height:1.6">추천(조장·관리감독자·동료 누구나, 서면만 · 전화 추천 불가) → 분기별 평가 → 심사위원회 → 본사 검토 → 대표이사 최종 승인 → 게시판 공고 · 지급<br>※ 사무실직원, 현장관리자·관리감독자는 포상 대상에서 제외</div></div>`;
+};
+V.awardForm=async(m,arg)=>{
+  setHead('우수근로자 추천','추천서 · 서면 접수');if(!needUser()){back();return}
+  const pre=arg?JSON.parse(arg):{};const [ny,nm]=awNext();
+  const st={cat:pre.cat||AW_CATS[0][0],photos:[]};
+  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="an" style="margin-top:0">추천받는 사람</label><input class="i" id="an" value="${esc(pre.name||'')}" placeholder="이름"></div><div><label class="f" for="at" style="margin-top:0">소속 팀</label><select class="i" id="at">${TEAMS.filter(t=>t!=='사무실').map(t=>`<option ${t===pre.team?'selected':''}>${t}</option>`).join('')}</select></div></div>
+  <label class="f">포상 구분</label><div class="seg" style="grid-template-columns:1fr 1fr" id="ac">${AW_CATS.map(c=>`<button data-c="${esc(c[0])}" class="${c[0]===st.cat?'on':''}">${esc(c[0])}</button>`).join('')}</div>
+  <div class="grid2"><div><label class="f" for="ay">연도</label><input class="i" type="number" id="ay" value="${ny}"></div><div id="amw"><label class="f" for="am">분기 포상 달</label><select class="i" id="am">${AW_MONTHS.map(x=>`<option value="${x}" ${x===nm?'selected':''}>${x}월</option>`).join('')}</select></div></div>
+  <div class="grid2"><div><label class="f" for="af">공적 기간 (부터)</label><input class="i" type="date" id="af"></div><div><label class="f" for="ato">까지</label><input class="i" type="date" id="ato" value="${today()}"></div></div>
+  <label class="f" for="as">공적 요약 (한 줄에 하나씩, 2~3줄)</label><textarea class="i" id="as" placeholder="예: 후진 유도 수신호를 팀에 정착시킴">${esc(pre.summary||'')}</textarea>
+  <label class="f" for="ad">상세 공적 내용</label><textarea class="i" id="ad" placeholder="안전수칙 준수, 아차사고 예방 아이디어, 주민·동료 칭찬 등 구체적으로"></textarea>
+  <label class="f">첨부 (작업 사진, 주민 칭찬 자료 등)</label><div id="pp"></div>
+  <p class="muted">추천자: <b>${esc(S.user)}</b> · 전화번호는 적지 않습니다</p>
+  <button class="btn pri block" id="asv" style="margin-top:6px">추천서 제출</button></div>`;
+  const syncM=()=>{$('#amw').style.visibility=awKind(st.cat)==='분기'?'visible':'hidden'};syncM();
+  $('#ac').onclick=e=>{const b=e.target.closest('button');if(!b)return;st.cat=b.dataset.c;$('#ac').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));syncM()};
+  photoPicker($('#pp'),st.photos);
+  $('#asv').onclick=async()=>{const name=$('#an').value.trim(),summary=$('#as').value.trim();
+    if(!name){toast('추천받는 사람 이름을 적어 주세요');return}if(!summary){toast('공적 요약을 적어 주세요');return}
+    const b=$('#asv');b.disabled=true;b.textContent='제출 중…';
+    try{const ph=await savePhotos(st.photos);const rec={name,team:$('#at').value,cat:st.cat,rnd:awRnd(st.cat,+$('#ay').value,+$('#am').value),from:$('#af').value,to:$('#ato').value,summary,detail:$('#ad').value.trim(),by:S.user,t:nowStr(),status:'추천 접수'};
+      if(ph.length)rec.photos=ph;if(pre.report)rec.fromReport=pre.report;
+      const r=await post('awards',rec);await log('포상 추천: '+st.cat);inval('awards');S.awR=rec.rnd;toast('추천서를 접수했습니다');S.stack.pop();S.cur={view:'awardView',arg:r.name};render()}
+    catch(e){toast('제출 실패: '+e.message);b.disabled=false;b.textContent='추천서 제출'}};
+};
+V.awardView=async(m,id)=>{
+  const x=(await load('awards',true))[id];setHead(x.name+' · '+x.cat,awRndN(x.rnd));
+  const sc=Object.assign({},x.score||{});const ex=(x.excl||[]).slice();
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>추천받는 사람</dt><dd><b>${esc(x.name)}</b> · ${esc(x.team||'')}</dd><dt>포상 구분</dt><dd>${esc(x.cat)}</dd><dt>회차</dt><dd>${awRndN(x.rnd)}</dd><dt>공적 기간</dt><dd>${fmtD(x.from)||'-'} ~ ${fmtD(x.to)||'-'}</dd><dt>추천자</dt><dd>${esc(x.by)} · ${esc(x.t)}</dd></dl>
+   <h3>공적 요약</h3><div class="pre" style="line-height:1.6">${esc(x.summary)}</div>${x.detail?`<h3>상세 공적</h3><div class="pre" style="line-height:1.6">${esc(x.detail)}</div>`:''}${thumbs(x.photos)}
+   ${x.fromReport?`<button class="btn sm" style="margin-top:8px" data-go="reportView" data-arg="${x.fromReport}">연결된 아차사고 신고 보기</button>`:''}</div>
+  <div class="card"><div class="between"><h2 style="margin:0">심사 점수</h2><span class="tag st" id="tot"></span></div><p class="muted" style="margin:4px 0 8px">관리감독자 · 심사위원회 입력 (배점은 참고)</p>
+   ${AW_ITEMS.map((it,i)=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span style="flex:1"><b>${'①②③④⑤⑥⑦⑧'[i]} ${esc(it[0])}</b><br><span class="muted">${esc(it[1])}</span></span><input class="i" type="number" inputmode="numeric" min="0" max="${it[2]}" data-sc="${i}" value="${sc[i]!=null?sc[i]:''}" style="width:70px;text-align:center"><span class="muted" style="width:34px">/${it[2]}</span></div>`).join('')}
+   <h3>포상 제외 확인</h3>${AW_EXCL.map((e,i)=>`<label style="display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:14px"><input type="checkbox" data-ex="${i}" ${ex[i]?'checked':''} style="width:20px;height:20px;flex-shrink:0;accent-color:#B53C0C"> ${esc(e)}</label>`).join('')}
+   <div id="exw"></div>
+   <label class="f" for="ast">진행 상태</label><select class="i" id="ast">${AW_STAT.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
+   <label class="f" for="aop">심사위원 의견</label><textarea class="i" id="aop" placeholder="예: 작업 중 안전수칙을 지키고 위험요소를 발견해 즉시 조치함">${esc(x.opinion||'')}</textarea>
+   <button class="btn dark block" id="asv" style="margin-top:12px">심사 저장</button>
+   ${(x.hist||[]).length?`<h3>처리 이력</h3>${x.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}`:''}</div>
+  <div class="grid2"><button class="btn" id="apr">추천서 인쇄 / PDF</button><button class="btn" id="adl" style="color:#8E1F14">삭제</button></div>`;
+  fillThumbs(m);
+  const calc=()=>{let bad=false;m.querySelectorAll('[data-sc]').forEach(el=>{const i=+el.dataset.sc,v=el.value===''?null:+el.value;if(v!=null&&(v<0||v>AW_ITEMS[i][2]))bad=true;if(v==null)delete sc[i];else sc[i]=v});
+    m.querySelectorAll('[data-ex]').forEach(el=>ex[+el.dataset.ex]=el.checked);
+    $('#tot').textContent=awSum(sc)+' / 100점';$('#exw').innerHTML=ex.some(Boolean)?'<div class="warn">제외 기준에 해당 — 이번 연도·분기 포상에서 제외됩니다</div>':(bad?'<div class="warn">배점보다 큰 점수가 있습니다</div>':'');return !bad};
+  m.querySelectorAll('[data-sc],[data-ex]').forEach(el=>el.oninput=calc);calc();
+  $('#asv').onclick=async()=>{if(!needUser())return;if(!calc()){toast('점수를 확인해 주세요');return}
+    let status=$('#ast').value;if(ex.some(Boolean)&&['선정','대표 승인','지급 완료'].includes(status)&&!confirm('제외 기준에 해당합니다. 그래도 "'+status+'"(으)로 저장할까요?'))return;
+    const hist=(x.hist||[]).concat([{t:nowStr(),u:S.user,what:status+' · '+awSum(sc)+'점'+(ex.some(Boolean)?' · 제외 기준 해당':'')}]);
+    try{await patch('awards/'+id,{score:sc,excl:ex,status,opinion:$('#aop').value.trim(),hist});await log('포상 심사: '+status);inval('awards');toast('저장했습니다');render()}catch(e){toast('저장 실패: '+e.message)}};
+  $('#apr').onclick=()=>printAward(x);
+  $('#adl').onclick=async()=>{if(!needUser()||!confirm('이 추천서를 삭제할까요? (기록은 이력으로 남습니다)'))return;const h=(x.hist||[]).concat([{t:nowStr(),u:S.user,what:'삭제'}]);try{await patch('awards/'+id,{deleted:true,hist:h});await log('포상 추천 삭제');inval('awards');toast('삭제했습니다');back()}catch(e){toast('삭제 실패: '+e.message)}};
 };
 
 /* ---------- 평가 (KRAS) ---------- */
@@ -446,6 +536,7 @@ V.rec=async m=>{
   m.innerHTML=`<div class="card"><h2>교육 · TBM</h2><button class="btn pri block" data-go="eduForm">+ 교육·TBM 기록하기</button><button class="btn block" style="margin-top:8px" data-go="eduList">교육 기록 전체 보기</button></div>
   <div class="card"><h2>2026년 보관본 <span class="tag lv-낮음">2029.05까지 보관</span></h2>
    ${[['archPrep','1단계 · 사전준비','실시규정 · 일정 · 예산 · 회의록'],['archEdu','교육 기록 (2026)','10건 · 실행서 · 일지 · 사진'],['check','2단계 · 체크리스트','6종 204항목'],['archVehicle','차량 안전장치 점검표','2026.04.16 · 15대'],['archOpinion','근로자 의견 청취','팀별 종합 · 설문 문항'],['kras','3~5단계 · KRAS 평가표','51항목 · 수시평가 2건'],['archMaterial','감소대책 교육자료','현장 · 건물청소'],['archOrg','조직도 · 비상연락','보고 체계 · 비상 전화'],['archPhotos','사진 전체','41장']].map(([v,t,s])=>`<button class="item" data-go="${v}" ${v==='kras'?'data-arg="2026"':''} style="background:#F7F8F6"><div class="between"><span class="t">${t}</span><span class="muted">›</span></div><div class="m">${s}</div></button>`).join('')}</div>
+  <div class="card"><h2>우수근로자 포상</h2><button class="btn block" data-go="award">추천 · 심사 · 결과 보기</button></div>
   <div class="card"><h2>출력</h2><div class="grid2"><button class="btn" id="p1">2026 평가표 인쇄</button><button class="btn" id="p2">2026 교육 기록 인쇄</button></div></div>
   <div class="card"><h2>설정</h2><a class="btn block" href="help.html" style="display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit;margin-bottom:8px">📖 사용 방법</a><button class="btn block" data-go="settings">설정 · 연결 확인 · 사진 올리기</button></div>`;
   $('#p1').onclick=()=>printKras(2026,A.kras);$('#p2').onclick=()=>printEdu();
@@ -581,6 +672,11 @@ function printKras(year,rows){
   doPrint(h,true);
 }
 function printCheck(L,s){let last='';doPrint(`<h1>유해·위험요인 파악 체크리스트 — ${esc(L.name)}</h1><div>점검일 ${fmtD(s.date)} · 점검자 ${esc(s.by)}</div><table style="margin-top:8px"><thead><tr><th>번호</th><th>구분</th><th>유해·위험요인(점검항목)</th><th>결과</th><th>비고</th></tr></thead><tbody>${L.items.map(it=>{const r=(s.res||{})[it.id]||{};return `<tr><td>${esc(it.no)}</td><td>${it.cat!==last?esc(last=it.cat):''}</td><td>${esc(it.text)}</td><td>${esc(r.r==='적합'?'√':(r.r||''))}</td><td>${esc(r.note||'')}</td></tr>`}).join('')}</tbody></table>`)}
+function printAward(x){const sc=x.score||{};
+  doPrint(`<div>본에코-제1호</div><h1 style="text-align:center">포상금 신청서 / 추천서</h1><table><tr><th style="width:20%">성명</th><td>${esc(x.name)}</td><th style="width:20%">소속(팀)</th><td>${esc(x.team||'')}</td></tr><tr><th>신청 구분</th><td colspan="3">${AW_CATS.map(c=>(c[0]===x.cat?'■ ':'□ ')+esc(c[0])).join('&nbsp;&nbsp;')}</td></tr><tr><th>회차</th><td>${awRndN(x.rnd)}</td><th>공적 기간</th><td>${fmtD(x.from)} ~ ${fmtD(x.to)}</td></tr><tr><th>공적 요약</th><td colspan="3" style="white-space:pre-line">${esc(x.summary)}</td></tr><tr><th>상세 공적</th><td colspan="3" style="white-space:pre-line;height:120px">${esc(x.detail||'')}</td></tr></table>
+  <p>위와 같이 포상금 지급을 신청(추천)합니다.　　신청(추천)일: ${esc((x.t||'').slice(0,10))}　　추천인: ${esc(x.by)} (서명)</p>
+  <h2>평가심사위원회 의견 작성란</h2><table><thead><tr><th>항목</th><th>평가 내용</th><th>배점</th><th>점수</th></tr></thead><tbody>${AW_ITEMS.map((it,i)=>`<tr><td>${'①②③④⑤⑥⑦⑧'[i]} ${esc(it[0])}</td><td>${esc(it[1])}</td><td>${it[2]}</td><td>${sc[i]!=null?sc[i]:''}</td></tr>`).join('')}<tr><th colspan="2">계</th><th>100</th><th>${x.score?awSum(sc):''}</th></tr></tbody></table>
+  <table style="margin-top:6px"><tr><th style="width:20%">결과</th><td>${esc(x.status)}${awOut(x)?' (제외 기준 해당)':''}</td></tr><tr><th>심사위원 의견</th><td style="white-space:pre-line;height:60px">${esc(x.opinion||'')}</td></tr></table>`)}
 async function printEdu(){let h=`<h1>${A.company} 2026년 위험성평가 관련 교육 기록</h1>`;for(const e of A.education){h+=`<h2>${fmtD(e.date)} ${esc(e.time)} · ${esc(e.title)} (${esc(e.team)})</h2><div>장소: ${esc(e.place||'-')}</div>${e.items.map(i=>`<div>● ${esc(i)}</div>`).join('')}<div>${(await Promise.all(e.photos.slice(0,2).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean).map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}</div>`}doPrint(h)}
 async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0,4).map(id=>photoSrc(id).catch(()=>null)))).filter(Boolean);
   doPrint(`<h1 style="text-align:center">교 육 실 행 서</h1><table><tr><th style="width:20%">구분</th><td>${esc(x.kind)}</td></tr><tr><th>교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육장소</th><td>${esc(x.place||'')}</td></tr><tr><th>교육자</th><td>${esc(x.by||'')}</td></tr><tr><th>교육내용</th><td style="white-space:pre-line">${esc(x.content||x.title)}${x.shared?'\n● 위험성평가 결과 공유':''}</td></tr></table><h2>교육 사진</h2>${ph.map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}<h2>참석자 서명 (${(x.att||[]).length}명)</h2><table><thead><tr><th>번호</th><th>성명</th><th>팀</th><th>서명</th></tr></thead><tbody>${(x.att||[]).map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.team||'')}</td><td><img src="${a.sig}" style="height:28px"></td></tr>`).join('')}</tbody></table>`)}

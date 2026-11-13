@@ -650,6 +650,7 @@ body{background:var(--bg)}
       <div id="hdr-right">
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
         <button class="hdr-sbtn" id="hb-staff" onclick="swSide('staff')">👷 직원</button>
+        <button class="hdr-sbtn" id="hb-field" onclick="openFieldView()" title="현장 직원 폰에 보이는 화면을 폰 크기 창으로 엽니다">📱 현장앱</button>
         <span id="staff-name"></span>
         <button id="logout-btn" onclick="doLogout()">변경</button>
       </div>
@@ -1274,6 +1275,8 @@ function sw(t){
 }
 // 위쪽 작은 버튼(📦 보관함·👷 직원) — 한 번 더 누르면 대장으로
 function swSide(t){ sw($('pane-'+t).classList.contains('on')?'ledger':t); }
+// [11_12] 📱 현장앱 — PC에서 현장 직원 폰 화면(사진 올리기)을 폰 크기 창으로 보기
+function openFieldView(){ const w=window.open('field/','bn_field','width=420,height=860,resizable=yes,scrollbars=yes'); if(w) w.focus(); else location.href='field/'; }
 // 지도 탭을 직접 누르면 선택 해제하고 전체를 보여줌
 function swMap(){ focusId=null; sw('map'); }
 

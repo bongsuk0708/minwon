@@ -306,7 +306,7 @@ body.nv{padding-top:44px}
   <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
   <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint" id="verLine">v65 · 2026-11-12 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v66 · 2026-11-13 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -714,7 +714,51 @@ async function getOcr(onStep){
 }
 
 // 사진을 판독하기 좋게 — 크기 맞추고, 돌리고, 흑백으로 또렷하게
-function prep(dataUrl, rot, hard, crop, side){
+// 그늘·어두운 조명 펴기 — 칸마다 '종이 밝기'를 구해 그만큼 나눠 줍니다.
+// 밤에 실내등 아래서 찍어 종이가 회색이고 한쪽이 그늘진 사진을 고르게 흰 종이로 만듭니다.
+function flatten(p, W, H, hist){
+  const B=Math.max(16, Math.round(Math.max(W,H)/40));
+  const gw=Math.ceil(W/B), gh=Math.ceil(H/B), ch=new Int32Array(gw*gh*256);
+  for(let y=0;y<H;y++){
+    const gy=(y/B|0)*gw;
+    for(let xx=0;xx<W;xx++) ch[((gy+(xx/B|0))<<8)+p[(y*W+xx)*4]]++;
+  }
+  // 사진 전체에서 밝은 쪽(종이) 밝기 — 종이 밖 어두운 바닥을 억지로 밝히지 않게 하한으로 씁니다
+  let acc=0, paper=255; const tot=W*H;
+  for(let g=255;g>=0;g--){ acc+=hist[g]; if(acc>tot*0.1){ paper=g; break; } }
+  const floor=Math.max(40, paper*0.55);
+  let bg=new Float32Array(gw*gh);
+  for(let k=0;k<gw*gh;k++){
+    let n=0; for(let g=0;g<256;g++) n+=ch[(k<<8)+g];
+    let a=0, v=255; for(let g=255;g>=0;g--){ a+=ch[(k<<8)+g]; if(a>n*0.15){ v=g; break; } }
+    bg[k]=Math.max(floor, v);
+  }
+  for(let pass=0;pass<2;pass++){          // 칸 경계가 티 나지 않게 고르기
+    const nb=new Float32Array(gw*gh);
+    for(let y=0;y<gh;y++) for(let xx=0;xx<gw;xx++){
+      let s=0,n=0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        const yy=y+dy, x2=xx+dx;
+        if(yy>=0&&yy<gh&&x2>=0&&x2<gw){ s+=bg[yy*gw+x2]; n++; }
+      }
+      nb[y*gw+xx]=s/n;
+    }
+    bg=nb;
+  }
+  hist.fill(0);
+  for(let y=0;y<H;y++){
+    const fy=Math.min(gh-1, Math.max(0, (y+0.5)/B-0.5)), y0=fy|0, y1=Math.min(gh-1,y0+1), ty=fy-y0;
+    for(let xx=0;xx<W;xx++){
+      const fx=Math.min(gw-1, Math.max(0, (xx+0.5)/B-0.5)), x0=fx|0, x1=Math.min(gw-1,x0+1), tx=fx-x0;
+      const b=(bg[y0*gw+x0]*(1-tx)+bg[y0*gw+x1]*tx)*(1-ty) + (bg[y1*gw+x0]*(1-tx)+bg[y1*gw+x1]*tx)*ty;
+      const i=(y*W+xx)*4;
+      let v=Math.round(p[i]*235/b); if(v>255) v=255;
+      p[i]=v; hist[v]++;
+    }
+  }
+}
+
+function prep(dataUrl, rot, hard, crop, side, flat){
   return new Promise(ok=>{
     const img=new Image();
     img.onload=()=>{
@@ -740,6 +784,7 @@ function prep(dataUrl, rot, hard, crop, side){
         const g=Math.round(p[i]*0.299 + p[i+1]*0.587 + p[i+2]*0.114);
         p[i]=g; hist[g]++;
       }
+      if(flat) flatten(p, c.width, c.height, hist);
       // 아주 어두운 2%, 아주 밝은 2%를 잘라내고 그 사이를 넓게 폅니다.
       // 조명이 어둡든 밝든 글자가 또렷해집니다.
       const total=p.length/4, cut=total*0.02;
@@ -1231,8 +1276,8 @@ async function runOcr(dataUrl, sid, hard){
     const w = await getOcr(t=>ocrMsg(t,'work'));
     if(hard) await w.setParameters({tessedit_pageseg_mode:'4'});
     const reads=[];
-    const rd = async (rot, h, side)=>{
-      const c = await prep(dataUrl, rot, h, null, side);
+    const rd = async (rot, h, side, flat)=>{
+      const c = await prep(dataUrl, rot, h, null, side, flat);
       if(!c) throw new Error('사진을 열 수 없습니다');
       const res = await w.recognize(c, {}, {text:true, blocks:true});
       const txt = res.data.text || '';
@@ -1250,21 +1295,26 @@ async function runOcr(dataUrl, sid, hard){
       }
     }else{
       // 같은 사진을 크기를 달리해 두 번 읽고 맞춰 봅니다.
-      // 둘이 똑같으면 끝, 다르거나 빠진 게 있으면 '글자만 남기기'로 한 번 더 읽어 가립니다.
-      const a = await rd(0, 0, 2600);
+      // 두 번 모두 그늘·어두운 조명을 편 그림으로 읽습니다 (밤에 찍은 회색 사진, 플래시 반사에 강함).
+      // 둘이 똑같으면 끝, 다르거나 빠진 게 있으면 펴지 않은 그림 → '글자만 남기기' 순으로 더 읽어 가립니다.
+      const a = await rd(0, 0, 2600, 1);
       ocrMsg('한 번 더 읽어 맞춰 보는 중','work');
-      const b = await rd(0, 0, 1700);
+      const b = await rd(0, 0, 1700, 1);
       const same = a.got.length && key(a)===key(b);
       if(!same){
-        ocrMsg('글자만 남겨서 다시 읽는 중','work');
-        await rd(0, 1);
+        ocrMsg('다른 방법으로 다시 읽는 중','work');
+        await rd(0, 0, 2600);
+        if(!reads.some(r=>r.got.length)){
+          ocrMsg('글자만 남겨서 다시 읽는 중','work');
+          await rd(0, 1);
+        }
       }
       if(!reads.some(r=>r.got.length)){
         // 바로 세운 사진이 대부분이라, 여기까지 안 읽혔을 때만 각도를 돌립니다
         for(const rot of [90,270,180]){
           ocrMsg('각도를 바꿔 다시 읽는 중','work');
-          const r = await rd(rot, 0);
-          if(r.got.length){ await rd(rot, 0, 1700); break; }
+          const r = await rd(rot, 0, 0, 1);
+          if(r.got.length){ await rd(rot, 0, 1700, 1); break; }
         }
       }
     }
@@ -1799,7 +1849,7 @@ if('serviceWorker' in navigator){
 
 /* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
    다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
-const APP_VER = 'v65';
+const APP_VER = 'v66';
 let newVer = null;
 
 function appBusy(){

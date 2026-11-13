@@ -568,6 +568,7 @@ body{background:var(--bg)}
 #lg-ledwrap .lg-led{background:#fff;color:#4b5563;border:1.5px solid var(--line)}
 #lg-ledwrap .lg-led.on{background:var(--blue);color:#fff;border-color:var(--blue)}
 .lg-led.on,button.lg-stat.on{border-color:var(--blue);background:#dff2f5}
+#mw-sw{display:none!important}   /* [11_13] 민원처리앱으로 넘어가는 버튼 없앰 — 민원 접수는 민원대장 [＋ 등록] */
 </style>
 </head>
 <body>
@@ -583,7 +584,7 @@ body{background:var(--bg)}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113a</span><span id="net-dot" class="net-dot"></span></h1>
+      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113b</span><span id="net-dot" class="net-dot"></span></h1>
       <div id="hdr-right">
         <a id="mw-sw" href="https://boneco-minwon.web.app/?from=risk" target="bn_minwon" rel="noopener">📋 민원접수</a>
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
@@ -1476,6 +1477,12 @@ function geoH(){
   });
 }
 
+// [11_13] 담당 팀 자동 — 민원처리앱 규칙: 15시 이전(06시~) 접수 = 기동반, 15시 이후·새벽 = 민원종류별 야간 수거팀 (현장앱이 이 팀으로 받음)
+function mTeamAuto(){
+  const h=parseInt(String(($('m-time')||{}).value||'').slice(0,2),10); const hh=isNaN(h)?new Date().getHours():h;
+  if(hh>=6&&hh<15) return '기동반';
+  return ({생활:'야간 생활팀',음식물:'야간 음식물팀',재활용:'야간 재활용팀'})[mSub]||'기동반';
+}
 async function submitM(){
   if(!mSub){toast('폐기물 구분 선택');return;}
   if(!$('m-addr').value.trim()){toast('주소 입력');return;}
@@ -1487,7 +1494,7 @@ async function submitM(){
     person:$('m-person').value.trim(),tel:$('m-tel').value.trim(),channel:$('m-channel').value.trim(),
     category:$('m-category').value.trim(),content:$('m-content').value.trim(),
     inspResult:'',status:$('m-status').value,mgmtLevel:$('m-mgmt').value,
-    actionNote:$('m-action').value.trim(),staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
+    actionNote:$('m-action').value.trim(),team:mTeamAuto(),src:'종합예방관리대장',staff,createdAt:nowStr(),updatedAt:nowStr(),del:0};
   $('photo-progress').classList.add('on');
   try{
     await saveRec(rec);
@@ -1498,6 +1505,7 @@ async function submitM(){
     }
     toast(mPos?('✅ 민원 접수 완료! ('+rec.no+')'):('✅ 접수 완료 ('+rec.no+') — 위치 미지정, 지도 표시 안 됨'));
     resetMForm();
+    if(window.lgFromLedger){ window.lgFromLedger=false; sw('ledger'); }   // [11_13] 민원대장 [＋ 등록]에서 왔으면 저장 후 민원대장으로
   }catch{toast('⚠️ 저장 실패');}
   finally{$('photo-progress').classList.remove('on');}
 }
@@ -2878,7 +2886,7 @@ function lgPickHtml(k,mode){
     +LG_KEYS.map(x=>'<button type="button" data-k="'+x[0]+'" class="'+(x[0]===k?'on':'')+'" onclick="'+(mode==='up'?'lgUpDraw':'lgAddTo')+'(\''+x[0]+'\')">'+x[1]+'</button>').join('')
     +'</div></div>';
 }
-function lgAddOpen(){ if(lgIsM()){ const a=$('mw-sw'); if(a) a.click(); return; } lgAddTo(lgKey()); }   // [11_11] 민원은 민원접수 화면에서
+function lgAddOpen(){ if(lgIsM()){ window.lgFromLedger=true; sw('form'); window.scrollTo(0,0); return; } lgAddTo(lgKey()); }   // [11_13] 민원은 민원처리앱으로 넘어가지 않고 대장 안 민원 접수창   // [11_11] 민원은 민원접수 화면에서
 function lgAddTo(k){
   if(lgKey()!==k) lgSetKey(k);   // 같은 대장이면 고른 달·동 그대로
   if(!$('pane-ledger').classList.contains('on')) sw('ledger');

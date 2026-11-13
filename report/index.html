@@ -631,6 +631,7 @@ body{background:var(--bg)}
 #form-hazard.hz .photo-section{margin:0}
 #form-hazard.hz .submit-btn{font-size:18px;padding:13px;margin-top:0}
 @media(max-width:640px){#form-hazard.hz .hz-r1,#form-hazard.hz .hz-r2,#form-hazard.hz .hz-r3{grid-template-columns:1fr}}
+.lg-num .lg-model{display:block;font-size:13.5px;font-weight:900;color:#1a56db;white-space:nowrap}   /* [11_13k] RFID 기계명 */
 </style>
 </head>
 <body>
@@ -646,7 +647,7 @@ body{background:var(--bg)}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113j</span><span id="net-dot" class="net-dot"></span></h1>
+      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113k</span><span id="net-dot" class="net-dot"></span></h1>
       <div id="hdr-right">
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
         <button class="hdr-sbtn" id="hb-staff" onclick="swSide('staff')">👷 직원</button>
@@ -2894,6 +2895,10 @@ function lgDongOf(s){   // [11_10] 디지털원장과 같은 규칙: '삼전'·'
   const n=+m[1]; return n>=1&&n<=174?'삼전동':(n>=183&&n<=341?'잠실동':'');
 }
 function lgIsUse(it){ return it._t==='rfid' ? (it.status||'사용')==='사용' : (it.status||'계약')!=='해지'; }
+// [11_13k] RFID 이름 앞 괄호(일반-BM·일반-CP·60L…)와 이름 속 기계 괄호(BM·지테크…)는 모델명 — 이름(주소)과 나눈다
+function lgRfidSplit(n){ n=String(n||'').trim(); let m=n.match(/^[(（]([^)）]*)[)）]\s*(.*)$/); if(m) return {model:m[1].trim(),name:m[2].trim()};
+  m=n.match(/[(（]([^)）]*?(?:BM|CP|ATEC|지테크|\d+\s*L)[^)）]*?)[)）]/i); if(m) return {model:m[1].trim(),name:(n.slice(0,m.index)+n.slice(m.index+m[0].length)).trim()}; return {model:'',name:n}; }
+function lgRfidAddr(it){ return lgAddrDisp(String(lgRfidSplit(it.name||it.addr||'').name).replace(/[(（][^)）]*[)）]/g,''), it.dong||it.addrDong||'').replace(/\s+/g,' ').trim(); }   // 괄호 다 뺀 주소만
 function lgNormName(s){ return String(s||'').replace(/\s+/g,'').replace(/[()（）]/g,'').replace(/에코$/,'').toLowerCase(); }
 
 // ── 불러오기 (관리대장 탭을 처음 열 때만 연결 → 평소 데이터 아낌) ──
@@ -3295,9 +3300,9 @@ function lgRenderList(list){
     if(it._t==='rfid'){
       const use=lgIsUse(it), sm=lgRfidSum(it);   // [11_12] 한 줄 · 오른쪽 kg·금액은 고른 기간에 자료가 있을 때만
       return '<div class="lg-row '+(use?'use':'unuse')+'" onclick="lgCard(\''+it.id+'\')">'
-        +'<div class="lg-top"><div class="lg-nm"><span class="lg-tag '+(use?'use':'unuse')+'">'+(use?'사용중':'미사용')+'</span>'
-          +E(it.name||'(이름 없음)')+(nopos?' <span class="lg-tag nopos">위치 없음</span>':'')+'</div>'
-        +'<div class="lg-num">'+(sm?lgFmt(sm.kg,2)+'kg<small>'+lgFmt(sm.amt)+'원'+(sm.n>1?' · '+sm.n+'개월':'')+'</small>':'')+'</div></div></div>';
+        +'<div class="lg-top"><div class="lg-nm">'+E(lgRfidAddr(it)||it.name||'(이름 없음)')   // [11_13k] 주소 맨 앞, 오른쪽 끝에 기계(모델)명
+          +' <span class="lg-tag '+(use?'use':'unuse')+'">'+(use?'사용중':'미사용')+'</span>'+(nopos?' <span class="lg-tag nopos">위치 없음</span>':'')+'</div>'
+        +'<div class="lg-num">'+((it.model||lgRfidSplit(it.name).model)?'<b class="lg-model">'+E(it.model||lgRfidSplit(it.name).model)+'</b>':'')+(sm?'<small>'+lgFmt(sm.kg,2)+'kg · '+lgFmt(sm.amt)+'원'+(sm.n>1?' · '+sm.n+'개월':'')+'</small>':'')+'</div></div></div>';
     }
     if(it.kind==='food'){
       const cum=lgFoodCum(it), u=lgNum(it.unit), sm=lgFoodSum(it);   // [11_12] '주소 · 상호', 오른쪽 ℓ·금액은 고른 기간 자료 있을 때만
@@ -3434,7 +3439,8 @@ function lgCardClose(){ const c=$('lg-card'); if(c) c.style.display='none';
 // ── 지도 ──
 // [11_11] 지도 라벨 글자: 주소(본/삼 번지) 또는 이름을 짧게
 function lgShort(it){
-  let s=String((lgIsM()||lgIsH())?(it.addr||it.riskType||''):(it._t==='rfid'?(it.name||it.addr||''):(it.name||it.addr||'')));
+  if(it._t==='rfid'){ const a=lgRfidAddr(it); return a.length>12?a.slice(0,12)+'…':(a||'-'); }   // [11_13k] 괄호 다 빼고 주소만
+  let s=String((lgIsM()||lgIsH())?(it.addr||it.riskType||''):(it.name||it.addr||''));
   s=lgAddrDisp(s.replace(/\([^)]*\)/g,''),it.dong||it.addrDong||'').replace(/\s+/g,' ').trim();
   return s.length>12?s.slice(0,12)+'…':(s||'-');
 }
@@ -3911,7 +3917,8 @@ function lgParseRows(rows){
     const r=rows[i], nm=String(r[cN]||'').trim(), line=r.map(String).join(' ');
     if(/합\s*계/.test(line)||/\(\s*[\d,]+\s*건\s*\)/.test(nm)){ const d=lgDongOf(line); if(d) pend.forEach(p=>{ if(!p.dong) p.dong=d; }); pend=[]; continue; }
     if(!nm) continue;
-    const p={name:nm, addr:cA>=0?String(r[cA]||'').trim():'', n:cP>=0?lgNum(r[cP]):0, kg:lgNum(r[cK]), amt:cM>=0?lgNum(r[cM]):0, dong:cD>=0?lgDongOf(r[cD]):''};
+    const sp=lgRfidSplit(nm);   // [11_13k] 앞 괄호 = 모델명
+    const p={name:sp.name, model:sp.model, addr:cA>=0?String(r[cA]||'').trim():'', n:cP>=0?lgNum(r[cP]):0, kg:lgNum(r[cK]), amt:cM>=0?lgNum(r[cM]):0, dong:cD>=0?lgDongOf(r[cD]):''};
     out.push(p); pend.push(p);
   }
   out.forEach(p=>{ if(!p.dong) p.dong=lgDongOf(p.name)||lgDongOf(p.addr); });
@@ -3932,13 +3939,13 @@ async function lgImport(input){
 async function lgRfidApply(p){
   const ym=lgYm();
   try{
-    const byKey={}; rfidList.forEach(x=>{ byKey[lgNormName(x.name)]=x; });
+    const byKey={}; rfidList.forEach(x=>{ byKey[lgNormName(x.name)]=x; byKey[lgNormName(lgRfidSplit(x.name).name)]=x; });   // [11_13k] 모델명 뗀 이름으로도 찾음
     let nNew=0,nUpd=0; const up={}, now=nowStr();
     p.rows.forEach(function(r,i){
       const ex=byKey[lgNormName(r.name)], mo={n:r.n,kg:r.kg,amt:r.amt};
-      if(ex){ up[ex.id+'/months/'+ym]=mo; if(!ex.addr&&r.addr) up[ex.id+'/addr']=r.addr; nUpd++; }
+      if(ex){ up[ex.id+'/months/'+ym]=mo; if(!ex.addr&&r.addr) up[ex.id+'/addr']=r.addr; if(!ex.model&&r.model) up[ex.id+'/model']=r.model; nUpd++; }
       else{ const id='r'+Date.now().toString(36)+'_'+i;
-        up[id]={name:r.name,addr:r.addr,dong:r.dong,status:r.kg>0?'사용':'미사용',months:{[ym]:mo},createdAt:now,updatedAt:now,by:staff||''};
+        up[id]={name:r.name,model:r.model||'',addr:r.addr,dong:r.dong,status:r.kg>0?'사용':'미사용',months:{[ym]:mo},createdAt:now,updatedAt:now,by:staff||''};
         byKey[lgNormName(r.name)]={id:id}; nNew++; }
     });
     const tKg=p.rows.reduce((s,r)=>s+r.kg,0), tAmt=p.rows.reduce((s,r)=>s+r.amt,0);
@@ -4090,7 +4097,7 @@ async function lgUpGo(){
   let hn=Math.max(0,...recs.filter(r=>r.recType==='hazard'&&r.hazardNo).map(r=>parseInt((r.hazardNo||'').replace('26-',''))||0));
   go.forEach(function(x,i){
     if(H){ const id=uuid()+i; hn++; up[id]=Object.assign({},x.rec,{id:id,hazardNo:'26-'+(hn<10?'0'+hn:hn)}); }
-    else up[(k==='rfid'?'r':'b')+Date.now().toString(36)+'_'+i]=x.rec;
+    else { const rec=Object.assign({},x.rec); if(k==='rfid'&&rec.name){ const sp=lgRfidSplit(rec.name); if(sp.model){ rec.name=sp.name; if(!rec.model) rec.model=sp.model; } } up[(k==='rfid'?'r':'b')+Date.now().toString(36)+'_'+i]=rec; }   // [11_13k]
   });
   const REF=H?RECS:(k==='rfid'?RFID:BIZ);
   try{

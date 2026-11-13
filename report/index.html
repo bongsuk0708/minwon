@@ -603,7 +603,8 @@ body{background:var(--bg)}
 #mj #form-minwon{display:block}
 #mj-b .form-card{box-shadow:none;border:1px solid var(--line)}
 #mj-b .form-label{font-size:.85em}#mj-b .form-input,#mj-b .form-select,#mj-b textarea{font-size:1em}#mj-b .pill{font-size:.92em}#mj-b .submit-btn{font-size:1.05em}
-@container (min-width:760px){ #mj #form-minwon{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start} #mj #form-minwon>.submit-btn{grid-column:1/-1} }
+@container (min-width:600px){ #mj #form-minwon{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch} #mj #form-minwon>.submit-btn,#mj #form-minwon>.mj-full{grid-column:1/-1} #mj .mj-half{max-width:50%} }
+#mj #form-minwon>.form-card{margin-bottom:0}#mj #form-minwon{display:grid;gap:12px}
 @media(min-width:701px){ #mj{width:min(760px,calc(100vw - 28px))} }
 </style>
 </head>
@@ -620,7 +621,7 @@ body{background:var(--bg)}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113e</span><span id="net-dot" class="net-dot"></span></h1>
+      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113f</span><span id="net-dot" class="net-dot"></span></h1>
       <div id="hdr-right">
         <a id="mw-sw" href="https://boneco-minwon.web.app/?from=risk" target="bn_minwon" rel="noopener">📋 민원접수</a>
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
@@ -1538,9 +1539,23 @@ function geoH(){
 })();
 // [11_13] 민원 접수창 — 창(이동·크기 조정)은 그대로, 안의 입력 양식은 부장님 원래 민원 등록 양식(#form-minwon)을 옮겨 와 쓴다
 function mjOpen(){
-  const f=$('form-minwon'), b=$('mj-b'); if(f&&f.parentElement!==b) b.appendChild(f);
+  const f=$('form-minwon'), b=$('mj-b'); if(f&&f.parentElement!==b){ b.appendChild(f); mjLayout(f); }
   try{ resetMForm(); }catch(e){}
   $('mj-bg').classList.add('on'); b.scrollTop=0; setTimeout(()=>{ const a=$('m-addr'); if(a) a.focus(); },50);
+}
+// [11_13] 접수창 배치 (시안): 위 두 칸 높이 맞춤(관리대상 → 오른쪽 칸), 주소 줄 가로 전체, 사진 칸 옆은 내용 구분·세부 내용, 방문 확인결과·처리 상태는 아래 가로 전체
+function mjLayout(f){
+  try{
+    const cards=[...f.querySelectorAll(':scope>.form-card')]; if(cards.length<4) return;
+    const [c1,c2,c3,c4]=cards, row=id=>$(id)&&$(id).closest('.form-row');
+    const addrRow=row('m-addr'), mg=$('m-mgmt').parentElement, st=$('m-status').parentElement, act=row('m-action'), two=st.parentElement;
+    const addrCard=document.createElement('div'); addrCard.className='form-card mj-full'; addrCard.appendChild(addrRow);
+    mg.classList.add('form-row'); c2.appendChild(mg);
+    const actCard=document.createElement('div'); actCard.className='form-card mj-full'; actCard.appendChild(act);
+    st.classList.add('mj-half'); actCard.appendChild(st); if(two&&!two.children.length) two.remove();
+    c2.after(addrCard); c4.after(actCard);
+    const ct=$('m-content'); if(ct) ct.style.minHeight='118px';
+  }catch(e){}
 }
 function mjClose(){ $('mj-bg').classList.remove('on'); const m=$('mj'); if(m){ m.style.left=''; m.style.top=''; } }   // 닫으면 자리는 처음으로 (크기는 그대로)
 // [11_13] 담당 팀 자동 — 민원처리앱 규칙: 15시 이전(06시~) 접수 = 기동반, 15시 이후·새벽 = 민원종류별 야간 수거팀 (현장앱이 이 팀으로 받음)

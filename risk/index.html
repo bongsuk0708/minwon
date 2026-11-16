@@ -146,7 +146,7 @@ table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v6';
+const VER='v7';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -297,42 +297,89 @@ V.home=async m=>{
 };
 
 /* ---------- 점검 (checklists) ---------- */
+// 지금 쓰는 체크리스트: 저장된 것(risk/cklists)이 있으면 그것, 없으면 2026년 원본
+async function ckLists(){let o={};try{o=await load('cklists',true)}catch(e){}
+  const base=A.checklists.map(c=>o[c.key]&&!o[c.key].deleted&&(o[c.key].items||[]).length?{key:c.key,name:o[c.key].name||c.name,items:o[c.key].items,edited:true}:{key:c.key,name:c.name,items:c.items});
+  const extra=Object.entries(o).filter(([k,v])=>!A.checklists.some(c=>c.key===k)&&v&&!v.deleted&&(v.items||[]).length).map(([k,v])=>({key:k,name:v.name||k,items:v.items,custom:true}));
+  return base.concat(extra)}
+// 점검 기록이 쓴 항목 (예전 기록은 2026년 원본 항목)
+const ckOf=s=>({key:s.key,name:s.name,items:s.items||((A.checklists.find(c=>c.key===s.key)||{}).items)||[]});
 V.check=async m=>{
   setHead('현장 체크리스트','2단계 · 유해·위험요인 파악');
-  let saved=[];try{const c=await load('checks',true);saved=Object.entries(c).map(([id,v])=>({id,...v})).sort((a,b)=>b.date>a.date?1:-1)}catch(e){}
-  m.innerHTML=`<div class="card"><h2>새 점검 시작</h2><p class="muted">2026년 체크리스트를 그대로 씁니다. 부적합 항목은 사진을 붙이고 평가표로 넘길 수 있습니다.</p>
-   ${A.checklists.map(c=>`<button class="item" data-go="checkForm" data-arg="${c.key}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(c.name)}</span><span class="muted">${c.items.length}항목 ›</span></div></button>`).join('')}</div>
-   <div class="card"><h2>점검 기록</h2>
-   ${saved.map(s=>{const ng=Object.values(s.res||{}).filter(x=>x.r==='부적합').length;return `<button class="item" data-go="checkView" data-arg="${s.id}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(s.name)}</span>${ng?`<span class="tag lv-높음">부적합 ${ng}</span>`:'<span class="tag lv-낮음">이상 없음</span>'}</div><div class="m">${fmtD(s.date)} · ${esc(s.by||'')}</div></button>`}).join('')}
+  let saved=[];try{const c=await load('checks',true);saved=Object.entries(c).map(([id,v])=>({id,...v})).filter(s=>!s.deleted).sort((a,b)=>b.date>a.date?1:-1)}catch(e){}
+  const lists=await ckLists();
+  m.innerHTML=`<div class="card"><h2>새 점검 시작</h2><p class="muted">부적합 항목은 사진을 붙이고 평가표로 넘길 수 있습니다. 점검 항목은 ✏ 버튼으로 고칩니다.</p>
+   ${lists.map(c=>`<div class="row" style="gap:6px;align-items:stretch;margin-bottom:8px"><button class="item" data-go="checkForm" data-arg="${esc(c.key)}" style="background:#F7F8F6;flex:1;margin:0"><div class="between"><span class="t">${esc(c.name)}</span><span class="muted">${c.items.length}항목 ›</span></div></button><button class="btn" data-go="ckEdit" data-arg="${esc(c.key)}" aria-label="${esc(c.name)} 항목 고치기" style="white-space:nowrap">✏ 항목</button></div>`).join('')}
+   <button class="btn block" data-go="ckEdit" data-arg="new" style="border-style:dashed">+ 새 체크리스트 만들기</button></div>
+   <div class="card"><h2>점검 기록</h2><p class="muted" style="margin-top:0">기록을 눌러 열면 수정·삭제할 수 있습니다.</p>
+   ${saved.map(s=>{const ng=Object.values(s.res||{}).filter(x=>x.r==='부적합').length;return `<button class="item" data-go="checkView" data-arg="${s.id}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(s.name)}</span>${ng?`<span class="tag lv-높음">부적합 ${ng}</span>`:'<span class="tag lv-낮음">이상 없음</span>'}</div><div class="m">${fmtD(s.date)} · ${esc(s.by||'')}${s.edited?' · 수정됨':''}</div></button>`}).join('')}
    ${A.checklists.map(c=>`<button class="item" data-go="archCheck" data-arg="${c.key}" style="background:#F7F8F6"><div class="between"><span class="t">${esc(c.name)}</span><span class="tag st">2026 보관</span></div><div class="m">1차 2026.04.10 · 2차 2026.04.30 · ${esc(A.roles.assessors)}</div></button>`).join('')}
    </div>`;
 };
-V.checkForm=async(m,key)=>{
-  const L=A.checklists.find(c=>c.key===key);setHead(L.name,'점검 입력');
+// arg: 체크리스트 key(새 점검) 또는 "edit:기록id"(점검 기록 수정)
+V.checkForm=async(m,arg)=>{
+  const eid=String(arg).startsWith('edit:')?String(arg).slice(5):null;
+  const old=eid?(await load('checks',true))[eid]:null;
+  const L=old?ckOf(old):(await ckLists()).find(c=>c.key===arg);
+  if(!L){m.innerHTML='<div class="card"><div class="warn">체크리스트를 찾지 못했습니다</div></div>';return}
+  setHead(L.name,old?'점검 기록 수정':'점검 입력');
   if(!needUser()){back();return}
-  const st={res:{},photos:{}};let lastCat='';
-  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="cdate">점검일</label><input class="i" type="date" id="cdate" value="${today()}"></div><div><label class="f">점검자</label><input class="i" id="cby" value="${esc(S.user)}"></div></div></div>
-  <div class="card list-check" id="cl">${L.items.map(it=>{const h=it.cat!==lastCat?`<div class="cat">${esc(lastCat=it.cat)}</div>`:'';return h+`<div style="padding:10px 0;border-bottom:1px solid #EEF0F2"><div class="q"><b>${esc(it.no)}</b><span>${esc(it.text)}</span></div><div class="seg" style="grid-template-columns:repeat(3,1fr)" data-it="${it.id}"><button class="ok" data-r="적합">적합</button><button class="ng" data-r="부적합">부적합</button><button data-r="해당없음">해당없음</button></div><div data-extra="${it.id}" style="display:none"><input class="i" placeholder="부적합 내용·비고" data-note="${it.id}" style="margin-top:8px"><div data-pp="${it.id}"></div></div></div>`}).join('')}</div>
-  <div class="card"><div class="between"><span class="muted" id="cnt">0 / ${L.items.length}</span><button class="btn sm" id="allok">남은 항목 모두 적합</button></div><button class="btn pri block" style="margin-top:10px" id="csave">점검 저장</button></div>`;
+  const st={res:{},photos:{},keep:{}};let lastCat='';const R0=(old&&old.res)||{};
+  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="cdate">점검일</label><input class="i" type="date" id="cdate" value="${old?esc(old.date||''):today()}"></div><div><label class="f">점검자</label><input class="i" id="cby" value="${esc(old?old.by||'':S.user)}"></div></div></div>
+  <div class="card list-check" id="cl">${L.items.map(it=>{const h=it.cat!==lastCat?`<div class="cat">${esc(lastCat=it.cat)}</div>`:'';return h+`<div style="padding:10px 0;border-bottom:1px solid #EEF0F2"><div class="q"><b>${esc(it.no)}</b><span>${esc(it.text)}</span></div><div class="seg" style="grid-template-columns:repeat(3,1fr)" data-it="${esc(it.id)}"><button class="ok" data-r="적합">적합</button><button class="ng" data-r="부적합">부적합</button><button data-r="해당없음">해당없음</button></div><div data-extra="${esc(it.id)}" style="display:none"><input class="i" placeholder="부적합 내용·비고" data-note="${esc(it.id)}" style="margin-top:8px"><div data-kp="${esc(it.id)}"></div><div data-pp="${esc(it.id)}"></div></div></div>`}).join('')}</div>
+  <div class="card"><div class="between"><span class="muted" id="cnt">0 / ${L.items.length}</span><button class="btn sm" id="allok">남은 항목 모두 적합</button></div><button class="btn pri block" style="margin-top:10px" id="csave">${old?'수정 저장':'점검 저장'}</button></div>`;
+  const q=(a,id)=>[...m.querySelectorAll(`[${a}]`)].find(el=>el.getAttribute(a)===id);
   const cnt=()=>$('#cnt').textContent=Object.keys(st.res).length+' / '+L.items.length;
-  m.querySelectorAll('[data-it]').forEach(seg=>seg.onclick=e=>{const b=e.target.closest('button');if(!b)return;const id=seg.dataset.it;st.res[id]=b.dataset.r;seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));const ex=m.querySelector(`[data-extra="${id}"]`);ex.style.display=b.dataset.r==='부적합'?'block':'none';if(b.dataset.r==='부적합'&&!st.photos[id]){st.photos[id]=[];photoPicker(m.querySelector(`[data-pp="${id}"]`),st.photos[id])}cnt()});
-  $('#allok').onclick=()=>{L.items.forEach(it=>{if(!st.res[it.id]){st.res[it.id]='적합';m.querySelector(`[data-it="${it.id}"] .ok`).classList.add('on')}});cnt()};
+  const drawKeep=id=>{const el=q('data-kp',id);const ids=st.keep[id]||[];el.innerHTML=ids.length?`<div class="muted" style="margin-top:8px">올려 둔 사진 ${ids.length}장</div>${thumbs(ids,{del:true})}`:'';fillThumbs(el);el.querySelectorAll('[data-delph]').forEach(x=>x.onclick=e=>{e.stopPropagation();st.keep[id]=ids.filter(p=>p!==x.dataset.delph);drawKeep(id)})};
+  const pick=(id,r)=>{st.res[id]=r;const seg=q('data-it',id);seg.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.r===r));q('data-extra',id).style.display=r==='부적합'?'block':'none';if(r==='부적합'&&!st.photos[id]){st.photos[id]=[];photoPicker(q('data-pp',id),st.photos[id]);drawKeep(id)}cnt()};
+  for(const it of L.items){const r=R0[it.id];if(!r)continue;st.keep[it.id]=(r.photos||[]).slice();if(r.note)q('data-note',it.id).value=r.note;pick(it.id,r.r)}
+  m.querySelectorAll('[data-it]').forEach(seg=>seg.onclick=e=>{const b=e.target.closest('button');if(b)pick(seg.dataset.it,b.dataset.r)});
+  $('#allok').onclick=()=>{L.items.forEach(it=>{if(!st.res[it.id])pick(it.id,'적합')})};cnt();
   $('#csave').onclick=async()=>{
     if(Object.keys(st.res).length<L.items.length&&!confirm('표시하지 않은 항목이 있습니다. 그대로 저장할까요?'))return;
     const b=$('#csave');b.disabled=true;b.textContent='저장 중…';
-    try{const res={};for(const it of L.items){if(!st.res[it.id])continue;const o={r:st.res[it.id]};const n=m.querySelector(`[data-note="${it.id}"]`).value.trim();if(n)o.note=n;if(st.photos[it.id]&&st.photos[it.id].length)o.photos=await savePhotos(st.photos[it.id]);res[it.id]=o}
-      const rec={key,name:L.name,date:$('#cdate').value,by:$('#cby').value.trim(),t:nowStr(),res};const r=await post('checks',rec);await log('체크리스트 저장: '+L.name);inval('checks');toast('저장했습니다');S.stack.pop();S.cur={view:'checkView',arg:r.name};render()}
-    catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='점검 저장'}};
+    try{const res={};for(const it of L.items){if(!st.res[it.id])continue;const o={r:st.res[it.id]};const n=q('data-note',it.id).value.trim();if(n)o.note=n;
+        if(o.r==='부적합'){const ph=(st.keep[it.id]||[]).concat(st.photos[it.id]&&st.photos[it.id].length?await savePhotos(st.photos[it.id]):[]);if(ph.length)o.photos=ph}res[it.id]=o}
+      const items=L.items.map(i=>({id:i.id,no:i.no,cat:i.cat,text:i.text}));
+      if(old){const rec={...old,date:$('#cdate').value,by:$('#cby').value.trim(),res,items,edited:nowStr(),hist:(old.hist||[]).concat([{t:nowStr(),u:S.user,what:'점검 기록 수정'}])};
+        await put('checks/'+eid,rec);await log('체크리스트 수정: '+L.name);inval('checks');toast('수정했습니다');back()}
+      else{const rec={key:L.key,name:L.name,date:$('#cdate').value,by:$('#cby').value.trim(),t:nowStr(),res,items};const r=await post('checks',rec);await log('체크리스트 저장: '+L.name);inval('checks');toast('저장했습니다');S.stack.pop();S.cur={view:'checkView',arg:r.name};render()}}
+    catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent=old?'수정 저장':'점검 저장'}};
 };
 V.checkView=async(m,id)=>{
-  const s=(await load('checks'))[id];const L=A.checklists.find(c=>c.key===s.key);setHead(s.name,fmtD(s.date)+' 점검');
+  const s=(await load('checks',true))[id];const L=ckOf(s);setHead(s.name,fmtD(s.date)+' 점검');
   const ng=L.items.filter(it=>s.res&&s.res[it.id]&&s.res[it.id].r==='부적합');
-  m.innerHTML=`<div class="card"><dl class="kv"><dt>점검일</dt><dd>${fmtD(s.date)}</dd><dt>점검자</dt><dd>${esc(s.by)}</dd><dt>결과</dt><dd>적합 ${Object.values(s.res||{}).filter(x=>x.r==='적합').length} · 부적합 ${ng.length} · 해당없음 ${Object.values(s.res||{}).filter(x=>x.r==='해당없음').length}</dd></dl></div>
-  ${ng.length?`<div class="card"><h2>부적합 항목</h2>${ng.map(it=>{const r=s.res[it.id];return `<div style="padding:8px 0;border-bottom:1px solid #EEF0F2"><div class="t" style="font-weight:600">${esc(it.no)}. ${esc(it.text)}</div>${r.note?`<div class="muted">${esc(r.note)}</div>`:''}${thumbs(r.photos)}<button class="btn sm" style="margin-top:6px" data-tokras="${it.id}">평가표로 보내기</button></div>`}).join('')}</div>`:''}
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>점검일</dt><dd>${fmtD(s.date)}</dd><dt>점검자</dt><dd>${esc(s.by)}</dd><dt>결과</dt><dd>적합 ${Object.values(s.res||{}).filter(x=>x.r==='적합').length} · 부적합 ${ng.length} · 해당없음 ${Object.values(s.res||{}).filter(x=>x.r==='해당없음').length}</dd></dl>
+   <div class="grid2" style="margin-top:10px"><button class="btn dark" data-go="checkForm" data-arg="edit:${id}">✏ 수정</button><button class="btn" id="cdel" style="color:#8E1F14">삭제</button></div></div>
+  ${ng.length?`<div class="card"><h2>부적합 항목</h2>${ng.map(it=>{const r=s.res[it.id];return `<div style="padding:8px 0;border-bottom:1px solid #EEF0F2"><div class="t" style="font-weight:600">${esc(it.no)}. ${esc(it.text)}</div>${r.note?`<div class="muted">${esc(r.note)}</div>`:''}${thumbs(r.photos)}<button class="btn sm" style="margin-top:6px" data-tokras="${esc(it.id)}">평가표로 보내기</button></div>`}).join('')}</div>`:''}
   <div class="card list-check"><h2>전체 결과</h2>${L.items.map(it=>{const r=(s.res||{})[it.id];return `<div class="q"><b>${esc(it.no)}</b><span style="flex:1">${esc(it.text)}</span><span class="tag ${r&&r.r==='부적합'?'lv-높음':(r&&r.r==='적합'?'lv-낮음':'st')}">${r?r.r:'-'}</span></div>`}).join('')}</div>
+  ${(s.hist||[]).length?`<div class="card"><h2>수정 이력</h2>${s.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}</div>`:''}
   <button class="btn block" id="pr">인쇄 / PDF</button>`;
   fillThumbs(m);$('#pr').onclick=()=>printCheck(L,s);
-  m.querySelectorAll('[data-tokras]').forEach(b=>b.onclick=()=>{const it=L.items.find(x=>x.id===b.dataset.tokras);const r=s.res[it.id];go('krasForm',`|new|${JSON.stringify({proc:s.key==='공통'?'공통':s.key,hazard:it.text+(r.note?' — '+r.note:''),photos:r.photos||[]})}`)});
+  $('#cdel').onclick=async()=>{if(!needUser())return;if(!confirm(`${fmtD(s.date)} "${s.name}" 점검 기록을 지울까요?`))return;try{await patch('checks/'+id,{deleted:true,delBy:S.user,delT:nowStr()});await log('체크리스트 기록 삭제: '+s.name);inval('checks');toast('지웠습니다');back()}catch(e){toast('실패: '+e.message)}};
+  m.querySelectorAll('[data-tokras]').forEach(b=>b.onclick=()=>{const it=L.items.find(x=>x.id===b.dataset.tokras);const r=s.res[it.id];go('krasForm',`|new|${JSON.stringify({proc:PROC.some(p=>p[0]===s.key)?s.key:'',hazard:it.text+(r.note?' — '+r.note:''),photos:r.photos||[]})}`)});
+};
+// 점검 항목 고치기 (key='new' 이면 새 체크리스트)
+V.ckEdit=async(m,key)=>{
+  if(!needUser()){back();return}
+  const isNew=key==='new';const cur=isNew?{key:'c'+uid(),name:'',items:[]}:(await ckLists()).find(c=>c.key===key);
+  if(!cur){back();return}
+  const orig=A.checklists.find(c=>c.key===cur.key);
+  setHead(isNew?'새 체크리스트':cur.name,'점검 항목 고치기');
+  const rows=cur.items.map(i=>Object.assign([i.cat,i.text],{_id:i.id}));
+  m.innerHTML=`<div class="note" style="margin-bottom:12px;line-height:1.6">여기서 고친 항목은 <b>앞으로 하는 점검</b>에 쓰입니다. 이미 저장된 점검 기록과 2026 보관본은 그대로 남습니다.</div>
+  <div class="card"><label class="f" for="kn" style="margin-top:0">체크리스트 이름</label><input class="i" id="kn" value="${esc(cur.name)}" placeholder="예: 가로청소"></div>
+  <div class="card"><h2 style="margin-bottom:2px">점검 항목 <span class="muted" id="kc"></span></h2><p class="muted" style="margin:0 0 6px">왼쪽 = 구분(같은 구분끼리 묶여 보임), 오른쪽 = 점검 내용. 번호는 순서대로 자동으로 붙습니다.</p><div id="kl"></div></div>
+  <div class="grid2">${orig&&cur.edited?'<button class="btn" id="kdef">2026년 원본으로 되돌리기</button>':(cur.custom?'<button class="btn" id="kdel" style="color:#8E1F14">이 체크리스트 지우기</button>':'<span></span>')}<button class="btn dark" id="ksv">저장</button></div>`;
+  listEd($('#kl'),rows,[{ph:'구분',w:1},{ph:'점검 내용',w:4}],()=>{$('#kc').textContent=rows.length+'항목'});
+  $('#ksv').onclick=async()=>{const name=$('#kn').value.trim();if(!name){toast('체크리스트 이름을 적어 주세요');return}
+    const its=rows.filter(r=>String(r[1]||'').trim());if(!its.length){toast('점검 항목이 하나도 없습니다');return}
+    let lc='';const items=its.map((r,i)=>{lc=String(r[0]||'').trim()||lc||'공통';return {id:r._id||(cur.key+'_'+uid()),no:String(i+1),cat:lc,text:String(r[1]).trim()}});
+    if(!confirm('저장하면 모든 휴대폰·PC의 새 점검에 바로 적용됩니다. 저장할까요?'))return;
+    const b=$('#ksv');b.disabled=true;b.textContent='저장 중…';
+    try{await put('cklists/'+cur.key,{name,items,t:nowStr(),by:S.user});await log('점검 항목 수정: '+name);inval('cklists');toast('저장했습니다');back()}catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='저장'}};
+  const kd=$('#kdef');if(kd)kd.onclick=async()=>{if(!confirm('고친 내용을 버리고 2026년 원본 항목으로 되돌릴까요?'))return;try{await del('cklists/'+cur.key);await log('점검 항목 원본으로 되돌림: '+cur.name);inval('cklists');toast('되돌렸습니다');back()}catch(e){toast('실패: '+e.message)}};
+  const kx=$('#kdel');if(kx)kx.onclick=async()=>{if(!confirm(`"${cur.name}" 체크리스트를 지울까요?\n(이미 저장된 점검 기록은 남습니다)`))return;try{await patch('cklists/'+cur.key,{deleted:true});await log('체크리스트 삭제: '+cur.name);inval('cklists');toast('지웠습니다');back()}catch(e){toast('실패: '+e.message)}};
 };
 V.archCheck=async(m,key)=>{
   const L=A.checklists.find(c=>c.key===key);setHead(L.name,'2026 보관 · 4.10 / 4.30');let lastCat='';
@@ -348,14 +395,16 @@ V.report=async m=>{
   setHead('아차사고·의견 신고','근로자 참여 기록');
   const r=await load('reports',true);const list=Object.entries(r).map(([id,v])=>({id,...v})).sort((a,b)=>b.t>a.t?1:-1);
   m.innerHTML=`<button class="btn pri block" data-go="reportForm" style="margin-bottom:12px">+ 새로 신고하기</button>
-  <div class="card"><h2>접수 목록 <span class="muted">${list.length}건</span></h2>${list.map(x=>`<button class="item" data-go="reportView" data-arg="${x.id}" style="background:#F7F8F6"><div class="between"><span class="muted">${esc(x.kind)} · ${esc(x.team||'')}</span><span class="tag ${x.status==='조치완료'?'lv-낮음':'st'}">${esc(x.status)}</span></div><div class="t">${esc((x.text||'').slice(0,70))}</div><div class="m">${esc(x.t)} · ${x.anon?'익명':esc(x.by||'')}${x.photos?' · 사진 '+x.photos.length:''}</div></button>`).join('')||'<div class="empty">아직 접수된 신고가 없습니다</div>'}</div>
+  <div class="card"><h2>접수 목록 <span class="muted">${list.length}건</span></h2>${list.map(x=>`<button class="item" data-go="reportView" data-arg="${x.id}" style="background:#F7F8F6"><div class="between"><span class="muted">${esc(x.kind)} · ${esc(x.team||'')}${x.dong?' · '+esc(x.dong):''}</span><span class="tag ${x.status==='조치완료'?'lv-낮음':'st'}">${esc(x.status)}</span></div><div class="t">${esc((x.text||'').slice(0,70))}</div><div class="m">${esc(x.t)} · ${x.anon?'익명':esc(x.by||'')}${x.photos?' · 사진 '+x.photos.length:''}</div></button>`).join('')||'<div class="empty">아직 접수된 신고가 없습니다</div>'}</div>
   <div class="card"><h2>2026 근로자 의견 청취 결과</h2><button class="btn block" data-go="archOpinion">팀별 종합표 보기</button></div>`;
 };
 V.reportForm=async m=>{
   setHead('신고하기','아차사고 · 위험요인 · 개선 건의');
   const st={kind:'아차사고',photos:[]};
+  let dongs=[];try{dongs=[...new Set(Object.values(await load('reports')).map(x=>x.dong).filter(Boolean))].sort()}catch(e){}
   m.innerHTML=`<div class="card"><label class="f">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="kind">${['아차사고','위험요인','개선 건의'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
-  <div class="grid2"><div><label class="f" for="team">소속 팀</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div><div><label class="f" for="place">장소</label><input class="i" id="place" placeholder="예: 잠실본동 골목"></div></div>
+  <label class="f" for="team">소속 팀</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select>
+  <label class="f">장소</label><div class="grid2" style="grid-template-columns:1fr 2fr"><div><input class="i" id="dong" list="dongs" placeholder="동" aria-label="동"><datalist id="dongs">${dongs.map(d=>`<option>${esc(d)}</option>`).join('')}</datalist></div><div><input class="i" id="addr" placeholder="주소·위치" aria-label="주소"></div></div>
   <label class="f" for="txt">무슨 일이 있었나요?</label><textarea class="i" id="txt" placeholder="언제, 어디서, 어떤 상황이었는지 적어 주세요"></textarea>
   <label class="f">사진</label><div id="pp"></div>
   <label style="display:flex;align-items:center;gap:8px;margin-top:12px;min-height:44px"><input type="checkbox" id="anon" style="width:20px;height:20px;accent-color:#B53C0C"> 이름 숨기기 (익명)</label>
@@ -365,13 +414,13 @@ V.reportForm=async m=>{
   $('#send').onclick=async()=>{const txt=$('#txt').value.trim();if(!txt){toast('내용을 적어 주세요');return}
     const anon=$('#anon').checked;if(!anon&&!needUser())return;
     const b=$('#send');b.disabled=true;b.textContent='보내는 중…';
-    try{const ph=await savePhotos(st.photos);const rec={kind:st.kind,team:$('#team').value,place:$('#place').value.trim(),text:txt,anon,by:anon?'':S.user,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
+    try{const ph=await savePhotos(st.photos);const dong=$('#dong').value.trim(),addr=$('#addr').value.trim();const rec={kind:st.kind,team:$('#team').value,dong,addr,place:[dong,addr].filter(Boolean).join(' '),text:txt,anon,by:anon?'':S.user,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
       await post('reports',rec);await log('신고 접수: '+st.kind);inval('reports');toast('접수되었습니다. 감사합니다!');back()}
     catch(e){toast('전송 실패: '+e.message);b.disabled=false;b.textContent='신고하기'}};
 };
 V.reportView=async(m,id)=>{
   const x=(await load('reports',true))[id];setHead(x.kind,x.t);
-  m.innerHTML=`<div class="card"><dl class="kv"><dt>구분</dt><dd>${esc(x.kind)}</dd><dt>팀</dt><dd>${esc(x.team)}</dd><dt>장소</dt><dd>${esc(x.place||'-')}</dd><dt>신고자</dt><dd>${x.anon?'익명':esc(x.by)}</dd><dt>접수</dt><dd>${esc(x.t)}</dd></dl><p class="pre" style="line-height:1.6">${esc(x.text)}</p>${thumbs(x.photos)}</div>
+  m.innerHTML=`<div class="card"><dl class="kv"><dt>구분</dt><dd>${esc(x.kind)}</dd><dt>팀</dt><dd>${esc(x.team)}</dd>${x.dong||x.addr?`<dt>동</dt><dd>${esc(x.dong||'-')}</dd><dt>주소</dt><dd>${esc(x.addr||'-')}</dd>`:`<dt>장소</dt><dd>${esc(x.place||'-')}</dd>`}<dt>신고자</dt><dd>${x.anon?'익명':esc(x.by)}</dd><dt>접수</dt><dd>${esc(x.t)}</dd></dl><p class="pre" style="line-height:1.6">${esc(x.text)}</p>${thumbs(x.photos)}</div>
   <div class="card"><h2>처리</h2><label class="f" for="rs">상태</label><select class="i" id="rs">${RSTAT.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
   <label class="f" for="rn">조치 내용</label><textarea class="i" id="rn">${esc(x.action||'')}</textarea>
   <div class="grid2" style="margin-top:10px"><button class="btn" id="tok">평가표로 보내기</button><button class="btn dark" id="rsv">저장</button></div>

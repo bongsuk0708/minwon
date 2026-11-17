@@ -102,6 +102,10 @@ canvas.sig{width:100%;height:180px;border:1.5px dashed #8C96A3;border-radius:10p
 #print{display:none}
 .pc-only{display:none}
 table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7F8F6}
+/* 현장 보고 전용 (?bogo): 아래 메뉴 없이 보고 화면만 */
+body.field nav.bot{display:none}
+body.field #app{display:block;max-width:640px;margin:0 auto}
+body.field main{padding-bottom:30px}
 /* PC: 넓은 화면은 왼쪽 메뉴 + 넓은 본문 */
 @media (min-width:1000px){
   #app{max-width:none;display:grid;grid-template-columns:200px minmax(0,1fr);grid-template-rows:auto 1fr}
@@ -148,7 +152,7 @@ table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v9';
+const VER='v10';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -403,12 +407,12 @@ V.report=async m=>{
 V.reportForm=async m=>{
   setHead('보고하기','아차 위험 · 위험요인 · 개선 건의');
   const st={kind:'아차사고',photos:[]};
-  let dongs=[];try{dongs=[...new Set(Object.values(await load('reports')).map(x=>x.dong).filter(Boolean))].sort()}catch(e){}
+  let places=[];try{places=[...new Set(Object.values(await load('reports')).map(x=>x.place).filter(Boolean))].sort().slice(0,200)}catch(e){}
   const nw=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
   m.innerHTML=`<div class="card"><label class="f">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="kind">${['아차사고','위험요인','개선 건의'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
   <label class="f" for="when">일시 (언제 있었나요?)</label><input class="i" id="when" type="datetime-local" value="${nw}" max="${nw}">
   <div class="grid2"><div><label class="f" for="team">부서</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div><div><label class="f" for="nm">이름</label><input class="i" id="nm" value="${esc(S.user||'')}" placeholder="이름"></div></div>
-  <label class="f">장소</label><div class="grid2" style="grid-template-columns:1fr 2fr"><div><input class="i" id="dong" list="dongs" placeholder="동" aria-label="동"><datalist id="dongs">${dongs.map(d=>`<option>${esc(d)}</option>`).join('')}</datalist></div><div><input class="i" id="addr" placeholder="주소·위치" aria-label="주소"></div></div>
+  <label class="f" for="place">장소 (동·주소·위치)</label><input class="i" id="place" list="places" placeholder="예: 중앙동 OO로 12 앞 골목"><datalist id="places">${places.map(d=>`<option>${esc(d)}</option>`).join('')}</datalist>
   <label class="f" for="txt">무슨 일이 있었나요?</label><textarea class="i" id="txt" placeholder="어디서, 어떤 상황이었는지 적어 주세요"></textarea>
   <label class="f">사진</label><div id="pp"></div>
   <label style="display:flex;align-items:center;gap:8px;margin-top:12px;min-height:44px"><input type="checkbox" id="anon" style="width:20px;height:20px;accent-color:#B53C0C"> 이름 숨기기 (익명)</label>
@@ -421,8 +425,8 @@ V.reportForm=async m=>{
     if(!anon&&nm!==S.user){S.user=nm;lsSet('risk_user',nm)}
     const when=($('#when').value||'').replace('T',' ');
     const b=$('#send');b.disabled=true;b.textContent='보내는 중…';
-    try{const ph=await savePhotos(st.photos);const dong=$('#dong').value.trim(),addr=$('#addr').value.trim();const rec={kind:st.kind,when,team:$('#team').value,dong,addr,place:[dong,addr].filter(Boolean).join(' '),text:txt,anon,by:anon?'':nm,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
-      await post('reports',rec);await log('보고 접수: '+st.kind);inval('reports');toast('접수되었습니다. 감사합니다!');back()}
+    try{const ph=await savePhotos(st.photos);const place=$('#place').value.trim();const rec={kind:st.kind,when,team:$('#team').value,place,text:txt,anon,by:anon?'':nm,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
+      await post('reports',rec);await log('보고 접수: '+st.kind);inval('reports');toast('접수되었습니다. 감사합니다!');if(FIELD)fieldDone(m,st.kind);else back()}
     catch(e){toast('전송 실패: '+e.message);b.disabled=false;b.textContent='보고하기'}};
 };
 V.reportView=async(m,id)=>{
@@ -1002,7 +1006,11 @@ async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0
   doPrint(`<h1 style="text-align:center">교 육 실 행 서</h1><table><tr><th style="width:20%">구분</th><td>${esc(x.kind)}</td></tr><tr><th>교육일시</th><td>${fmtD(x.date)} ${esc(x.time||'')}</td></tr><tr><th>교육장소</th><td>${esc(x.place||'')}</td></tr><tr><th>교육자</th><td>${esc(x.by||'')}</td></tr><tr><th>교육내용</th><td style="white-space:pre-line">${esc(x.content||x.title)}${x.shared?'\n● 위험성평가 결과 공유':''}</td></tr></table><h2>교육 사진</h2>${ph.map(s=>`<span class="ph"><img src="${s}"></span>`).join('')}<h2>참석자 서명 (${(x.att||[]).length}명)</h2><table><thead><tr><th>번호</th><th>성명</th><th>팀</th><th>서명</th></tr></thead><tbody>${(x.att||[]).map((a,i)=>`<tr><td>${i+1}</td><td>${esc(a.name)}</td><td>${esc(a.team||'')}</td><td>${a.sig?`<img src="${a.sig}" style="height:28px">`:'종이 서명지 별첨'}</td></tr>`).join('')}</tbody></table>${shPdf.length?`<p>별첨 서명지(PDF): ${shPdf.map(s=>esc(s.name)).join(', ')}</p>`:''}${shImg.map(s=>`<div style="page-break-before:always"><h2>별첨 — 종이 서명지</h2><img src="${s}" style="width:100%;max-height:250mm;object-fit:contain"></div>`).join('')}`)}
 
 /* ---------- start ---------- */
-S.cur={view:'home'};const cfgP=loadCfg();drawNav();render();cfgP.then(()=>{if(S.cur.view==='home'&&!S.stack.length)render()});
+// 현장 직원용 보고 전용 화면: 주소 끝에 ?bogo (예: .../minwon/risk/?bogo)
+const FIELD=/[?&]bogo\b/.test(location.search);
+function fieldDone(m,kind){setHead('보고 완료','아차 위험 접수');m.innerHTML=`<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:44px">✅</div><h2 style="margin:8px 0">${esc(kind)} 보고가 접수되었습니다</h2><p class="muted">감사합니다. 관리자가 확인 후 조치합니다.</p><button class="btn pri block" id="again" style="margin-top:14px">또 보고하기</button></div>`;$('#again').onclick=()=>render()}
+if(FIELD){document.body.classList.add('field');const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href='manifest-bogo.json'}
+S.cur={view:FIELD?'reportForm':'home'};const cfgP=loadCfg();drawNav();render();cfgP.then(()=>{if(S.cur.view===(FIELD?'reportForm':'home')&&!S.stack.length)render()});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>

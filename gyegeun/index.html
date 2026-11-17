@@ -306,7 +306,7 @@ body.nv{padding-top:44px}
   <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
   <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint" id="verLine">v66 · 2026-11-13 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v67 · 2026-11-17 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -990,6 +990,50 @@ function alreadySent(date, veh, g, t, n, no){
     return true;
   });
 }
+/* alreadySent 가 놓치는 '같은 전표로 보이는 것'을 한 번 더 찾습니다. 막지는 않고 저장 전에 여쭙니다.
+   ① 전표번호는 서로 다른데 1차·2차·실중량이 모두 같음 — 번호를 틀리게 읽은 같은 전표일 수 있습니다
+      (11/3 7507호: 같은 전표가 000812 / 000312 로 두 번 들어감).
+   ② 한쪽이 손으로 넣은 것(1차·2차·번호 없음)이고 같은 날 같은 차 실중량이 같음
+      (11/2·11/6 7201호: 판독으로 저장한 뒤 손으로 또 저장). */
+function looksSent(date, veh, g, t, n, no){
+  if(g && t){
+    const k = slipKey(date, veh, g, t, n);
+    const a = recs.find(r=> slipKey(r.date, r.veh, r.gross, r.tare, r.weight)===k);
+    if(a) return {hit:a, why:'no'};
+  }
+  const hand = !no && !(g && t);
+  const b = recs.find(r=> r.date===date && r.veh===veh && +r.weight===+n
+                          && (hand || (!r.no && !r.gross)));
+  return b ? {hit:b, why:'hand'} : null;
+}
+/* 전표에 찍힌 차량번호(예: 88나7201)를 판독 글자에서 찾습니다.
+   한글은 못 읽어 엉뚱한 글자 한두 개로 나오니(88L+7201, 88117201), 앞 숫자 … 뒤 네 자리로 봅니다.
+   우리 차량 목록에 있는 번호만 봅니다. */
+function slipVehs(text){
+  const out=[], t=String(text||'');
+  // 앞 숫자까지 틀리게 읽히는 일이 있어(90오8326 → 0098326), 붙어 있는 글자 덩어리가
+  // 여섯 자 이상이고 뒤 네 자리로 끝나면 차량번호로 봅니다.
+  // 중량(쉼표)·시각(:)·날짜(/ -)·전표번호(00으로 시작하는 6자리)는 뺍니다.
+  const toks=t.split(/\s+/).filter(k=> k.length>=6 && !/[,.:\/-]/.test(k) && !/^00\d{4}$/.test(k));
+  for(const v in CARS){
+    const m=String(CARS[v].f||'').match(/^(\d{2,3})\D+(\d{4})$/); if(!m) continue;
+    if(new RegExp('(?<![\\d,.:/-])'+m[1]+'.{0,3}'+m[2]+'(?![\\d,.:/-])').test(t)
+       || toks.some(k=>k.endsWith(m[2]))) out.push(v);
+  }
+  return out;
+}
+/* 여러 번 읽은 것 중 한 번이라도 지금 고른 차량이 보이면 문제없습니다.
+   한 번도 안 보이고, 다른 차량 하나가 두 번 이상 똑같이 보일 때만 그 차량을 돌려줍니다. */
+function otherVeh(reads, veh){
+  const cnt={};
+  for(const r of reads){
+    const vs=slipVehs(r.txt);
+    if(vs.includes(veh)) return '';
+    vs.forEach(v=>{ cnt[v]=(cnt[v]||0)+1; });
+  }
+  const top=Object.keys(cnt).filter(v=>cnt[v]>=2);
+  return top.length===1 ? top[0] : '';
+}
 /* 두 줄이 같은 전표인지 봅니다.
    전표번호가 둘 다 있으면 번호가 답입니다. 없으면 1차·2차·실중량이 모두 같을 때만 같다고 봅니다. */
 function sameSlip(a, b){
@@ -1320,6 +1364,7 @@ async function runOcr(dataUrl, sid, hard){
     }
     vote = ocrVote(reads);
     found = vote.found; text = vote.text;
+    vote.vehOn = otherVeh(reads, cfg.veh);
     // 전표번호는 그 줄만 잘라 다시 읽은 것을 씁니다 (줄을 못 찾았을 때만 위에서 맞춰 본 번호)
     const src = found.length ? reads.find(r=>r.boxes.length) : null;
     if(src){
@@ -1367,6 +1412,7 @@ async function runOcr(dataUrl, sid, hard){
   const n=Math.min(room, found.length);
   const fresh = found.slice(0,n).map(v=>({w:String(v.n), g:v.g, t:v.t, site:'', auto:true, shot:sid, chk:vote.chk}));
   attachTimes(fresh, vote.times);
+  if(vote.vehOn) fresh.forEach(r=>{ r.vehOn = vote.vehOn; });
   if(vote.cropNos){
     if(vote.cropNos.length===fresh.length) fresh.forEach((r,i)=>{ if(vote.cropNos[i]) r.no=vote.cropNos[i]; });
     else if(fresh.length===1 && vote.cropNos[0]) fresh[0].no=vote.cropNos[0];
@@ -1392,6 +1438,8 @@ async function runOcr(dataUrl, sid, hard){
     drawSite();
     smsg = ` 반입처는 ${site}로 맞췄습니다.`;
   }
+  if(vote.vehOn)
+    smsg += ` ⚠ 전표의 차량번호가 ${CARS[vote.vehOn].f} 로 보입니다 — 지금 고른 차량은 ${cfg.veh}호입니다. 전표를 한 번 보세요.`;
   drawCnt(); drawSlips();
   const tot = form.rows.length;
   const chk = form.seong
@@ -1561,6 +1609,28 @@ $('#bSave').onclick = ()=>{
       + `아까 그 전표를 다시 찍으신 거라면 「취소」를 누르고 빨간 줄을 × 로 지우세요.`);
     if(!go) return;
   }
+  // 번호를 틀리게 읽었거나 손으로 넣어서 위에서 안 걸린 것 — 같은 전표로 보이면 여쭙니다.
+  const soft2 = rows.filter(r=> !soft.includes(r))
+    .map(r=>({r, d:looksSent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no)})).filter(x=>x.d);
+  if(soft2.length){
+    const go = confirm(
+      `이미 올린 전표와 같아 보이는 줄이 ${soft2.length}장 있습니다.\n\n`
+      + soft2.slice(0,4).map(x=> x.d.why==='no'
+          ? `  ${comma(+x.r.w)}kg — 1차·2차 중량까지 같습니다`
+            + ` (전표번호 ${x.r.no||'없음'} / 올린 것 ${x.d.hit.no||'없음'})`
+          : `  ${comma(+x.r.w)}kg — 같은 날 같은 중량을 이미 올렸습니다`).join('\n')
+      + (soft2.length>4 ? `\n  … 외 ${soft2.length-4}장` : '')
+      + `\n\n다른 전표가 맞으면(정말 두 번 나르셨으면) 「확인」,\n`
+      + `아까 올린 그 전표라면 「취소」를 누르고 그 줄을 × 로 지우세요.`);
+    if(!go) return;
+  }
+  // 전표에 찍힌 차량번호가 지금 고른 차량과 다르면 여쭙니다 (11/13: 1351호 전표가 8326호로도 올라감)
+  const wrongVeh = [...new Set(rows.map(r=>r.vehOn).filter(v=> v && v!==cfg.veh))];
+  if(wrongVeh.length && !confirm(
+      `전표에는 ${wrongVeh.map(v=>CARS[v] ? CARS[v].f : v).join(' · ')} 로 찍혀 있는 것 같습니다.\n`
+      + `지금은 ${CARS[cfg.veh] ? CARS[cfg.veh].f : cfg.veh} 차량으로 올리려 합니다.\n\n`
+      + `전표의 차량번호를 눈으로 보시고,\n`
+      + `이 차량이 맞으면 「확인」, 아니면 「취소」를 누르고 설정에서 차량을 바꿔 주세요.`)) return;
 
   // 사무실 엑셀에 들어갈 칸이 없는 조합이면 한 번 짚어 줍니다 (막지는 않습니다)
   if(!XL_SLOTS.has(`${cfg.veh}|${form.seong}|${siteName()}`)){
@@ -1849,7 +1919,7 @@ if('serviceWorker' in navigator){
 
 /* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
    다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
-const APP_VER = 'v66';
+const APP_VER = 'v67';
 let newVer = null;
 
 function appBusy(){

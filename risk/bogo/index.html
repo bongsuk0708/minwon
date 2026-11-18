@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1B2430">
+<title>아차 위험 접수 · 본에코</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="../icon-192.png">
+<link rel="apple-touch-icon" href="../icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="아차위험접수">
+<style>
+/* 현장 직원용 '아차 위험 접수' 앱 — 위험성평가 앱과 따로 설치됨. 보고 화면은 ../index.html?bogo 를 그대로 띄움 (저장소·자동 로그인은 그 화면이 처리) */
+html,body{margin:0;height:100%;background:#F3F4F1;font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:#1B2430}
+body{display:flex;flex-direction:column}
+iframe{flex:1;width:100%;border:0;display:block}
+.inst{position:relative;margin:10px 12px 0;padding:12px 40px 12px 14px;border-radius:12px;background:#FBE6DC;border:1.5px solid #F2A33A;font-size:14px;line-height:1.6}
+.inst .b{display:block;width:100%;margin-top:8px;min-height:46px;border:none;border-radius:10px;background:#B53C0C;color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
+.inst .ix{position:absolute;top:4px;right:4px;width:36px;height:36px;border:none;background:none;font-size:22px;color:#7A4A00;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<iframe id="f" src="../index.html?bogo" title="아차 위험 보고" allow="camera; geolocation"></iframe>
+<script>
+let evt=null,hide=false;
+const ua=navigator.userAgent,and=/Android/i.test(ua),ios=/iPhone|iPad|iPod/i.test(ua),kakao=/KAKAOTALK/i.test(ua),
+  samsung=/SamsungBrowser/i.test(ua),inapp=kakao||/; wv\)|NAVER|BAND|Line\/|Instagram|FBAN|FBAV/i.test(ua);
+const standalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+function draw(){const d=document.getElementById('bar');
+  if(standalone()||hide){d.innerHTML='';return}
+  let h;
+  if(inapp&&and)h=`<b>📲 폰에 설치하기</b><div>${kakao?'카카오톡':'이 앱'} 안에서는 설치가 안 됩니다. 아래 버튼으로 크롬에서 연 뒤 설치하세요.</div><button class="b" id="ib">크롬으로 열기</button>`;
+  else if(inapp)h=`<b>📲 폰에 설치하기</b><div><b>⋯</b> 메뉴 → <b>Safari로 열기</b> → 공유 <b>⬆</b> → <b>홈 화면에 추가</b></div>`;
+  else if(ios)h=`<b>📲 폰에 설치하기</b><div>아래 공유 버튼 <b>⬆</b> → <b>홈 화면에 추가</b> → 추가</div>`;
+  else if(evt)h=`<b>📲 폰에 설치하기</b><div>홈 화면에 <b>아차위험접수</b> 아이콘이 생겨 앱처럼 바로 열립니다.</div><button class="b" id="ib">설치하기</button>`;
+  else if(samsung)h=`<b>📲 폰에 설치하기</b><div>주소창 오른쪽 <b>⬇ 설치 아이콘</b>을 누르거나, 아래 <b>≡</b> 메뉴 → <b>현재 페이지 추가</b> → <b>홈 화면</b></div>`;
+  else h=`<b>📲 폰에 설치하기</b><div>오른쪽 위 <b>⋮</b> 메뉴 → <b>앱 설치</b> (또는 <b>홈 화면에 추가</b>)</div>`;
+  d.innerHTML=`<div class="inst"><button class="ix" aria-label="닫기">×</button>${h}</div>`;
+  d.querySelector('.ix').onclick=()=>{hide=true;draw()};
+  const b=d.querySelector('#ib');if(b)b.onclick=async()=>{
+    if(evt){evt.prompt();await evt.userChoice.catch(()=>null);evt=null;draw();return}
+    const u=location.href;
+    if(kakao)location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u);
+    else location.href='intent://'+u.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end'}}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();evt=e;draw()});
+addEventListener('appinstalled',()=>{evt=null;hide=true;draw()});
+draw();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(()=>{});
+</script>
+</body>
+</html>

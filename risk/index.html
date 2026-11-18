@@ -13,7 +13,7 @@ window.fetch=function(i,o){var u=typeof i==='string'?i:'';if(u.indexOf(H)<0||/[?
 <meta name="theme-color" content="#1B2430">
 <title>위험성평가 · 본에코</title>
 <link rel="manifest" href="manifest.json">
-<script>/* 현장 보고 전용(?bogo)은 따로 설치되도록 설치 정보를 바꿈 */if(/[?&]bogo\b/.test(location.search)){document.querySelector('link[rel=manifest]').href='manifest-bogo.json';document.title='아차 위험 접수 · 본에코'}</script>
+<script>/* 현장 보고 전용(?bogo): 주소로 바로 열면 따로 설치되는 '아차 위험 접수' 앱(bogo/)으로 넘김. 그 앱 안(틀 안)에서는 보고 화면만 보임 */if(/[?&]bogo\b/.test(location.search)){if(window.top===window)location.replace('bogo/');document.querySelector('link[rel=manifest]').href='manifest-bogo.json';document.title='아차 위험 접수 · 본에코'}</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v12';
+const VER='v13';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -1019,7 +1019,7 @@ if(FIELD){document.body.classList.add('field');const ml=document.querySelector('
 let instEvt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEvt=e;drawInst()});
 window.addEventListener('appinstalled',()=>{instEvt=null;drawInst();toast('설치되었습니다. 홈 화면의 "아차위험접수"로 여세요')});
-function drawInst(){if(!FIELD)return;let d=$('#instBar');if(!d){d=document.createElement('div');d.id='instBar';$('#main').before(d)}
+function drawInst(){if(!FIELD||window.top!==window)return;let d=$('#instBar');if(!d){d=document.createElement('div');d.id='instBar';$('#main').before(d)}
   const ua=navigator.userAgent,sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
   if(sa||S.instHide){d.innerHTML='';return}
   const and=/Android/i.test(ua),ios=/iPhone|iPad|iPod/i.test(ua),kakao=/KAKAOTALK/i.test(ua),inapp=kakao||/; wv\)|NAVER|BAND|Line\/|Instagram|FBAN|FBAV/i.test(ua);

@@ -13,6 +13,7 @@ window.fetch=function(i,o){var u=typeof i==='string'?i:'';if(u.indexOf(H)<0||/[?
 <meta name="theme-color" content="#1B2430">
 <title>위험성평가 · 본에코</title>
 <link rel="manifest" href="manifest.json">
+<script>/* 현장 보고 전용(?bogo)은 따로 설치되도록 설치 정보를 바꿈 */if(/[?&]bogo\b/.test(location.search)){document.querySelector('link[rel=manifest]').href='manifest-bogo.json';document.title='아차 위험 접수 · 본에코'}</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
@@ -106,6 +107,10 @@ table.kt tr[data-go]{cursor:pointer}table.kt tr[data-go]:hover td{background:#F7
 body.field nav.bot{display:none}
 body.field #app{display:block;max-width:640px;margin:0 auto}
 body.field main{padding-bottom:30px}
+.inst{position:relative;margin:12px 16px 0;padding:12px 40px 12px 14px;border-radius:12px;background:#FBE6DC;border:1.5px solid #F2A33A;font-size:14px;line-height:1.6}
+.inst .btn{margin-top:8px}
+.inst .ix{position:absolute;top:4px;right:4px;width:36px;height:36px;border:none;background:none;font-size:22px;color:#7A4A00;cursor:pointer}
+body.field #instBar{max-width:640px;margin:0 auto}
 /* PC: 넓은 화면은 왼쪽 메뉴 + 넓은 본문 */
 @media (min-width:1000px){
   #app{max-width:none;display:grid;grid-template-columns:200px minmax(0,1fr);grid-template-rows:auto 1fr}
@@ -152,7 +157,7 @@ body.field main{padding-bottom:30px}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v10';
+const VER='v11';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -1010,7 +1015,28 @@ async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0
 const FIELD=/[?&]bogo\b/.test(location.search);
 function fieldDone(m,kind){setHead('보고 완료','아차 위험 접수');m.innerHTML=`<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:44px">✅</div><h2 style="margin:8px 0">${esc(kind)} 보고가 접수되었습니다</h2><p class="muted">감사합니다. 관리자가 확인 후 조치합니다.</p><button class="btn pri block" id="again" style="margin-top:14px">또 보고하기</button></div>`;$('#again').onclick=()=>render()}
 if(FIELD){document.body.classList.add('field');const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href='manifest-bogo.json'}
-S.cur={view:FIELD?'reportForm':'home'};const cfgP=loadCfg();drawNav();render();cfgP.then(()=>{if(S.cur.view===(FIELD?'reportForm':'home')&&!S.stack.length)render()});
+// 현장 보고 전용 화면: 폰에 설치(홈 화면 아이콘) 안내
+let instEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEvt=e;drawInst()});
+window.addEventListener('appinstalled',()=>{instEvt=null;drawInst();toast('설치되었습니다. 홈 화면의 "아차위험접수"로 여세요')});
+function drawInst(){if(!FIELD)return;let d=$('#instBar');if(!d){d=document.createElement('div');d.id='instBar';$('#main').before(d)}
+  const ua=navigator.userAgent,sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+  if(sa||S.instHide){d.innerHTML='';return}
+  const and=/Android/i.test(ua),ios=/iPhone|iPad|iPod/i.test(ua),kakao=/KAKAOTALK/i.test(ua),inapp=kakao||/; wv\)|NAVER|BAND|Line\/|Instagram|FBAN|FBAV/i.test(ua);
+  let h;
+  if(inapp&&and)h=`<b>📲 폰에 설치하기</b><div>${kakao?'카카오톡':'이 앱'} 안에서는 설치가 안 됩니다. 아래 버튼으로 크롬(인터넷)에서 연 뒤 설치하세요.</div><button class="btn pri block" id="ib">크롬으로 열기</button>`;
+  else if(inapp)h=`<b>📲 폰에 설치하기</b><div>오른쪽 아래(위) <b>⋯</b> 메뉴 → <b>Safari로 열기</b> → 공유 버튼 <b>⬆</b> → <b>홈 화면에 추가</b></div>`;
+  else if(ios)h=`<b>📲 폰에 설치하기</b><div>아래 공유 버튼 <b>⬆</b> → <b>홈 화면에 추가</b> → 추가</div>`;
+  else if(instEvt)h=`<b>📲 폰에 설치하기</b><div>홈 화면에 "아차위험접수" 아이콘이 생겨 앱처럼 바로 열립니다.</div><button class="btn pri block" id="ib">설치하기</button>`;
+  else h=`<b>📲 폰에 설치하기</b><div>오른쪽 위 <b>⋮</b> 메뉴 → <b>홈 화면에 추가</b> (또는 <b>앱 설치</b>)</div>`;
+  d.innerHTML=`<div class="inst"><button class="ix" aria-label="닫기">×</button>${h}</div>`;
+  d.querySelector('.ix').onclick=()=>{S.instHide=true;drawInst()};
+  const b=d.querySelector('#ib');if(b)b.onclick=async()=>{
+    if(instEvt){instEvt.prompt();const r=await instEvt.userChoice.catch(()=>null);instEvt=null;drawInst();return}
+    const u=location.href;
+    if(kakao)location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(u);
+    else location.href='intent://'+u.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end'}}
+S.cur={view:FIELD?'reportForm':'home'};const cfgP=loadCfg();drawNav();render();drawInst();cfgP.then(()=>{if(S.cur.view===(FIELD?'reportForm':'home')&&!S.stack.length)render()});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>

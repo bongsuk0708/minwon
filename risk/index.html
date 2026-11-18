@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v13';
+const VER='v15';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -210,7 +210,7 @@ async function log(what){try{await post('log',{t:nowStr(),u:S.user||'',what})}ca
 const S={user:lsGet('risk_user',''),tab:'home',stack:[],cache:{},photoCache:{}};
 function toast(m,ms){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms||2200)}
 function setHead(t,sub){$('#title').textContent=t;$('#subtitle').textContent=sub||'본에코(주) · 위험성평가';$('#backBtn').style.display=S.stack.length?'flex':'none';$('#userName').textContent=S.user||'이름 설정'}
-const NAV=[['home','홈','<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'],['check','점검','<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>'],['report','보고','<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],['kras','평가','<path d="M4 20h16"/><rect x="5" y="12" width="3" height="6"/><rect x="10.5" y="8" width="3" height="10"/><rect x="16" y="4" width="3" height="14"/>'],['rec','기록','<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>']];
+const NAV=[['home','홈','<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'],['check','점검','<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>'],['report','접수함','<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],['kras','평가','<path d="M4 20h16"/><rect x="5" y="12" width="3" height="6"/><rect x="10.5" y="8" width="3" height="10"/><rect x="16" y="4" width="3" height="14"/>'],['rec','기록','<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>']];
 function drawNav(){$('#nav').innerHTML=NAV.map(([k,l,svg])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg>${l}</button>`).join('')}
 function go(view,arg,push=true){if(push&&S.cur)S.stack.push(S.cur);S.cur={view,arg};render()}
 function back(){const p=S.stack.pop();if(p){S.cur=p;render()}}
@@ -277,13 +277,13 @@ V.home=async m=>{
   setHead('위험성평가','본에코(주) · '+VER);
   const ys=(await years().catch(()=>[])).filter(y=>y>2026);const cy=ys.length?ys[ys.length-1]:null;
   let open=[],reps=[];
-  try{const r=await load('reports',true);reps=Object.entries(r).map(([id,v])=>({id,...v})).filter(x=>x.status!=='조치완료').sort((a,b)=>b.t>a.t?1:-1)}catch(e){}
+  try{const r=await load('reports',true);reps=Object.entries(r).map(([id,v])=>({id,...v})).filter(x=>x.status!=='조치완료'&&!x.deleted).sort((a,b)=>b.t>a.t?1:-1)}catch(e){}
   if(cy){try{const k=await load('kras/'+cy,true);open=Object.entries(k).map(([id,v])=>({id,...v})).filter(x=>!x.done&&!x.deleted).sort((a,b)=>b.risk-a.risk)}catch(e){}}
   const steps=cy?null:[['1','사전준비','실시규정 3.5 · 1차 교육 4.10'],['2','유해·위험요인 파악','체크리스트 4.10 / 4.30 · 의견청취'],['3','위험성 결정','KRAS 평가 5.11 ~ 5.14'],['4','감소대책 수립·실행','수립 5.15 · 교육 5.19 / 5.22'],['5','기록·보존','종합본 5.29 · 2029.05까지 보관']];
   m.innerHTML=`
   <a href="help.html" class="item" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px;border:1.5px solid #F2A33A"><span style="font-size:22px">📖</span><span style="flex:1"><span class="t">사용 방법 보기</span><span class="m" style="display:block">신고·서명·점검·평가 하는 법 (그림 설명)</span></span><span class="muted">›</span></a>
   <div class="grid2" style="margin-bottom:12px">
-    <button class="big acc" data-go="reportForm"><b>⚠ 아차 위험 접수</b><span>사진 한 장이면 됩니다</span></button>
+    <button class="big acc" data-go="report"><b>📥 접수함</b><span>현장 보고 · ${reps.length?"처리 대기 "+reps.length+"건":"대기 없음"}</span></button>
     <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>폰 서명 · 종이 서명지 올리기</span></button>
   </div>
   <button class="item" data-go="award" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🏆</span><span style="flex:1"><span class="t">우수근로자 포상</span><span class="m" style="display:block">추천하기 · 심사 점수 · 분기(${AW_MONTHS.join('·')}월)·연말 결과</span></span><span class="muted">›</span></button>
@@ -403,20 +403,21 @@ V.archCheck=async(m,key)=>{
 
 /* ---------- 신고 ---------- */
 V.report=async m=>{
-  setHead('아차 위험·의견 보고','근로자 참여 기록');
-  const r=await load('reports',true);const list=Object.entries(r).map(([id,v])=>({id,...v})).sort((a,b)=>b.t>a.t?1:-1);
-  m.innerHTML=`<button class="btn pri block" data-go="reportForm" style="margin-bottom:12px">+ 새로 보고하기</button>
+  setHead('접수함','현장 직원 보고 · 처리');
+  const r=await load('reports',true);const list=Object.entries(r).map(([id,v])=>({id,...v})).filter(x=>!x.deleted).sort((a,b)=>b.t>a.t?1:-1);
+  m.innerHTML=`<div class="note" style="margin-bottom:12px">현장 직원은 <b>아차위험접수</b> 앱으로 보고합니다. 앱 주소: <b>bongsuk0708.github.io/minwon/risk/bogo/</b> <button class="btn sm" id="cpBogo">주소 복사</button></div>
   <div class="card"><h2>접수 목록 <span class="muted">${list.length}건</span></h2>${list.map(x=>`<button class="item" data-go="reportView" data-arg="${x.id}" style="background:#F7F8F6"><div class="between"><span class="muted">${esc(x.kind)} · ${esc(x.team||'')}${x.dong?' · '+esc(x.dong):''}</span><span class="tag ${x.status==='조치완료'?'lv-낮음':'st'}">${esc(x.status)}</span></div><div class="t">${esc((x.text||'').slice(0,70))}</div><div class="m">${esc(x.when||x.t)} · ${x.anon?'익명':esc(x.by||'')}${x.photos?' · 사진 '+x.photos.length:''}</div></button>`).join('')||'<div class="empty">아직 접수된 신고가 없습니다</div>'}</div>
   <div class="card"><h2>2026 근로자 의견 청취 결과</h2><button class="btn block" data-go="archOpinion">팀별 종합표 보기</button></div>`;
+  $('#cpBogo').onclick=async()=>{const u='https://bongsuk0708.github.io/minwon/risk/bogo/';try{await navigator.clipboard.writeText(u);toast('주소를 복사했습니다. 카톡·밴드에 붙여넣으세요')}catch(e){prompt('주소를 길게 눌러 복사하세요',u)}};
 };
 V.reportForm=async m=>{
   setHead('위험성평가','아차 위험 · 위험요인 · 개선 건의 보고');
   const st={kind:'아차사고',photos:[]};
   let places=[];try{places=[...new Set(Object.values(await load('reports')).map(x=>x.place).filter(Boolean))].sort().slice(0,200)}catch(e){}
   const nw=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
-  m.innerHTML=`<div class="card"><label class="f">구분</label><div class="seg" style="grid-template-columns:repeat(3,1fr)" id="kind">${['아차사고','위험요인','개선 건의'].map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
+  m.innerHTML=`<div class="card"><label class="f">구분</label><div class="seg" style="grid-template-columns:repeat(${FIELD?2:3},1fr)" id="kind">${(FIELD?['아차사고','위험요인']:['아차사고','위험요인','개선 건의']).map(k=>`<button data-k="${k}" class="${k===st.kind?'on':''}">${k}</button>`).join('')}</div>
   <label class="f" for="when">일시 (언제 있었나요?)</label><input class="i" id="when" type="datetime-local" value="${nw}" max="${nw}">
-  <div class="grid2"><div><label class="f" for="team">부서</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div><div><label class="f" for="nm">이름</label><input class="i" id="nm" value="${esc(S.user||'')}" placeholder="이름"></div></div>
+  ${FIELD?`<label class="f" for="nm">이름</label><input class="i" id="nm" value="${esc(S.user||'')}" placeholder="이름">`:`<div class="grid2"><div><label class="f" for="team">부서</label><select class="i" id="team">${TEAMS.map(t=>`<option>${t}</option>`).join('')}</select></div><div><label class="f" for="nm">이름</label><input class="i" id="nm" value="${esc(S.user||'')}" placeholder="이름"></div></div>`}
   <label class="f" for="place">장소 (동·주소·위치)</label><input class="i" id="place" list="places" placeholder="예: 중앙동 OO로 12 앞 골목"><datalist id="places">${places.map(d=>`<option>${esc(d)}</option>`).join('')}</datalist>
   <label class="f" for="txt">무슨 일이 있었나요?</label><textarea class="i" id="txt" placeholder="어디서, 어떤 상황이었는지 적어 주세요"></textarea>
   <label class="f">사진</label><div id="pp"></div>
@@ -430,7 +431,7 @@ V.reportForm=async m=>{
     if(!anon&&nm!==S.user){S.user=nm;lsSet('risk_user',nm)}
     const when=($('#when').value||'').replace('T',' ');
     const b=$('#send');b.disabled=true;b.textContent='보내는 중…';
-    try{const ph=await savePhotos(st.photos);const place=$('#place').value.trim();const rec={kind:st.kind,when,team:$('#team').value,place,text:txt,anon,by:anon?'':nm,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
+    try{const ph=await savePhotos(st.photos);const place=$('#place').value.trim();const rec={kind:st.kind,when,team:FIELD?'':$('#team').value,place,text:txt,anon,by:anon?'':nm,t:nowStr(),status:'접수'};if(ph.length)rec.photos=ph;
       await post('reports',rec);await log('보고 접수: '+st.kind);inval('reports');toast('접수되었습니다. 감사합니다!');if(FIELD)fieldDone(m,st.kind);else back()}
     catch(e){toast('전송 실패: '+e.message);b.disabled=false;b.textContent='보고하기'}};
 };
@@ -441,8 +442,11 @@ V.reportView=async(m,id)=>{
   <label class="f" for="rn">조치 내용</label><textarea class="i" id="rn">${esc(x.action||'')}</textarea>
   <div class="grid2" style="margin-top:10px"><button class="btn" id="tok">평가표로 보내기</button><button class="btn dark" id="rsv">저장</button></div>
   ${x.kind==='아차사고'&&!x.anon&&x.by?'<button class="btn block" id="toaw" style="margin-top:8px">🏆 신고자를 포상 추천</button>':''}
-  ${(x.hist||[]).length?`<h3>처리 이력</h3>${x.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}`:''}</div>`;
+  ${(x.hist||[]).length?`<h3>처리 이력</h3>${x.hist.map(h=>`<div class="muted">${esc(h.t)} ${esc(h.u)} — ${esc(h.what)}</div>`).join('')}`:''}</div>
+  <button class="btn block" id="rdel" style="color:#8E1F14;margin-bottom:16px">🗑 이 보고 삭제</button>`;
   fillThumbs(m);
+  $('#rdel').onclick=async()=>{if(!needUser())return;if(!confirm('이 보고를 삭제할까요?\n(목록·홈 조치 필요에서 사라집니다)'))return;
+    try{await patch('reports/'+id,{deleted:true,delBy:S.user,delT:nowStr()});await log('보고 삭제: '+x.kind+' '+(x.t||''));inval('reports');toast('삭제했습니다');back()}catch(e){toast('삭제 실패: '+e.message)}};
   $('#rsv').onclick=async()=>{if(!needUser())return;const st=$('#rs').value,ac=$('#rn').value.trim();const hist=(x.hist||[]).concat([{t:nowStr(),u:S.user,what:st+(ac?' / '+ac.slice(0,40):'')}]);
     try{await patch('reports/'+id,{status:st,action:ac,hist});await log('신고 처리: '+st);inval('reports');toast('저장했습니다');render()}catch(e){toast('저장 실패: '+e.message)}};
   $('#tok').onclick=()=>go('krasForm',`|new|${JSON.stringify({proc:'수시',hazard:x.text,photos:x.photos||[],from:id})}`);
@@ -750,16 +754,16 @@ function sigModal(done){
 V.eduView=async(m,id)=>{
   const x=(await load('edu',true))[id];setHead(x.title,fmtD(x.date)+' · '+x.kind);
   m.innerHTML=`<div class="card"><dl class="kv"><dt>일시</dt><dd>${fmtD(x.date)} ${esc(x.time||'')}</dd><dt>장소</dt><dd>${esc(x.place||'-')}</dd><dt>교육자</dt><dd>${esc(x.by||'-')}</dd><dt>결과 공유</dt><dd>${x.shared?'위험성평가 결과 공유함':'-'}</dd></dl>${x.content?`<h3>교육 내용</h3><div class="pre" style="line-height:1.6">${esc(x.content)}</div>`:''}${thumbs(x.photos)}</div>
-  <div class="card"><h2>참석자 ${(x.att||[]).length}명</h2>${(x.att||[]).map(a=>attRow(a)).join('')||'<div class="empty">서명 없음</div>'}</div>
+  <div class="card"><h2>참석자 ${(x.att||[]).length}명</h2>${(x.att||[]).map(a=>attRow(a)).join('')||((x.sheets||[]).length?'<div class="muted">종이 서명지로 받음 (아래 서명지 참고)</div>':'<div class="empty">서명 없음</div>')}</div>
   <div class="card"><div class="between"><h2 style="margin:0">종이 서명지 ${(x.sheets||[]).length?`<span class="muted">${x.sheets.length}개</span>`:''}</h2><button class="btn sm" id="blank">빈 서명지 인쇄</button></div>${sheetList(x.sheets)||'<div class="muted" style="margin-top:8px">올린 서명지 없음</div>'}
-  <button class="btn pri block" style="margin-top:10px" id="addSh">서명지 올리기 · 명단 넣기</button><div id="shw"></div></div>
+  <button class="btn pri block" style="margin-top:10px" id="addSh">서명지 올리기</button><div id="shw"></div></div>
   <button class="btn block" id="pr">교육 실행서 인쇄 / PDF</button>`;
   fillThumbs(m);$('#pr').onclick=()=>printEduOne(x);$('#blank').onclick=()=>printSignSheet(x,x.att);
   $('#addSh').onclick=()=>{if(!needUser())return;const st={att:[],sheets:[]};$('#addSh').remove();
     $('#shw').innerHTML=`<div id="shb" style="margin-top:10px"></div><div id="nat" style="margin-top:6px"></div><button class="btn dark block" style="margin-top:10px" id="shs">올리기 저장</button>`;
     const drawNew=()=>{$('#nat').innerHTML=st.att.length?`<div class="muted">새로 넣을 명단 ${st.att.length}명</div>`+st.att.map((a,k)=>attRow(a,k)).join(''):'';$('#nat').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{st.att.splice(+b.dataset.rm,1);drawNew()})};
     sheetBox($('#shb'),st,()=>{const have=new Set((x.att||[]).map(a=>a.name));st.att=st.att.filter(a=>!have.has(a.name));drawNew()});
-    $('#shs').onclick=async()=>{if(!st.sheets.length&&!st.att.length){toast('올릴 파일이나 명단이 없습니다');return}const b=$('#shs');b.disabled=true;b.textContent='저장 중…';
+    $('#shs').onclick=async()=>{if(!st.sheets.length&&!st.att.length){toast('올릴 서명지 파일이 없습니다');return}const b=$('#shs');b.disabled=true;b.textContent='저장 중…';
       try{const sh=await saveSheets(st.sheets);const up={};if(sh.length)up.sheets=(x.sheets||[]).concat(sh);if(st.att.length)up.att=(x.att||[]).concat(st.att);await patch('edu/'+id,up);await log('교육 서명지 올림: '+x.title);inval('edu');toast('저장했습니다');render()}
       catch(e){toast('저장 실패: '+e.message);b.disabled=false;b.textContent='올리기 저장'}}};
 };
@@ -780,19 +784,11 @@ function sheetBox(holder,st,onAtt){
   const draw=()=>{holder.innerHTML=`<p class="muted" style="margin:0 0 8px;line-height:1.6">교육 때 종이에 사인을 받고, 그 서명지를 <b>스캔(PDF)이나 사진</b>으로 올리세요. 올린 원본이 서명 증빙이 됩니다.</p>
     <div>${st.sheets.map((s,k)=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span>${s.type==='pdf'?'📄':'🖼'} ${esc(s.name)}</span><button class="btn sm" data-srm="${k}">빼기</button></div>`).join('')}</div>
     <label class="btn block" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;border-style:dashed"><input type="file" id="shf" accept="image/*,application/pdf" multiple hidden>📄 서명지 파일 올리기 (PDF·사진)</label>
-    <label class="f" for="rost">참석자 명단 넣기 <span class="muted">— 엑셀에서 이름·팀 칸을 복사해 붙여넣기</span></label>
-    <textarea class="i" id="rost" placeholder="한 줄에 한 명: 이름 팀&#10;예) 홍길동	생활팀"></textarea>
-    <div class="grid2" style="margin-top:8px"><button class="btn" id="rostAdd">붙여넣은 명단 넣기</button><label class="btn" style="display:flex;align-items:center;justify-content:center"><input type="file" id="rostF" accept=".xlsx,.xls,.csv" hidden>엑셀 파일로 넣기</label></div>
-    <div class="muted" id="rmsg" style="margin-top:6px"></div>`;
+    <p class="muted" style="margin:8px 0 0">서명지에 이름과 사인이 함께 올라가므로 참석자 명단은 따로 넣지 않아도 됩니다.</p>`;
     holder.querySelectorAll('[data-srm]').forEach(b=>b.onclick=()=>{st.sheets.splice(+b.dataset.srm,1);draw()});
     holder.querySelector('#shf').onchange=async e=>{for(const f of e.target.files){try{
         if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){if(f.size>8e6){toast('PDF가 너무 큽니다 (8MB까지): '+f.name);continue}st.sheets.push({d:await fileData(f),type:'pdf',name:f.name})}
         else st.sheets.push({d:await compress(f,2000,0.8),type:'img',name:f.name})}catch(_){toast('파일을 읽지 못했습니다: '+f.name)}}draw()};
-    const add=list=>{const have=new Set(st.att.map(a=>a.name));let n=0;for(const p of list){if(have.has(p.name))continue;have.add(p.name);st.att.push({name:p.name,team:p.team,paper:true,t:nowStr()});n++}
-      onAtt();return n};
-    holder.querySelector('#rostAdd').onclick=()=>{const l=parseRoster(holder.querySelector('#rost').value);if(!l.length){toast('넣을 이름이 없습니다');return}const n=add(l);holder.querySelector('#rost').value='';holder.querySelector('#rmsg').textContent=`${n}명 넣었습니다${l.length>n?` (이미 있는 ${l.length-n}명 제외)`:''}`};
-    holder.querySelector('#rostF').onchange=async e=>{const f=e.target.files[0];if(!f)return;holder.querySelector('#rmsg').textContent='엑셀 읽는 중…';
-      try{const l=await rosterFromFile(f);const n=add(l);holder.querySelector('#rmsg').textContent=l.length?`${f.name}: ${n}명 넣었습니다${l.length>n?` (이미 있는 ${l.length-n}명 제외)`:''}`:'이름을 찾지 못했습니다. 첫 칸이 이름인지 확인해 주세요'}catch(err){holder.querySelector('#rmsg').textContent='읽기 실패: '+err.message}e.target.value=''};
   };draw();
 }
 async function saveSheets(arr){const out=[];for(const s of arr){const id='f'+uid();await put('photos/'+id,s.d);S.photoCache[id]=s.d;out.push({id,type:s.type,name:s.name})}return out}

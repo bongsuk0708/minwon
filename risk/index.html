@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v16';
+const VER='v17';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -210,7 +210,7 @@ async function log(what){try{await post('log',{t:nowStr(),u:S.user||'',what})}ca
 const S={user:lsGet('risk_user',''),tab:'home',stack:[],cache:{},photoCache:{}};
 function toast(m,ms){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),ms||2200)}
 function setHead(t,sub){$('#title').textContent=t;$('#subtitle').textContent=sub||'본에코(주) · 위험성평가';$('#backBtn').style.display=S.stack.length?'flex':'none';$('#userName').textContent=S.user||'이름 설정'}
-const NAV=[['home','홈','<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'],['check','점검','<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>'],['report','접수함','<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'],['kras','평가','<path d="M4 20h16"/><rect x="5" y="12" width="3" height="6"/><rect x="10.5" y="8" width="3" height="10"/><rect x="16" y="4" width="3" height="14"/>'],['rec','기록','<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>']];
+const NAV=[['home','홈','<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/>'],['check','점검','<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="m9 12 2 2 4-4"/>'],['kras','평가','<path d="M4 20h16"/><rect x="5" y="12" width="3" height="6"/><rect x="10.5" y="8" width="3" height="10"/><rect x="16" y="4" width="3" height="14"/>'],['rec','기록','<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v11h14V9"/><path d="M10 13h4"/>']];
 function drawNav(){$('#nav').innerHTML=NAV.map(([k,l,svg])=>`<button data-tab="${k}" class="${S.tab===k?'on':''}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg>${l}</button>`).join('')}
 function go(view,arg,push=true){if(push&&S.cur)S.stack.push(S.cur);S.cur={view,arg};render()}
 function back(){const p=S.stack.pop();if(p){S.cur=p;render()}}
@@ -411,7 +411,7 @@ V.report=async m=>{
   $('#cpBogo').onclick=async()=>{const u='https://bongsuk0708.github.io/minwon/risk/bogo/';try{await navigator.clipboard.writeText(u);toast('주소를 복사했습니다. 카톡·밴드에 붙여넣으세요')}catch(e){prompt('주소를 길게 눌러 복사하세요',u)}};
 };
 V.reportForm=async m=>{
-  setHead('위험성평가','아차 위험 · 위험요인 · 개선 건의 보고');
+  setHead('위험성평가','아차 위험 · 위험요인 보고');
   const st={kind:'아차사고',photos:[]};
   let places=[];try{places=[...new Set(Object.values(await load('reports')).map(x=>x.place).filter(Boolean))].sort().slice(0,200)}catch(e){}
   const nw=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);

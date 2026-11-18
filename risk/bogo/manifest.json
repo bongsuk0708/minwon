@@ -2,7 +2,7 @@
   "id": "/minwon/risk/bogo/",
   "name": "아차 위험 접수 · 본에코",
   "short_name": "아차위험접수",
-  "description": "현장 직원 아차사고·위험요인·개선 건의 보고",
+  "description": "현장 직원 아차사고·위험요인 보고",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

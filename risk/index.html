@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v11';
+const VER='v12';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -410,7 +410,7 @@ V.report=async m=>{
   <div class="card"><h2>2026 근로자 의견 청취 결과</h2><button class="btn block" data-go="archOpinion">팀별 종합표 보기</button></div>`;
 };
 V.reportForm=async m=>{
-  setHead('보고하기','아차 위험 · 위험요인 · 개선 건의');
+  setHead('위험성평가','아차 위험 · 위험요인 · 개선 건의 보고');
   const st={kind:'아차사고',photos:[]};
   let places=[];try{places=[...new Set(Object.values(await load('reports')).map(x=>x.place).filter(Boolean))].sort().slice(0,200)}catch(e){}
   const nw=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -1013,7 +1013,7 @@ async function printEduOne(x){const ph=(await Promise.all((x.photos||[]).slice(0
 /* ---------- start ---------- */
 // 현장 직원용 보고 전용 화면: 주소 끝에 ?bogo (예: .../minwon/risk/?bogo)
 const FIELD=/[?&]bogo\b/.test(location.search);
-function fieldDone(m,kind){setHead('보고 완료','아차 위험 접수');m.innerHTML=`<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:44px">✅</div><h2 style="margin:8px 0">${esc(kind)} 보고가 접수되었습니다</h2><p class="muted">감사합니다. 관리자가 확인 후 조치합니다.</p><button class="btn pri block" id="again" style="margin-top:14px">또 보고하기</button></div>`;$('#again').onclick=()=>render()}
+function fieldDone(m,kind){setHead('위험성평가','보고 완료');m.innerHTML=`<div class="card" style="text-align:center;padding:28px 16px"><div style="font-size:44px">✅</div><h2 style="margin:8px 0">${esc(kind)} 보고가 접수되었습니다</h2><p class="muted">감사합니다. 관리자가 확인 후 조치합니다.</p><button class="btn pri block" id="again" style="margin-top:14px">또 보고하기</button></div>`;$('#again').onclick=()=>render()}
 if(FIELD){document.body.classList.add('field');const ml=document.querySelector('link[rel=manifest]');if(ml)ml.href='manifest-bogo.json'}
 // 현장 보고 전용 화면: 폰에 설치(홈 화면 아이콘) 안내
 let instEvt=null;

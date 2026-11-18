@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v15';
+const VER='v16';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -573,7 +573,7 @@ V.krasView=async(m,arg)=>{
   fillThumbs(m);
 };
 const MX_P={1:'거의 없음 — 안전조치가 잘 되어 있어 일어나기 어려움',2:'가끔 — 조치는 있으나 부주의하면 일어날 수 있음',3:'자주 — 조치가 없거나 부족해 쉽게 일어날 수 있음'};
-const MX_S={1:'가벼움 — 응급처치 후 바로 작업 가능',2:'중간 — 쉬어야 하는 부상·질병',3:'큼 — 사망·장해·오래 치료하는 큰 부상'};
+const MX_S={1:'가벼움 — 응급처치 후 바로 작업 가능',2:'중간 — 쉬어야 하는 부상·질병',3:'큼 — 사망·장해·오래 치료하는 큰 부상, 여러 명이 다침'};
 const MX_A={'낮음':'지금 상태 유지, 교육·관리','보통':'계획을 세워 개선','높음':'바로 개선, 작업 중지까지 검토'};
 function mxInfo(p,s){if(!p||!s)return '<span class="muted">숫자를 누르면 뜻이 나옵니다</span>';const v=p*s,l=lvl(v);return `<div><b>가능성 ${p}</b> · ${MX_P[p]}</div><div><b>중대성 ${s}</b> · ${MX_S[s]}</div><div style="margin-top:4px"><span class="tag lv-${l}">${v} · ${l}</span> ${MX_A[l]}</div>`}
 function mxHtml(p,s,ro){let h=`<div class="mx" ${ro?'data-ro="1"':''} style="margin-top:10px">`;for(const sv of [3,2,1]){h+=`<span>중대 ${sv}</span>`;for(const pv of [1,2,3]){const v=sv*pv,l=lvl(v);h+=`<button type="button" data-mx="${pv},${sv}" class="lv-${l} ${p===pv&&s===sv?'on':''}" aria-label="가능성 ${pv} 중대성 ${sv} 위험성 ${v}">${v}</button>`}}h+=`<span></span><span>가능 1</span><span>2</span><span>3</span></div><div class="mxi">${mxInfo(p,s)}</div>`;return h}

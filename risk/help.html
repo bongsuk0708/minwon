@@ -8,246 +8,268 @@
 <style>
 :root{--ink:#1B2430;--mute:#5A6472;--acc:#B53C0C;--bg:#F3F4F1;--line:#DDE1E6}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:16px;line-height:1.65}
-header{background:var(--ink);color:#fff;padding:16px;position:sticky;top:0;z-index:5}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;font-size:17px;line-height:1.7}
+header{background:var(--ink);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
 header .in{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:12px}
 header h1{margin:0;font-size:19px;flex:1}
-header a{color:#F2A33A;font-weight:700;text-decoration:none;font-size:14px;border:1px solid #F2A33A;border-radius:8px;padding:6px 10px}
+header a{color:#F2A33A;font-weight:700;text-decoration:none;font-size:14px;border:1px solid #F2A33A;border-radius:8px;padding:6px 10px;white-space:nowrap}
 main{max-width:860px;margin:0 auto;padding:16px}
-nav.toc{background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:16px}
-nav.toc a{display:block;color:var(--ink);text-decoration:none;padding:7px 0;border-bottom:1px solid #EEF0F2;font-weight:600}
+.dev{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#fff;border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+.dev button{font:inherit;font-weight:700;font-size:17px;padding:12px;border-radius:10px;border:2px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.dev button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.devnote{text-align:center;color:var(--mute);font-size:14px;margin:-4px 0 14px}
+nav.toc{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:16px}
+nav.toc a{display:block;color:var(--ink);text-decoration:none;padding:8px 0;border-bottom:1px solid #EEF0F2;font-weight:600}
+nav.toc a:last-child{border-bottom:none}
 nav.toc a span{color:var(--mute);font-weight:400;font-size:14px}
-.part{font-size:14px;font-weight:700;color:#fff;background:var(--acc);display:inline-block;padding:4px 12px;border-radius:999px;margin:22px 0 8px}
+.part{font-size:14px;font-weight:700;color:#fff;background:var(--acc);display:inline-block;padding:4px 12px;border-radius:999px;margin:18px 0 8px}
 .part.mgr{background:var(--ink)}
-section{background:#fff;border-radius:14px;padding:16px;margin-bottom:16px}
-section h2{margin:0 0 4px;font-size:20px}
-section .who{color:var(--mute);font-size:14px;margin-bottom:10px}
-.step{display:flex;gap:16px;align-items:flex-start;padding:12px 0;border-top:1px solid #EEF0F2}
-.step:first-of-type{border-top:none}
-.step figure{margin:0;flex:0 0 250px}
-.step img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}
-.step .txt{flex:1;min-width:0}
-.step ol{margin:0;padding-left:22px}
-.step li{margin-bottom:6px}
-.n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:#E01B1B;color:#fff;font-size:13px;font-weight:700;align-items:center;justify-content:center;margin-right:4px;vertical-align:1px}
-.tip{background:#FDEBC8;color:#5C3800;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
-.ok{background:#E3F1E8;color:#1F5234;border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+section{background:#fff;border-radius:14px;padding:16px;margin-bottom:14px}
+section h2{margin:0 0 2px;font-size:21px}
+.who{color:var(--mute);font-size:14px;margin-bottom:10px}
+ol.s{list-style:none;margin:0;padding:0;counter-reset:s}
+ol.s>li{counter-increment:s;position:relative;padding:8px 0 8px 40px;border-top:1px solid #EEF0F2}
+ol.s>li:first-child{border-top:none}
+ol.s>li::before{content:counter(s);position:absolute;left:0;top:9px;width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+.b{display:inline-block;background:#F3F4F1;border:1px solid var(--line);border-radius:7px;padding:0 7px;font-weight:700;white-space:nowrap}
+.tip{background:#FDEBC8;color:#5C3800;border-radius:10px;padding:10px 12px;font-size:15px;margin-top:10px}
+.ok{background:#E3F1E8;color:#1F5234;border-radius:10px;padding:10px 12px;font-size:15px;margin-top:10px}
+.big{font-size:18px;font-weight:700;word-break:break-all}
 table{width:100%;border-collapse:collapse;font-size:15px}
-th,td{border-bottom:1px solid #EEF0F2;padding:9px 6px;text-align:left;vertical-align:top}
-th{color:var(--mute);font-weight:600;width:110px}
-.qa b{display:block;margin-top:10px}
-.big{font-size:18px;font-weight:700}
-@media (max-width:640px){.step{flex-direction:column}.step figure{flex:none;width:100%;max-width:330px;align-self:center}}
-@media print{
-  header a,nav.toc{display:none}
-  header{position:static;background:#fff;color:#000;border-bottom:2px solid #000}
-  body{background:#fff;font-size:12pt}
-  section{border:none;padding:4px 0;margin-bottom:6px}
-  .step{page-break-inside:avoid}
-  .step figure{flex:0 0 42mm}
-  .step{padding:6px 0}
-  section h2,section .who{page-break-after:avoid;break-after:avoid}
-  .pb{page-break-before:always}
-}
+th,td{border-bottom:1px solid #EEF0F2;padding:8px 6px;text-align:left;vertical-align:top}
+th{color:var(--mute);font-weight:600;white-space:nowrap}
+.mx td,.mx th{text-align:center;padding:6px 3px;white-space:normal;font-size:14px}
+.lv1{background:#E3F1E8}.lv2{background:#FDEBC8}.lv3{background:#F9D7D2}
+.qa b{display:block;margin-top:12px}
+/* 폰/PC 보기 */
+body.pc .ph,body.ph .pc{display:none!important}
+@media print{header a,nav.toc,.dev,.devnote{display:none}header{position:static;background:#fff;color:#000;border-bottom:2px solid #000}body{background:#fff;font-size:12pt}section{border:none;padding:4px 0;break-inside:avoid}body.pc .ph,body.ph .pc{display:inline!important}}
 @page{size:A4;margin:12mm}
 </style>
 </head>
-<body>
-<header><div class="in"><h1>위험성평가 앱 사용 방법</h1><a href="./">← 앱으로</a></div></header>
+<body class="ph">
+<header><div class="in"><h1>📖 사용 방법</h1><a href="./">← 앱으로</a></div></header>
 <main>
 
+<div class="dev" role="group" aria-label="무엇으로 보나요">
+  <button type="button" data-dev="ph">📱 폰으로 쓸 때</button>
+  <button type="button" data-dev="pc">💻 사무실 PC로 쓸 때</button>
+</div>
+<p class="devnote">위 버튼을 누르면 그 기기에 맞는 설명으로 바뀝니다.</p>
+
 <nav class="toc" aria-label="목차">
-  <a href="#start">처음 한 번 — 설치와 이름 입력 <span>· 모두</span></a>
-  <a href="#w1">① 아차사고·위험요인 신고하기 <span>· 현장 근무자</span></a>
-  <a href="#w2">② 교육·TBM 때 서명하기 <span>· 현장 근무자</span></a>
-  <a href="#m1">③ 신고 처리하기 <span>· 관리자</span></a>
-  <a href="#m2">④ 현장 체크리스트 점검 <span>· 관리자</span></a>
-  <a href="#m3">⑤ 교육·TBM 기록 남기기 <span>· 관리자</span></a>
-  <a href="#m4">⑥ 평가표 보기 · 수시평가 · 인쇄 <span>· 관리자</span></a>
-  <a href="#m5">⑦ 다음 해 정기평가 시작하기 <span>· 관리자</span></a>
-  <a href="#m6">⑧ 기록 보관 · 출력 <span>· 관리자</span></a>
-  <a href="#year">1년 흐름 — 언제 무엇을 하나</a>
+  <a href="#start">처음 한 번 — 설치하고 이름 넣기</a>
+  <a href="#screen">화면 생김새 — 메뉴 4개</a>
+  <a href="#photo">사진·파일 올리는 법 <span>· 모든 화면 같음</span></a>
+  <a href="#field">현장 직원 — 아차 위험 보고하기 <span>· 따로 된 앱</span></a>
+  <a href="#inbox">① 접수함 — 들어온 보고 처리</a>
+  <a href="#edu">② 교육·TBM 기록</a>
+  <a href="#check">③ 현장 체크리스트 점검</a>
+  <a href="#kras">④ 평가표 보기·고치기·인쇄</a>
+  <a href="#newyear">⑤ 새해 정기평가 시작하기</a>
+  <a href="#docs">⑥ 대표 사인 받은 서류 올리기</a>
+  <a href="#more">⑦ 포상 · 알림·공유 기록 · 보관본</a>
+  <a href="#year">1년 동안 할 일</a>
   <a href="#faq">이럴 땐 이렇게</a>
 </nav>
 
 <section id="start">
-  <h2>처음 한 번 — 설치와 이름 입력</h2>
-  <div class="who">모두 · 처음 한 번만 하면 됩니다</div>
-  <ol>
-    <li>휴대폰 크롬에서 주소를 엽니다.<br><span class="big">bongsuk0708.github.io/minwon/risk</span></li>
-    <li>오른쪽 위 <b>⋮</b> → <b>홈 화면에 추가</b>를 누르면 바탕화면에 앱 아이콘(주황 방패)이 생깁니다.</li>
-    <li>처음 열면 <b>이름 입력 창</b>이 뜹니다. 본인 이름을 적으세요. 신고·서명에 이 이름이 남습니다.</li>
-    <li>이름을 바꾸려면 화면 오른쪽 위 <b>주황색 이름</b>을 누르세요.</li>
+  <h2>처음 한 번 — 설치하고 이름 넣기</h2>
+  <div class="who">한 번만 하면 됩니다</div>
+  <p>주소: <span class="big">bongsuk0708.github.io/minwon/risk</span></p>
+  <ol class="s">
+    <li class="ph"><b>크롬</b>으로 위 주소를 엽니다. (카카오톡 안에서 열면 설치가 안 됩니다)</li>
+    <li class="ph">오른쪽 위 <span class="b">⋮</span> → <span class="b">앱 설치</span> 또는 <span class="b">홈 화면에 추가</span>를 누릅니다.<br><small>삼성 인터넷: 아래 <span class="b">≡</span> → <span class="b">현재 페이지 추가</span> → <span class="b">홈 화면</span></small><br><small>아이폰(사파리): 아래 <span class="b">공유 ⬆</span> → <span class="b">홈 화면에 추가</span></small></li>
+    <li class="ph">폰 바탕화면에 <b>위험성평가</b> 아이콘이 생깁니다. 다음부터 이 아이콘으로 엽니다.</li>
+    <li class="pc"><b>크롬</b>이나 <b>엣지</b>로 위 주소를 엽니다.</li>
+    <li class="pc">주소창 오른쪽 끝의 <span class="b">설치 ⊕</span> 아이콘을 누르면 바탕화면에 아이콘이 생깁니다. 아이콘이 없으면 <span class="b">Ctrl + D</span>로 즐겨찾기에 넣어도 됩니다.</li>
+    <li>처음 열면 <b>이름 넣는 창</b>이 뜹니다. 본인 이름을 적습니다. 저장·처리할 때 이 이름이 남습니다.</li>
+    <li>이름을 바꾸려면 화면 오른쪽 위 <b>주황색 이름</b>을 누릅니다.</li>
   </ol>
-  <div class="tip">인터넷이 연결되어 있어야 저장됩니다. 지하·차고처럼 신호가 약한 곳에서는 밖으로 나와서 저장하세요.</div>
+  <div class="tip">인터넷이 연결되어 있어야 저장됩니다. 신호가 약한 곳에서는 밖으로 나와서 저장하세요.</div>
 </section>
 
-<div class="part">현장 근무자용 — 이 두 가지만 알면 됩니다</div>
-
-<section id="w1">
-  <h2>① 아차사고·위험요인 신고하기</h2>
-  <div class="who">현장 근무자 누구나 · 다칠 뻔했거나 위험한 곳을 봤을 때</div>
-  <div class="step"><figure><img src="help/w1_home.jpg" alt="홈 화면, 주황색 아차사고 신고 버튼 표시"></figure>
-    <div class="txt"><ol><li>앱을 열면 첫 화면 왼쪽 위 <b>주황색 「⚠ 아차사고 신고」</b> 버튼을 누릅니다.</li></ol></div></div>
-  <div class="step"><figure><img src="help/w2_report.jpg" alt="신고 입력 화면, 구분·내용·사진·신고하기 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 구분을 고릅니다.<br>· <b>아차사고</b>: 다칠 뻔한 일<br>· <b>위험요인</b>: 위험한 장소·장비<br>· <b>개선 건의</b>: 바꿨으면 하는 것</li>
-      <li>소속 팀과 장소를 고르거나 적습니다.</li>
-      <li><span class="n">2</span> 무슨 일이었는지 한두 줄 적습니다. 짧아도 됩니다.</li>
-      <li><span class="n">3</span> <b>📷 사진 추가</b>로 현장 사진을 찍어 붙입니다.</li>
-      <li>이름을 숨기고 싶으면 <b>이름 숨기기</b>에 체크합니다.</li>
-      <li><span class="n">4</span> <b>신고하기</b>를 누르면 끝입니다.</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/w3_reportlist.jpg" alt="홈 화면 조치 필요에 접수된 신고가 보임"></figure>
-    <div class="txt"><p>접수되면 첫 화면 <b>「조치 필요」</b>에 올라갑니다. 관리자가 확인해서 처리 결과를 남깁니다.</p>
-    <div class="ok">신고는 벌점이 아니라 사고를 막는 기록입니다. 작은 것도 올려 주세요.</div></div></div>
+<section id="screen">
+  <h2>화면 생김새 — 메뉴 4개</h2>
+  <div class="who"><span class="ph">메뉴는 화면 맨 아래에 있습니다</span><span class="pc">메뉴는 화면 왼쪽에 있습니다</span></div>
+  <table>
+    <tr><th>🏠 홈</th><td>📥 접수함 · 👥 교육·TBM · 📤 서류 올리기 · 🏆 포상 · 올해 평가 · <b>조치 필요</b> 목록</td></tr>
+    <tr><th>✅ 점검</th><td>현장 체크리스트 점검하기, 지난 점검 기록</td></tr>
+    <tr><th>📊 평가</th><td>연도별 위험성평가표 (정기·수시), 검색, 인쇄</td></tr>
+    <tr><th>🗂 기록</th><td>교육 기록, 알림·공유 기록, 2026 보관본, 설정</td></tr>
+  </table>
+  <div class="ok"><b>조치 필요</b>(홈)는 ① 올해 평가표에서 완료일이 아직 없는 항목과 ② 처리가 안 끝난 현장 보고를 보여 줍니다. 처리하면 저절로 빠집니다.</div>
 </section>
 
-<section id="w2">
-  <h2>② 교육·TBM 때 서명하기</h2>
-  <div class="who">현장 근무자 · 관리자가 휴대폰을 건네주면</div>
-  <div class="step"><figure><img src="help/w4_sign.jpg" alt="참석자 서명 창, 이름·서명칸·서명 완료 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 본인 이름을 적고 팀을 고릅니다.</li>
-      <li><span class="n">2</span> 네모 칸 안에 <b>손가락으로 서명</b>합니다. 잘못 쓰면 <b>다시 쓰기</b>.</li>
-      <li><span class="n">3</span> <b>서명 완료</b>를 누르고 다음 사람에게 넘깁니다.</li>
-    </ol></div></div>
+<section id="photo">
+  <h2>사진·파일 올리는 법</h2>
+  <div class="who">보고·평가표·교육·포상·서류 등 모든 화면이 똑같습니다</div>
+  <ol class="s">
+    <li class="ph"><span class="b">📷 사진 찍기</span> — 카메라가 바로 켜집니다. 찍으면 붙습니다.</li>
+    <li class="ph"><span class="b">🖼 고르기</span> — 이미 찍어 둔 사진이나 PDF를 갤러리·내 파일에서 고릅니다. 여러 장을 한 번에 골라도 됩니다.</li>
+    <li class="pc"><span class="b">📁 파일 고르기</span> — PC에 있는 사진(jpg·png)이나 스캔한 PDF를 고릅니다. <span class="b">Ctrl</span>을 누른 채 여러 개를 고를 수 있습니다.</li>
+    <li>잘못 고른 것은 <span class="b">×</span> 또는 <span class="b">빼기</span>를 누릅니다.</li>
+    <li>마지막에 그 화면의 <b>저장</b> 버튼을 눌러야 올라갑니다.</li>
+  </ol>
+  <div class="tip">PDF는 한 개에 8MB까지 올라갑니다. 사진은 자동으로 줄여서 올립니다.</div>
 </section>
 
-<div class="part mgr pb">관리자용</div>
+<div class="part">현장 직원</div>
 
-<section id="m1">
-  <h2>③ 신고 처리하기</h2>
-  <div class="who">관리자 · 아래 「신고」 메뉴</div>
-  <div class="step"><figure><img src="help/m1_reportproc.jpg" alt="신고 상세 화면, 상태·조치 내용·평가표로 보내기·저장 표시"></figure>
-    <div class="txt"><ol>
-      <li>아래 메뉴 <b>신고</b> → 목록에서 신고를 누릅니다.</li>
-      <li><span class="n">1</span> 상태를 바꿉니다: 접수 → 검토중 → 평가 반영 → 조치완료</li>
-      <li><span class="n">2</span> 한 일을 적습니다. (예: 배수구 덮개 구청 교체 요청)</li>
-      <li><span class="n">3</span> 위험성 평가가 필요한 건이면 <b>평가표로 보내기</b> — 내용과 사진이 채워진 수시평가 화면이 열립니다.</li>
-      <li><span class="n">4</span> <b>저장</b>. 누가 언제 바꿨는지 처리 이력에 남습니다.</li>
-    </ol>
-    <div class="tip">아차사고가 확인되면 위험성평가(수시평가)를 하도록 지침에 정해져 있습니다. 「평가표로 보내기」를 쓰면 그 기록이 자동으로 남습니다.</div></div></div>
+<section id="field">
+  <h2>아차 위험 보고하기 — 「아차위험접수」 앱</h2>
+  <div class="who">현장 직원용 앱은 따로 있습니다 · 다칠 뻔했거나 위험한 곳을 봤을 때</div>
+  <p>주소: <span class="big">bongsuk0708.github.io/minwon/risk/bogo/</span><br><small>관리자 앱 › 📥 접수함 맨 위 <span class="b">주소 복사</span>를 눌러 카톡·밴드로 보내 주세요. 처음 열면 설치 안내가 나옵니다.</small></p>
+  <ol class="s">
+    <li><b>아차사고</b>(다칠 뻔한 일) 또는 <b>위험요인</b>(위험한 장소·장비)을 고릅니다.</li>
+    <li>언제 있었는지, 이름, 장소(동·주소·위치)를 적습니다.</li>
+    <li>무슨 일이었는지 한두 줄 적습니다. 짧아도 됩니다.</li>
+    <li>📷 사진을 찍어 붙입니다.</li>
+    <li>이름을 숨기고 싶으면 <b>이름 숨기기</b>에 체크합니다.</li>
+    <li><span class="b">보고하기</span>를 누르면 끝. 관리자 앱 접수함으로 바로 들어갑니다.</li>
+  </ol>
+  <div class="ok">보고는 벌점이 아니라 사고를 막는 기록입니다. 작은 것도 올려 주세요.</div>
 </section>
 
-<section id="m2">
-  <h2>④ 현장 체크리스트 점검</h2>
-  <div class="who">관리자 · 아래 「점검」 메뉴 · 26년 체크리스트 6종 그대로</div>
-  <div class="step"><figure><img src="help/m2_check.jpg" alt="체크리스트 종류 목록"></figure>
-    <div class="txt"><ol><li>아래 메뉴 <b>점검</b> → 점검할 공정(예: 음식물류폐기물)을 누릅니다.</li><li>아래쪽 「점검 기록」에서 지난 점검과 26년 보관본을 볼 수 있습니다.</li></ol></div></div>
-  <div class="step"><figure><img src="help/m3_checkform.jpg" alt="점검 입력, 적합·부적합·사진 추가 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 항목마다 <b>적합 / 부적합 / 해당없음</b>을 누릅니다.</li>
-      <li><span class="n">2</span> <b>부적합</b>을 누르면 내용 칸이 열립니다. 무엇이 문제인지 적고</li>
-      <li><span class="n">3</span> 사진을 붙입니다.</li>
-      <li>다 보면 맨 아래 <b>남은 항목 모두 적합</b> → <b>점검 저장</b>.</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/m4_checkview.jpg" alt="점검 결과, 부적합 항목의 평가표로 보내기 표시"></figure>
-    <div class="txt"><p>저장하면 결과표가 나옵니다. 부적합 항목은 <b>평가표로 보내기</b>로 바로 위험성평가 항목을 만들 수 있습니다. 맨 아래 <b>인쇄 / PDF</b>로 종이 점검표도 뽑을 수 있습니다.</p></div></div>
+<div class="part mgr">관리자</div>
+
+<section id="inbox">
+  <h2>① 접수함 — 들어온 보고 처리</h2>
+  <div class="who">홈 › 📥 접수함 (버튼에 처리 대기 건수가 나옵니다)</div>
+  <ol class="s">
+    <li>목록에서 보고를 누릅니다.</li>
+    <li><b>상태</b>를 바꿉니다: 접수 → 검토중 → 평가 반영 → 조치완료</li>
+    <li><b>조치 내용</b>에 한 일을 적습니다. (예: 바닥 미끄럼 방지 매트 설치)</li>
+    <li><b>조치 사진·파일</b>: 고친 뒤 사진이나 서류를 올립니다. <span class="ph">(📷 사진 찍기)</span><span class="pc">(📁 파일 고르기)</span></li>
+    <li><span class="b">저장</span>. 누가 언제 바꿨는지 처리 이력에 남습니다.</li>
+  </ol>
+  <div class="tip">위험성 평가가 필요한 건이면 <span class="b">평가표로 보내기</span> → 내용과 사진이 채워진 수시평가 화면이 열립니다.<br>잘못 들어온 보고는 맨 아래 <span class="b">🗑 이 보고 삭제</span> (기록은 남습니다).<br>아차사고를 알려 준 직원은 <span class="b">🏆 신고자를 포상 추천</span>으로 바로 추천할 수 있습니다.</div>
 </section>
 
-<section id="m3">
-  <h2>⑤ 교육·TBM 기록 남기기</h2>
-  <div class="who">관리자 · 첫 화면 「교육·TBM 기록」 또는 「기록」 메뉴</div>
-  <div class="step"><figure><img src="help/m5_edu.jpg" alt="교육 기록 입력, 구분·교육 내용·서명 받기 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 구분을 고릅니다: TBM / 정기 안전교육 / 위험성평가 교육</li>
-      <li>제목, 날짜, 시간, 장소를 적습니다.</li>
-      <li><span class="n">2</span> 교육 내용이나 오늘의 위험요인을 한 줄에 하나씩 적습니다.</li>
-      <li>평가 결과를 알려 준 교육이면 <b>평가 결과 공유</b>에 체크합니다. 결과 공유 의무의 근거가 됩니다.</li>
-      <li>교육 사진을 붙입니다.</li>
-      <li><span class="n">3</span> <b>+ 서명 받기</b>를 눌러 휴대폰을 돌리며 한 명씩 서명받습니다. (② 참고)</li>
-      <li>맨 아래 <b>저장</b>.</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/m6_eduview.jpg" alt="저장된 교육 기록, 교육 실행서 인쇄 버튼 표시"></figure>
-    <div class="txt"><p>저장된 기록에서 <b>교육 실행서 인쇄 / PDF</b>를 누르면 교육 실행서가 사진과 서명까지 넣어 한 장으로 나옵니다. 종합본에 그대로 넣으면 됩니다.</p></div></div>
+<section id="edu">
+  <h2>② 교육·TBM 기록</h2>
+  <div class="who">홈 › 👥 교육·TBM 기록</div>
+  <ol class="s">
+    <li>구분(TBM · 정기 안전교육 · 위험성평가 교육), 제목, 날짜, 장소를 넣습니다.</li>
+    <li>교육 내용이나 오늘의 위험요인을 한 줄에 하나씩 적습니다.</li>
+    <li>교육 사진을 붙입니다.</li>
+    <li>서명은 둘 중 하나로 받습니다.<br>
+      <span class="ph">· <b>폰 서명</b>: <span class="b">+ 폰으로 서명</span> → 폰을 돌려 한 명씩 이름 적고 손가락으로 서명<br></span>
+      · <b>종이 서명지</b>: 빈 서명지를 인쇄해 사인받고 → <span class="ph">📷 사진 찍기로</span><span class="pc">스캔한 PDF를 📁 파일 고르기로</span> 올리기 (서명지에 이름·사인이 있어서 명단은 따로 안 넣어도 됩니다)</li>
+    <li><span class="b">저장</span>. 저장된 기록에서 <b>교육 실행서 인쇄 / PDF</b>를 누르면 사진·서명까지 한 장으로 나옵니다.</li>
+  </ol>
 </section>
 
-<section id="m4">
-  <h2>⑥ 평가표 보기 · 수시평가 · 인쇄</h2>
-  <div class="who">관리자 · 아래 「평가」 메뉴</div>
-  <div class="step"><figure><img src="help/m7_kras.jpg" alt="평가표 목록, 공정·위험도 필터·수시평가·인쇄 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 공정별(공통·생활·음식물·재활용·대형·건물·수시)로 걸러 봅니다.</li>
-      <li><span class="n">2</span> 위험도(높음·보통·낮음)로 걸러 봅니다.</li>
-      <li><span class="n">3</span> <b>+ 수시평가</b>: 사고·작업 변경·새 장비가 생기면 항목을 추가합니다.</li>
-      <li><span class="n">4</span> <b>인쇄</b>: KRAS 표준 양식(A4 가로)으로 출력됩니다. PDF로 저장하려면 인쇄 창에서 프린터를 「PDF로 저장」으로 고르세요.</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/m8_krasview.jpg" alt="평가 항목 상세"></figure>
-    <div class="txt"><p>항목을 누르면 위험성(가능성×중대성), 감소대책, 예정일·완료일, 담당자, 수정 이력이 나옵니다.</p>
-    <div class="tip">2026년 보관본은 기록 보존을 위해 수정할 수 없게 잠가 두었습니다.</div></div></div>
+<section id="check">
+  <h2>③ 현장 체크리스트 점검</h2>
+  <div class="who">메뉴 › ✅ 점검</div>
+  <ol class="s">
+    <li>점검할 공정(예: 음식물류폐기물)을 누릅니다.</li>
+    <li>항목마다 <b>적합 / 부적합 / 해당없음</b>을 누릅니다.</li>
+    <li><b>부적합</b>이면 무엇이 문제인지 적고 사진을 붙입니다.</li>
+    <li>나머지가 다 괜찮으면 <span class="b">남은 항목 모두 적합</span> → <span class="b">점검 저장</span>.</li>
+    <li>결과 화면에서 부적합 항목은 <span class="b">평가표로 보내기</span>, 종이가 필요하면 <span class="b">인쇄 / PDF</span>.</li>
+  </ol>
+  <div class="tip">점검 항목을 바꾸려면 공정 옆 <span class="b">✏ 항목</span>. 새 점검표는 <span class="b">+ 새 체크리스트 만들기</span>.</div>
 </section>
 
-<section id="m5">
-  <h2>⑦ 다음 해 정기평가 시작하기</h2>
-  <div class="who">관리자 · 1년에 한 번 (예: 2027년 3월)</div>
-  <div class="step"><figure><img src="help/m9_home_next.jpg" alt="홈 화면 다음 정기평가 시작하기 버튼"></figure>
-    <div class="txt"><ol><li>첫 화면에서 <b>다음 정기평가 시작하기</b>를 누릅니다.</li></ol></div></div>
-  <div class="step"><figure><img src="help/m10_newyear.jpg" alt="새 정기평가 화면, 가져올 평가표·평가일·만들기 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 가져올 평가표: 작년 평가표를 고릅니다. 51개 항목이 그대로 들어옵니다.</li>
-      <li><span class="n">2</span> 평가 시작일·종료일을 넣습니다. (26년은 5.11~5.14)</li>
-      <li><span class="n">3</span> <b>평가표 만들기</b>.</li>
-    </ol>
-    <div class="ok">점수는 그대로 두고 <b>예정일·완료일만 비워서</b> 들어옵니다. 올해 다시 확인하라는 뜻입니다.</div></div></div>
-  <div class="step"><figure><img src="help/m11_krasedit.jpg" alt="항목 수정, 위험성 표와 개선 후 위험성 표시"></figure>
-    <div class="txt"><ol>
-      <li>항목을 하나씩 열어 <b>수정</b>을 누릅니다.</li>
-      <li><span class="n">1</span> 올해 상황에 맞게 표의 칸을 눌러 위험성을 고릅니다. (세로 = 중대성, 가로 = 가능성)</li>
-      <li><span class="n">2</span> 감소대책을 고치고 개선 후 위험성을 고릅니다.</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/m12_krasdates.jpg" alt="예정일·완료일·저장 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 개선 예정일, <span class="n">2</span> 완료일을 넣고 <span class="n">3</span> <b>저장</b>.</li>
-    </ol>
-    <div class="tip">완료일이 평가일보다 앞서면 빨간 경고가 뜨고 저장되지 않습니다. 26년 서류처럼 날짜가 거꾸로 되는 일을 막아 줍니다. 고친 내용은 「수정 이력」에 자동으로 남습니다.</div></div></div>
+<section id="kras">
+  <h2>④ 평가표 보기·고치기·인쇄</h2>
+  <div class="who">메뉴 › 📊 평가</div>
+  <ol class="s">
+    <li>위에서 <b>연도</b>를 고릅니다. (2026은 보관본이라 고칠 수 없습니다)</li>
+    <li><b>정기 / 수시</b>로 나눠 보거나, <b>검색창</b>에 낱말(예: 후진, 사각)을 넣어 찾습니다.</li>
+    <li>항목을 누르면 위험성, 감소대책, 예정일·완료일, 수정 이력이 나옵니다. <span class="b">수정</span>으로 고칩니다.</li>
+    <li>새 위험(사고·작업 변경·새 장비)이 생기면 <span class="b">+ 항목 추가</span> = 수시평가.</li>
+    <li><span class="b">인쇄</span>: KRAS 양식(A4 가로)으로 나옵니다. <span class="pc">PDF로 저장하려면 인쇄 창에서 프린터를 「PDF로 저장」으로 고르세요.</span><span class="ph">폰은 인쇄 창에서 「PDF로 저장」을 고르면 파일로 남습니다.</span></li>
+  </ol>
+  <h3 style="margin:14px 0 6px">위험성 숫자 보는 법 (가능성 × 중대성)</h3>
+  <p style="margin:0 0 8px">표의 숫자를 누르면 뜻이 나옵니다.</p>
+  <table class="mx">
+    <tr><th></th><th>가능성 1<br><small>거의 없음</small></th><th>가능성 2<br><small>가끔</small></th><th>가능성 3<br><small>자주</small></th></tr>
+    <tr><th>중대성 3<br><small>사망·장해·여러 명</small></th><td class="lv2">3 보통</td><td class="lv3">6 높음</td><td class="lv3">9 높음</td></tr>
+    <tr><th>중대성 2<br><small>쉬어야 하는 부상</small></th><td class="lv1">2 낮음</td><td class="lv2">4 보통</td><td class="lv3">6 높음</td></tr>
+    <tr><th>중대성 1<br><small>응급처치 정도</small></th><td class="lv1">1 낮음</td><td class="lv1">2 낮음</td><td class="lv2">3 보통</td></tr>
+  </table>
+  <div class="ok"><b>높음(6·9)</b> 바로 개선, 작업 중지까지 검토 · <b>보통(3·4)</b> 계획 세워 개선 · <b>낮음(1·2)</b> 지금 상태 유지, 교육·관리</div>
 </section>
 
-<section id="m6">
-  <h2>⑧ 기록 보관 · 출력</h2>
-  <div class="who">관리자 · 아래 「기록」 메뉴 · 법정 보관 3년</div>
-  <div class="step"><figure><img src="help/m13_rec.jpg" alt="기록 화면, 교육 기록하기와 2026 보관본 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 교육·TBM 기록하기 / 전체 보기</li>
-      <li><span class="n">2</span> <b>2026년 보관본</b>: 사전준비(실시규정·일정·예산·회의록), 교육 기록 10건, 체크리스트, 차량 안전장치 점검표, 근로자 의견 청취, KRAS 평가표, 감소대책 교육자료, 조직도·비상연락, 사진 41장</li>
-    </ol></div></div>
-  <div class="step"><figure><img src="help/m15_archedu.jpg" alt="2026 교육 기록 상세, 사진과 교육일지"></figure>
-    <div class="txt"><p>교육 기록을 누르면 그날 사진과 교육일지 스캔이 함께 나옵니다. 사진을 누르면 크게 보이고 ◀ ▶로 넘깁니다.</p></div></div>
-  <div class="step"><figure><img src="help/m14_print.jpg" alt="출력 버튼과 설정 버튼 표시"></figure>
-    <div class="txt"><ol>
-      <li><span class="n">1</span> 2026 평가표 인쇄 · <span class="n">2</span> 2026 교육 기록 인쇄</li>
-      <li><span class="n">3</span> <b>설정</b>: 서버 연결 확인, 사진 개수 확인, 최근 활동(누가 언제 무엇을 했는지)</li>
-    </ol></div></div>
+<section id="newyear">
+  <h2>⑤ 새해 정기평가 시작하기</h2>
+  <div class="who">1년에 한 번 · 이미 만든 해는 평가 메뉴에서 그 연도를 누르면 됩니다</div>
+  <ol class="s">
+    <li>홈 › <span class="b">다음 정기평가 시작하기</span> (또는 평가 › <span class="b">+ 새 연도</span>)</li>
+    <li><b>가져올 평가표</b>에서 작년을 고르고, 평가 시작일·종료일을 넣습니다.</li>
+    <li><span class="b">평가표 만들기</span> → 작년 항목이 그대로 들어옵니다. (점수는 그대로, <b>예정일·완료일은 비어서</b> 들어옵니다)</li>
+    <li>평가 › 그 연도에서 항목을 하나씩 열어 <span class="b">수정</span> → 올해 상황에 맞게 위험성·감소대책을 고치고 예정일·완료일을 넣습니다.</li>
+  </ol>
+  <div class="tip">완료일을 넣은 항목은 홈 <b>조치 필요</b>에서 빠집니다. 완료일이 평가일보다 앞서면 경고가 뜨고 저장되지 않습니다.</div>
+</section>
+
+<section id="docs">
+  <h2>⑥ 대표 사인 받은 서류 올리기</h2>
+  <div class="who">홈 › 📤 서류 올리기 · 실시규정, 사전준비 회의, 추진 일정, 안전·보건 예산 등</div>
+  <ol class="s">
+    <li>서류를 출력해서 대표님 사인을 받습니다.</li>
+    <li class="ph"><span class="b">📷 사진 찍기</span>로 서류를 찍습니다. (평평한 곳에 놓고 위에서 똑바로)</li>
+    <li class="pc">스캔한 PDF나 사진을 <span class="b">📁 파일 고르기</span>로 고릅니다.</li>
+    <li><b>어떤 서류예요?</b>에서 종류를 고릅니다. <small>(파일 이름에 「예산」「규정」「일정」「회의」가 있으면 미리 골라져 있습니다)</small></li>
+    <li><span class="b">⬆ 저장</span> → 기록 › 1단계 · 사전준비의 그 칸에 <b>연도별로</b> 들어갑니다.</li>
+  </ol>
+  <div class="tip">기록 › 1단계 · 사전준비 화면에서 칸마다 바로 올릴 수도 있습니다. 서류 이름을 누르면 열리고, 잘못 올린 것은 <span class="b">빼기</span>.</div>
+</section>
+
+<section id="more">
+  <h2>⑦ 포상 · 알림·공유 기록 · 보관본</h2>
+  <div class="who">필요할 때만</div>
+  <table>
+    <tr><th>🏆 포상</th><td>홈 › 우수근로자 포상 → <span class="b">+ 우수근로자 추천하기</span> → 심사 점수 넣기 → 분기·연말 결과, 추천서 인쇄</td></tr>
+    <tr><th>📣 알림 기록</th><td>기록 › 평가 일정 알림 · 결과 공유 → <span class="b">+ 알림 기록</span>: 평가 전에 직원들에게 미리 알린 기록 (밴드에 올리기 버튼 있음)</td></tr>
+    <tr><th>🤝 공유 기록</th><td>같은 곳 <span class="b">+ 공유 기록</span>: 신규 채용·작업 변경 때 위험요인·대책을 알려 주고 → 확인서 인쇄 → 서명 → 사진·PDF 올리기</td></tr>
+    <tr><th>🗂 보관본</th><td>기록 › 2026 보관본: 사전준비, 교육 기록, 체크리스트, 의견 청취, 평가표, 조직도·비상연락 (3년 보관)</td></tr>
+    <tr><th>⚙ 설정</th><td>기록 › 설정: 연결 확인, 최근 활동, 포상·평가 항목 고치기, 지금 버전</td></tr>
+  </table>
 </section>
 
 <section id="year">
-  <h2>1년 흐름 — 언제 무엇을 하나</h2>
-  <div class="who">26년 일정표 기준</div>
+  <h2>1년 동안 할 일</h2>
+  <div class="who">2026년 일정 기준</div>
   <table>
-    <tr><th>3월</th><td>실시규정 확인 · 일정표 작성 · 체크리스트 준비 → 앱: <b>⑦ 다음 해 정기평가 시작</b></td></tr>
-    <tr><th>4월</th><td>1차 교육(위험성평가 교육) · 현장 점검 1차·2차 · 근로자 의견 청취 → 앱: <b>⑤ 교육 기록</b>, <b>④ 체크리스트</b>, <b>① 신고</b>로 의견 받기</td></tr>
-    <tr><th>5월</th><td>위험성 결정(평가) · 감소대책 수립 · 사후 교육 → 앱: <b>⑥ 평가표 수정</b>, <b>⑤ 교육 기록(결과 공유 체크)</b></td></tr>
-    <tr><th>5월 말</th><td>종합본 정리 → 앱: <b>⑧ 인쇄 / PDF</b></td></tr>
-    <tr><th>연중</th><td>매일 TBM 서명 · 아차사고 신고 → 처리 → 필요하면 수시평가 (<b>①②③⑥</b>)</td></tr>
+    <tr><th>3월</th><td>실시규정·추진 일정·예산 → 대표 사인 → <b>⑥ 서류 올리기</b> / <b>⑤ 새해 정기평가 시작</b> / 직원들에게 <b>알림 기록</b></td></tr>
+    <tr><th>4월</th><td>위험성평가 교육 → <b>② 교육 기록</b> · 현장 점검 → <b>③ 체크리스트</b> · 직원 의견 듣기</td></tr>
+    <tr><th>5월</th><td>평가표 고치기 → <b>④ 평가</b> · 결과를 직원에게 알리기 → <b>② 교육</b> 또는 <b>공유 기록</b></td></tr>
+    <tr><th>5월 말</th><td>종합본 정리 → <b>④ 인쇄 / PDF</b></td></tr>
+    <tr><th>연중</th><td>매일 TBM 서명 · 현장 보고 → <b>① 접수함</b> 처리 → 필요하면 수시평가</td></tr>
     <tr><th>보관</th><td>기록은 3년 보관 (2026년분 → 2029년 5월까지)</td></tr>
   </table>
 </section>
 
 <section id="faq" class="qa">
   <h2>이럴 땐 이렇게</h2>
-  <b>사진이 「사진 미등록」으로 나와요</b>
-  기록 → 설정 → 「연결 확인」에서 2026 사진이 41 / 41장인지 보세요. 숫자가 모자라면 사진 올리기를 다시 하세요.
-  <b>저장 실패라고 나와요</b>
-  인터넷 연결을 확인하고 다시 누르세요. 입력한 내용은 화면에 그대로 남아 있습니다.
-  <b>잘못 저장했어요</b>
-  평가 항목은 「수정」으로 고치면 됩니다. 고친 기록은 이력으로 남습니다. 신고는 관리자가 상태와 조치 내용을 바꿀 수 있습니다.
-  <b>이름이 다른 사람으로 나와요</b>
-  화면 오른쪽 위 주황색 이름을 눌러 바꾸세요. 같이 쓰는 휴대폰이면 서명할 때마다 이름을 확인하세요.
   <b>앱이 예전 화면 그대로예요</b>
-  앱을 완전히 닫았다가 다시 열거나, 크롬에서 새로고침하세요. 지금 버전은 <b>설정</b> 맨 아래에 나옵니다.
+  <span class="ph">앱을 완전히 닫았다가(최근 앱 목록에서 위로 밀기) 다시 여세요. 그래도 안 바뀌면 한 번 더.</span><span class="pc">키보드 <span class="b">Ctrl + F5</span>를 누르세요.</span> 지금 버전은 홈 맨 위(예: v20)에 나옵니다.
+  <b>📷 사진 찍기를 눌러도 카메라가 안 켜져요</b>
+  폰 설정 › 애플리케이션 › 크롬(또는 위험성평가) › 권한 › <b>카메라 허용</b>. 안 되면 <span class="b">🖼 고르기</span>로 찍어 둔 사진을 올리세요.
+  <b>저장 실패라고 나와요</b>
+  인터넷 연결을 확인하고 다시 누르세요. 적은 내용은 화면에 그대로 남아 있습니다.
+  <b>잘못 저장했어요</b>
+  평가 항목은 <span class="b">수정</span>으로 고칩니다(이력이 남음). 보고는 접수함에서 상태·조치 내용을 바꾸거나 삭제합니다. 서류는 <span class="b">빼기</span>.
+  <b>이름이 다른 사람으로 나와요</b>
+  오른쪽 위 주황색 이름을 눌러 바꾸세요. 같이 쓰는 폰·PC면 쓰기 전에 이름을 꼭 확인하세요.
+  <b>설치 버튼이 안 보여요</b>
+  카카오톡·밴드 안에서 열면 설치가 안 됩니다. 주소를 <b>크롬</b>(또는 삼성 인터넷)에서 다시 여세요.
 </section>
 
-<p style="text-align:center;color:var(--mute);font-size:13px">본에코(주) 위험성평가 앱 · 사용 방법 v2</p>
+<p style="text-align:center;color:var(--mute);font-size:13px">본에코(주) 위험성평가 앱 · 사용 방법 v3 (앱 v20 기준)</p>
 </main>
+<script>
+(function(){
+  var mob=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  var d=mob?'ph':'pc';try{d=localStorage.getItem('risk_help_dev')||d}catch(e){}
+  function set(v){document.body.className=v;document.querySelectorAll('[data-dev]').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-dev')===v)});try{localStorage.setItem('risk_help_dev',v)}catch(e){}}
+  document.querySelectorAll('[data-dev]').forEach(function(b){b.onclick=function(){set(b.getAttribute('data-dev'))}});
+  set(d);
+})();
+</script>
 </body>
 </html>

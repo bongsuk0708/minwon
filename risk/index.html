@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v19';
+const VER='v20';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -292,6 +292,7 @@ V.home=async m=>{
     <button class="big acc" data-go="report"><b>📥 접수함</b><span>현장 보고 · ${reps.length?"처리 대기 "+reps.length+"건":"대기 없음"}</span></button>
     <button class="big" data-go="eduForm"><b>👥 교육·TBM 기록</b><span>폰 서명 · 종이 서명지 올리기</span></button>
   </div>
+  <button class="item" data-go="docUp" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">📤</span><span style="flex:1"><span class="t">서류 올리기</span><span class="m" style="display:block">사진 찍기·파일 고르기 → 종류 고르면 제자리로 (실시규정·일정·예산 등)</span></span><span class="muted">›</span></button>
   <button class="item" data-go="award" style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🏆</span><span style="flex:1"><span class="t">우수근로자 포상</span><span class="m" style="display:block">추천하기 · 심사 점수 · 분기(${AW_MONTHS.join('·')}월)·연말 결과</span></span><span class="muted">›</span></button>
   <div class="card"><div class="between"><h2 style="margin:0">${cy?cy+'년 평가 진행':'2026년 정기평가'}</h2><span class="tag ${cy?'st':'lv-낮음'}">${cy?'진행중':'완료 · 보관'}</span></div>
    ${cy?`<p class="muted">평가표 ${Object.keys(S.cache['kras/'+cy]||{}).length}건 · 미완료 ${open.length}건</p><button class="btn block" data-go="kras" data-arg="${cy}">${cy}년 평가표 열기</button>`:
@@ -662,7 +663,10 @@ V.rec=async m=>{
   $('#p1').onclick=()=>printKras(2026,A.kras);$('#p2').onclick=()=>printEdu();
 };
 // 사전준비 서명본 (실시규정·사전준비 회의) — 출력 → 대표 사인 → 사진·PDF로 올리기. 저장 risk/prepdocs/{id}
-const PREP_N={rule:'실시규정 서명본',prep:'사전준비 서명본',sched:'추진 일정 서명본'};
+const PREP_N={rule:'실시규정 서명본',prep:'사전준비 서명본',sched:'추진 일정 서명본',budget:'안전·보건 예산 서명본',etc:'기타 서류'};
+const PREP_K=Object.keys(PREP_N);
+// 파일 이름으로 종류 미리 고르기
+const prepGuess=n=>{n=String(n||'');return /예산|budget/i.test(n)?'budget':/규정|절차/.test(n)?'rule':/일정|계획/.test(n)?'sched':/회의|공지|사전/.test(n)?'prep':''};
 let PREP_DOCS={};
 function prepBox(k){const ds=Object.entries(PREP_DOCS).map(([id,v])=>({id,...v})).filter(d=>d.k===k&&!d.deleted).sort((a,b)=>(b.t||'').localeCompare(a.t||''));
   const ys=[...new Set(ds.map(d=>d.y))];
@@ -670,7 +674,7 @@ function prepBox(k){const ds=Object.entries(PREP_DOCS).map(([id,v])=>({id,...v})
   ${ds.length?ys.map(y=>`<div class="cat">${esc(y)}년</div>${ds.filter(d=>d.y===y).map(d=>`<div class="between" style="padding:6px 0;border-bottom:1px solid #EEF0F2"><span>${d.type==='pdf'?`<span data-pdf="${d.f}" style="cursor:pointer;text-decoration:underline">📄 ${esc(d.name)}</span>`:`<span data-pimg="${d.f}" style="cursor:pointer;text-decoration:underline">🖼 ${esc(d.name)}</span>`}<div class="muted">${esc(d.t||'')} · ${esc(d.u||'')}</div></span><button class="btn sm" data-pdel="${d.id}">빼기</button></div>`).join('')}`).join(''):'<p class="muted" style="margin:4px 0">아직 올린 서명본이 없습니다. 서류를 출력해 대표 사인을 받은 뒤 스캔(PDF)이나 사진으로 올리세요.</p>'}
   <div id="pp_${k}"></div><button class="btn dark block" id="ps_${k}" style="margin-top:8px">⬆ 고른 서명본 저장</button>`}
 function prepBind(m){
-  ['rule','prep','sched'].forEach(k=>{const h=$('#pp_'+k);if(!h)return;const arr=[];const sb=$('#ps_'+k);
+  PREP_K.forEach(k=>{const h=$('#pp_'+k);if(!h)return;const arr=[];const sb=$('#ps_'+k);
     filePick(h,arr,PREP_N[k]+' 고르기 (사진·PDF)');
     sb.onclick=async()=>{if(!arr.length){toast('먼저 서명본 파일을 고르세요');return}if(!needUser())return;sb.disabled=true;
       try{const y=String(new Date().getFullYear());for(const s of await saveSheets(arr))await post('prepdocs',{k,y,f:s.id,type:s.type,name:s.name,t:nowStr(),u:S.user});await log(PREP_N[k]+' 올림 '+arr.length+'개');inval('prepdocs');toast('올렸습니다');render()}catch(e){sb.disabled=false;toast('올리기 실패: '+e.message)}}});
@@ -686,8 +690,27 @@ V.archPrep=async m=>{
   <div class="card"><h2>사전준비 회의 · 공지</h2>${thumbs(['p11','p12','p13'],{cap:1})}${prepBox('prep')}</div>
   <div class="card"><h2>추진 일정</h2>${thumbs(['p03','p04'],{cap:1})}<table class="t" style="margin-top:10px"><tbody>${A.schedule.map(s=>{const mo=s.d.slice(5,7);const h=mo!==lastM?`<tr><th colspan="3" style="color:var(--acc)">${+(lastM=mo)}월</th></tr>`:'';return h+`<tr><td style="white-space:nowrap">${+s.d.slice(5,7)}.${+s.d.slice(8)}</td><td style="white-space:nowrap"><span class="tag st">${esc(s.tag)}</span></td><td>${esc(s.task)}</td></tr>`}).join('')}</tbody></table>${prepBox('sched')}</div>
   <div class="card"><h2>2026 안전·보건 예산 (예정)</h2><table class="t"><tbody>${A.budget.map(b=>`<tr><td><b>${esc(b.name)}</b>${b.detail?`<div class="muted">${esc(b.detail)}</div>`:''}</td><td style="text-align:right;white-space:nowrap">${won(b.amt)}</td></tr>`).join('')}<tr><th>합계</th><th style="text-align:right">${won(tot)}</th></tr></tbody></table>
-  <div class="note" style="margin-top:8px">예비비 13,367,000원은 예비비 제외 합계(133,370,000원)의 10%인 13,337,000원과 3만원 차이가 납니다. 종합본 원문 그대로입니다.</div></div>`;
+  <div class="note" style="margin-top:8px">예비비 13,367,000원은 예비비 제외 합계(133,370,000원)의 10%인 13,337,000원과 3만원 차이가 납니다. 종합본 원문 그대로입니다.</div>${prepBox('budget')}</div>
+  <div class="card"><h2>기타 서류</h2>${prepBox('etc')}</div>`;
   fillThumbs(m);prepBind(m);
+};
+// 홈 › 📤 서류 올리기 — 사진 찍기·파일 고르기 → 종류 고르면 제자리(사전준비 칸)로
+V.docUp=async m=>{
+  setHead('서류 올리기','사진 찍기 · 파일 고르기 → 종류 고르기');
+  const arr=[];
+  const draw=()=>{arr.forEach(s=>{if(s.k===undefined)s.k=prepGuess(s.name)});
+    m.innerHTML=`<div class="card"><h2>① 서류 고르기</h2><p class="muted" style="margin:0 0 8px;line-height:1.6">대표 사인 받은 서류를 사진으로 찍거나 스캔(PDF) 파일을 고르세요.</p><div id="dpk"></div></div>
+    ${arr.length?`<div class="card"><h2>② 어떤 서류예요?</h2>${arr.map((s,i)=>`<div style="padding:8px 0;border-bottom:1px solid #EEF0F2"><div style="margin-bottom:6px">${s.type==='pdf'?'📄':'🖼'} ${esc(s.name)}</div><select class="i" data-dk="${i}"><option value="">— 종류 고르기 —</option>${PREP_K.map(k=>`<option value="${k}" ${s.k===k?'selected':''}>${PREP_N[k].replace(' 서명본','')}</option>`).join('')}</select></div>`).join('')}
+      <button class="btn pri block" id="dsv" style="margin-top:12px">⬆ 저장 (제자리로 넣기)</button></div>`:''}
+    <div class="note">저장하면 <b>기록 › 1단계 · 사전준비</b>의 그 칸에 연도별로 들어갑니다. 교육 서명지는 교육·TBM 기록에서 올리세요.</div>`;
+    filePick($('#dpk'),arr,'서류 고르기 (사진·PDF)');
+    // 고른 뒤 다시 그리기 (filePick이 다시 그릴 때마다 감시)
+    const n0=arr.length;new MutationObserver((_,o)=>{if(arr.length!==n0){o.disconnect();draw()}}).observe($('#dpk'),{childList:true});
+    m.querySelectorAll('[data-dk]').forEach(s=>s.onchange=()=>{arr[+s.dataset.dk].k=s.value});
+    const sv=$('#dsv');if(sv)sv.onclick=async()=>{if(arr.some(s=>!s.k)){toast('서류마다 종류를 골라 주세요');return}if(!needUser())return;sv.disabled=true;sv.textContent='저장 중…';
+      try{const y=String(new Date().getFullYear());const saved=await saveSheets(arr);for(let i=0;i<saved.length;i++){const s=saved[i];await post('prepdocs',{k:arr[i].k,y,f:s.id,type:s.type,name:s.name,t:nowStr(),u:S.user})}
+        await log('서류 올리기 '+saved.length+'개');inval('prepdocs');toast('제자리에 넣었습니다');S.stack=[];go('archPrep')}catch(e){sv.disabled=false;sv.textContent='⬆ 저장 (제자리로 넣기)';toast('올리기 실패: '+e.message)}};
+  };draw();
 };
 V.archEdu=async m=>{
   setHead('교육 기록','2026 보관본');

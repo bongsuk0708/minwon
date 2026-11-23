@@ -647,7 +647,7 @@ body{background:var(--bg)}
 <div id="app" style="display:none">
   <div id="hdr">
     <div id="hdr-top">
-      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1113k</span><span id="net-dot" class="net-dot"></span></h1>
+      <h1><span>종합예방관리대장</span><i class="h-logo" aria-hidden="true"></i><span>본에코(주)</span><span id="build-tag" class="build-tag">v1123l</span><span id="net-dot" class="net-dot"></span></h1>
       <div id="hdr-right">
         <button class="hdr-sbtn" id="hb-photo" onclick="swSide('photo')">📦 보관함</button>
         <button class="hdr-sbtn" id="hb-staff" onclick="swSide('staff')">👷 직원</button>
@@ -1182,7 +1182,7 @@ function startApp(){
   connectFB();
   renderExtra('m'); renderExtra('h');
   if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
-  setTimeout(function(){ sw('ledger'); },0);   // 첫 화면 = 종합예방관리대장 (관리대장 코드가 아래쪽에 있어 다 읽은 뒤 염)
+  setTimeout(function(){ sw('ledger'); if(/[?&]from=wonjang\b/.test(location.search)&&typeof lgPickLed==='function') lgPickLed('mw'); },0);   // 첫 화면 = 종합예방관리대장 (관리대장 코드가 아래쪽에 있어 다 읽은 뒤 염) · [11_23l] 디지털원장 [📋 민원접수·대장관리]로 열면 민원대장부터
 }
 
 // ── Firebase ──

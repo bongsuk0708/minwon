@@ -157,7 +157,7 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v22';
+const VER='v23';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
@@ -591,6 +591,7 @@ V.krasView=async(m,arg)=>{
 };
 const MX_P={1:'거의 없음 — 안전조치가 잘 되어 있어 일어나기 어려움',2:'가끔 — 조치는 있으나 부주의하면 일어날 수 있음',3:'자주 — 조치가 없거나 부족해 쉽게 일어날 수 있음'};
 const MX_S={1:'가벼움 — 응급처치 후 바로 작업 가능',2:'중간 — 쉬어야 하는 부상·질병',3:'큼 — 사망·장해·오래 치료하는 큰 부상, 여러 명이 다침'};
+const AF_N={1:'가능성 1 × 중대성 1 (거의 없음 · 가벼움)',2:'가능성 2 × 중대성 1, 또는 1 × 2',3:'가능성 3 × 중대성 1, 또는 1 × 3',4:'가능성 2 × 중대성 2',6:'가능성 3 × 중대성 2, 또는 2 × 3',9:'가능성 3 × 중대성 3'};
 const MX_A={'낮음':'지금 상태 유지, 교육·관리','보통':'계획을 세워 개선','높음':'바로 개선, 작업 중지까지 검토'};
 function mxInfo(p,s){if(!p||!s)return '<span class="muted">숫자를 누르면 뜻이 나옵니다</span>';const v=p*s,l=lvl(v);return `<div><b>가능성 ${p}</b> · ${MX_P[p]}</div><div><b>중대성 ${s}</b> · ${MX_S[s]}</div><div style="margin-top:4px"><span class="tag lv-${l}">${v} · ${l}</span> ${MX_A[l]}</div>`}
 function mxHtml(p,s,ro){let h=`<div class="mx" ${ro?'data-ro="1"':''} style="margin-top:10px">`;for(const sv of [3,2,1]){h+=`<span>중대 ${sv}</span>`;for(const pv of [1,2,3]){const v=sv*pv,l=lvl(v);h+=`<button type="button" data-mx="${pv},${sv}" class="lv-${l} ${p===pv&&s===sv?'on':''}" aria-label="가능성 ${pv} 중대성 ${sv} 위험성 ${v}">${v}</button>`}}h+=`<span></span><span>가능 1</span><span>2</span><span>3</span></div><div class="mxi">${mxInfo(p,s)}</div>`;return h}
@@ -612,15 +613,20 @@ V.krasForm=async(m,arg)=>{
   <label class="f">사진</label>${thumbs(cur.photos)}<div id="pp"></div></div>
   <div class="card"><div class="between"><h2 style="margin:0">위험성 결정</h2><span class="tag" id="rk"></span></div><p class="muted" style="margin:4px 0 0">칸을 눌러 가능성 × 중대성을 고르세요</p><div id="mx"></div></div>
   <div class="card"><label class="f" for="fpl" style="margin-top:0">위험성 감소대책</label><textarea class="i" id="fpl">${esc(cur.plan)}</textarea>
-  <label class="f">개선 후 위험성</label><div class="seg" style="grid-template-columns:repeat(6,1fr)" id="af">${[1,2,3,4,6,9].map(v=>`<button data-v="${v}" class="${cur.after===v?'on':''}">${v}</button>`).join('')}</div>
+  <label class="f">개선 후 위험성</label><div class="seg" style="grid-template-columns:repeat(6,1fr)" id="af">${[1,2,3,4,6,9].map(v=>`<button data-v="${v}" class="${cur.after===v?'on':''}">${v}</button>`).join('')}</div><div class="mxi" id="afi"></div>
   <div class="grid2"><div><label class="f" for="fdu">개선 예정일</label><input class="i" type="date" id="fdu" value="${cur.due||''}"></div><div><label class="f" for="fdo">완료일</label><input class="i" type="date" id="fdo" value="${cur.done||''}"></div></div>
   <div id="dw"></div>
   <label class="f" for="fo">담당자</label><input class="i" id="fo" value="${esc(cur.owner||'')}">
   <button class="btn pri block" id="fs" style="margin-top:14px">저장</button>${!isNew?'<button class="btn block" id="fdel" style="margin-top:8px;color:#8E1F14">삭제</button>':''}</div>`;
   photoPicker($('#pp'),newPh);fillThumbs(m);
   const drawMx=()=>{$('#mx').innerHTML=mxHtml(cur.p,cur.s);const v=cur.p*cur.s;$('#rk').className='tag lv-'+lvl(v);$('#rk').textContent=v+' · '+lvl(v)};
-  $('#mx').onclick=e=>{const b=e.target.closest('[data-mx]');if(!b)return;[cur.p,cur.s]=b.dataset.mx.split(',').map(Number);drawMx()};drawMx();
-  $('#af').onclick=e=>{const b=e.target.closest('button');if(!b)return;cur.after=+b.dataset.v;$('#af').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b))};
+  $('#mx').onclick=e=>{const b=e.target.closest('[data-mx]');if(!b)return;[cur.p,cur.s]=b.dataset.mx.split(',').map(Number);drawMx();if($('#afi'))drawAf()};drawMx();
+  const drawAf=()=>{const v=cur.after,l=lvl(v),now=cur.p*cur.s;
+    $('#afi').innerHTML=`<div><b>개선 후 위험성</b> = 감소대책을 다 한 뒤에 <b>남는 위험</b>입니다. 대책으로 가능성이나 중대성이 얼마나 줄어드는지 생각해서 고르세요.</div>
+    <div style="margin-top:4px"><span class="tag lv-${l}">${v} · ${l}</span> ${AF_N[v]} — ${l==='낮음'?'대책 후 받아들일 수 있는 위험 (지금 상태 유지, 교육·관리)':l==='보통'?'대책 후에도 남는 위험 — 추가 대책이나 관리 계획을 세우세요':'대책 후에도 높음 — 대책을 더 세우거나 작업 방법을 바꾸세요'}</div>
+    ${v>now||(v===now&&now>=3)?`<div class="warn" style="margin-top:6px">개선 후 위험성(${v})이 지금 위험성(${now})보다 낮지 않습니다. 감소대책을 다시 확인하세요.</div>`:''}
+    <div class="muted" style="margin-top:4px">보통 <b>낮음(1·2)</b>이 되도록 대책을 세웁니다. 지금 ${now} → 개선 후 ${v}</div>`};
+  $('#af').onclick=e=>{const b=e.target.closest('button');if(!b)return;cur.after=+b.dataset.v;$('#af').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));drawAf()};drawAf();
   const chk=()=>{const du=$('#fdu').value,dn=$('#fdo').value;let w='';const ev=meta.evalFrom||'';
     if(cur.proc!=='수시'&&ev&&dn&&dn<ev)w='완료일이 평가일('+fmtD(ev)+')보다 앞섭니다. 평가 후 조치한 날짜를 넣어 주세요.';
     else if(du&&dn&&dn<du)w='완료일이 예정일보다 앞섭니다.';$('#dw').innerHTML=w?`<div class="warn">${w}</div>`:'';return !w};

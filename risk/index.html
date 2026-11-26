@@ -157,10 +157,18 @@ body.field #instBar{max-width:640px;margin:0 auto}
 <script src="data2026.js"></script>
 <script>
 'use strict';
-const VER='v21';
+const VER='v22';
 const DB='https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
 const ROOT='risk';
 const A=window.RISK2026;
+// 공정별 세부작업 (평가 항목 고를 때 목록, 없으면 직접 쓰기)
+const TASKS={공통:['수집·운반','차량운행','차량점검','후진·주정차','상차·하차','세차·차량 정리'],
+  생활:['봉투 수거','수거·상차','압착 작업','적환장 하차'],
+  음식물:['수거통 수거','리프트 상차','수거통 세척','처리장 하차'],
+  재활용:['재활용 수거','수거·상차','선별 작업','하차·적재'],
+  대형:['대형폐기물 수거','인력 상차','집게차·크레인 상차','해체·절단'],
+  건물:['계단청소','화장실청소','주차장청소','바닥청소','유리창청소','외곽청소'],
+  수시:['수시 작업']};
 let PROC=[['공통','수집·운반 공통'],['생활','생활(봉투)폐기물'],['음식물','음식물류폐기물'],['재활용','재활용가능자원'],['대형','대형생활/기동대'],['건물','건물 내외 청소'],['수시','수시평가']];
 let PROCN=Object.fromEntries(PROC);
 let TEAMS=['생활팀','수송팀','재활팀','음식팀','대형팀','건물청소팀','사무실'];
@@ -596,7 +604,7 @@ V.krasForm=async(m,arg)=>{
   const isNew=id==='new';const cur=isNew?{proc:pre.proc||(PROC.find(p=>p[0]==='공통')||PROC[0])[0],task:'수집·운반',cls:CLS[0],hazard:pre.hazard||'',law:'',current:'',p:2,s:2,plan:'',after:1,due:'',done:'',owner:S.user,photos:pre.photos||[]}:{...(await load('kras/'+year,true))[id]};
   setHead(isNew?'평가 항목 추가':'평가 항목 수정',year+'년');
   const newPh=[];
-  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="fp">공정</label><select class="i" id="fp">${(PROC.some(p=>p[0]===cur.proc)||!cur.proc?PROC:PROC.concat([[cur.proc,PROCN[cur.proc]||cur.proc]])).map(([k,n])=>`<option value="${esc(k)}" ${cur.proc===k?'selected':''}>${esc(n)}</option>`).join('')}</select></div><div><label class="f" for="ft">세부작업</label><input class="i" id="ft" value="${esc(cur.task)}" list="tasks"><datalist id="tasks"><option>수집·운반</option><option>차량운행</option><option>차량점검</option><option>계단청소</option><option>화장실청소</option><option>주차장청소</option></datalist></div></div>
+  m.innerHTML=`<div class="card"><div class="grid2"><div><label class="f" for="fp">공정</label><select class="i" id="fp">${(PROC.some(p=>p[0]===cur.proc)||!cur.proc?PROC:PROC.concat([[cur.proc,PROCN[cur.proc]||cur.proc]])).map(([k,n])=>`<option value="${esc(k)}" ${cur.proc===k?'selected':''}>${esc(n)}</option>`).join('')}</select></div><div><label class="f" for="fts">세부작업</label><select class="i" id="fts"></select><input class="i" id="ft" value="${esc(cur.task)}" placeholder="세부작업을 직접 적으세요" style="margin-top:6px;display:none"></div></div>
   <label class="f" for="fc">위험분류</label><select class="i" id="fc">${withCur(CLS,cur.cls).map(c=>`<option ${cur.cls===c?'selected':''}>${esc(c)}</option>`).join('')}</select>
   <label class="f" for="fh">위험 발생 상황 및 결과</label><textarea class="i" id="fh">${esc(cur.hazard)}</textarea>
   <label class="f" for="fl">관련 근거 (법적 기준)</label><input class="i" id="fl" value="${esc(cur.law)}" placeholder="예: 안전보건규칙 제3조[전도의 방지]">
@@ -616,7 +624,17 @@ V.krasForm=async(m,arg)=>{
   const chk=()=>{const du=$('#fdu').value,dn=$('#fdo').value;let w='';const ev=meta.evalFrom||'';
     if(cur.proc!=='수시'&&ev&&dn&&dn<ev)w='완료일이 평가일('+fmtD(ev)+')보다 앞섭니다. 평가 후 조치한 날짜를 넣어 주세요.';
     else if(du&&dn&&dn<du)w='완료일이 예정일보다 앞섭니다.';$('#dw').innerHTML=w?`<div class="warn">${w}</div>`:'';return !w};
-  $('#fdu').onchange=chk;$('#fdo').onchange=chk;$('#fp').onchange=()=>{cur.proc=$('#fp').value;chk()};
+  // 세부작업: 고른 공정 것 먼저, 다른 공정 것 전부, 그동안 쓴 것, 맨 아래 ✏ 직접 쓰기
+  const used={};[A.kras,Object.values(S.cache['kras/'+year]||{})].forEach(rs=>rs.forEach(r=>{if(r&&r.task&&!r.deleted)(used[r.proc]=used[r.proc]||new Set()).add(r.task)}));
+  const tasksOf=p=>[...new Set([...(TASKS[p]||[]),...(used[p]||[])])];
+  const drawTasks=()=>{const p=$('#fp').value,t=$('#ft').value.trim(),mine=tasksOf(p);
+    const others=PROC.filter(([k])=>k!==p).map(([k,n])=>[n,tasksOf(k).filter(x=>!mine.includes(x))]).filter(g=>g[1].length);
+    const all=mine.concat(...others.map(g=>g[1]));const direct=!!t&&!all.includes(t);
+    $('#fts').innerHTML=`<optgroup label="${esc(PROCN[p]||p)}">${mine.map(x=>`<option ${x===t?'selected':''}>${esc(x)}</option>`).join('')}</optgroup>${others.map(([n,xs])=>`<optgroup label="${esc(n)}">${xs.map(x=>`<option ${x===t?'selected':''}>${esc(x)}</option>`).join('')}</optgroup>`).join('')}<option value="__d" ${direct||!t?'selected':''}>✏ 직접 쓰기</option>`;
+    $('#ft').style.display=direct||!t?'block':'none'};
+  $('#fts').onchange=()=>{const v=$('#fts').value;if(v==='__d'){$('#ft').value='';$('#ft').style.display='block';$('#ft').focus()}else{$('#ft').value=v;$('#ft').style.display='none'}};
+  drawTasks();
+  $('#fdu').onchange=chk;$('#fdo').onchange=chk;$('#fp').onchange=()=>{cur.proc=$('#fp').value;chk();drawTasks()};
   $('#fs').onclick=async()=>{
     const v={proc:$('#fp').value,task:$('#ft').value.trim(),cls:$('#fc').value,hazard:$('#fh').value.trim(),law:$('#fl').value.trim(),current:$('#fcu').value.trim(),p:cur.p,s:cur.s,risk:cur.p*cur.s,plan:$('#fpl').value.trim(),after:cur.after,due:$('#fdu').value,done:$('#fdo').value,owner:$('#fo').value.trim()};
     if(!v.hazard){toast('위험 발생 상황을 적어 주세요');return}

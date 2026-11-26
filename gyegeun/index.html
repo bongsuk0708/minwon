@@ -306,7 +306,7 @@ body.nv{padding-top:44px}
   <button class="btn" id="bFresh">새로고침 (최신으로 맞추기)</button>
   <div class="hint">앱을 껐다 켜지 않아도 됩니다. 이 단추만 누르면 최신으로 바뀝니다.</div>
   <button class="btn gh" id="bWipe">이 폰의 기록 모두 지우기</button>
-  <div class="hint" id="verLine">v67 · 2026-11-17 · 계근 전표 입력 · 본에코</div>
+  <div class="hint" id="verLine">v68 · 2026-11-26 · 계근 전표 입력 · 본에코</div>
   <div style="height:20px"></div>
 </section>
 
@@ -967,7 +967,49 @@ function slipKey(date, veh, g, t, n){
 /* 전표번호는 계근기가 전표 한 장마다 매기는 고유 번호입니다.
    이것이 같으면 같은 전표이고, 이것이 다르면 실중량이 같아도 다른 전표입니다.
    그래서 전표번호가 있으면 그것만 봅니다. */
+/* 서버에 올라간 전표 (다른 폰이 올린 것까지).
+   폰마다 자기가 올린 전표만 알고 있어서, 같은 전표를 다른 폰으로 또 올리면 못 막았습니다
+   (11/17 7507호 000305 — 11/17에 '기타', 11/18에 다른 폰 사진으로 '대형'으로 또 올라감).
+   저장 직전에 최근 며칠 치를 서버에서 받아 이 폰의 기록과 합쳐서 봅니다. */
+let srvRecs = [], srvAt = 0, srvFrom = Infinity, srvPull = null;
+async function pullSrv(fromDate){
+  if(!cfg.db || !online()) return false;
+  // 전표 id 는 올린 시각(밀리초)을 36진수로 쓴 것으로 시작합니다 → id 순서 = 올린 시각 순서.
+  // 계근일 하루 전부터 올라온 것만 받습니다 (그보다 먼저 올라왔을 수는 없습니다). 길어도 40일 치까지만.
+  let from = new Date((fromDate||ymd(new Date()))+'T00:00:00').getTime() - 86400000;
+  from = Math.max(from, Date.now() - 40*86400000);
+  if(srvPull) await srvPull.catch(()=>{});
+  if(Date.now()-srvAt < 60000 && srvFrom <= from) return true;     // 1분 안에 받은 것이면 그대로 씁니다
+  const base = cfg.db.replace(/\/+$/,'');
+  const ctl = ('AbortController' in window) ? new AbortController() : null;
+  const tm = ctl ? setTimeout(()=>ctl.abort(), 6000) : 0;
+  srvPull = (async()=>{
+    const q = `orderBy=${encodeURIComponent('"$key"')}&startAt=${encodeURIComponent('"'+from.toString(36)+'"')}`;
+    const res = await fetch(`${base}/gyegeun/records.json?${q}`, ctl ? {signal:ctl.signal} : {});
+    if(!res.ok) throw new Error(res.status);
+    const j = await res.json() || {};
+    srvRecs = Object.keys(j).map(id=>Object.assign({id}, j[id]||{})).filter(r=>r.veh && r.date);
+    srvAt = Date.now(); srvFrom = from;
+  })();
+  try{ await srvPull; return true; }
+  catch(e){ return false; }
+  finally{ clearTimeout(tm); srvPull = null; }
+}
+// 이 폰의 기록 + 서버 기록 (같은 전표는 한 번만)
+function allRecs(){
+  if(!srvRecs.length) return recs;
+  const mine = new Set(recs.map(r=>r.id));
+  return recs.concat(srvRecs.filter(r=>!mine.has(r.id)));
+}
+/* 같은 전표가 다른 차량으로 이미 올라간 것 (11/13: 8326호 전표 000177 이 1351호로 먼저 올라감).
+   같은 날 + 같은 전표번호 + 1차·2차·실중량까지 모두 같을 때만 봅니다. */
+function otherVehSent(date, veh, g, t, n, no){
+  if(!no || !g || !t) return null;
+  return allRecs().find(r=> r.veh!==veh && r.date===date && r.no===no
+                            && +r.gross===+g && +r.tare===+t && +r.weight===+n) || null;
+}
 function alreadySent(date, veh, g, t, n, no){
+  const recs = allRecs();
   const gap  = d => Math.abs(new Date(d+'T00:00:00') - new Date(date+'T00:00:00'))/86400000;
   // 1) 전표번호는 계근대에서 날마다 1번부터 새로 매깁니다.
   //    (같은 차 전표를 보면 00:36→23번, 02:19→75번, 22:33→318번, 다음 날 00:36 다시 23번쯤)
@@ -996,6 +1038,7 @@ function alreadySent(date, veh, g, t, n, no){
    ② 한쪽이 손으로 넣은 것(1차·2차·번호 없음)이고 같은 날 같은 차 실중량이 같음
       (11/2·11/6 7201호: 판독으로 저장한 뒤 손으로 또 저장). */
 function looksSent(date, veh, g, t, n, no){
+  const recs = allRecs();
   if(g && t){
     const k = slipKey(date, veh, g, t, n);
     const a = recs.find(r=> slipKey(r.date, r.veh, r.gross, r.tare, r.weight)===k);
@@ -1306,6 +1349,8 @@ async function runOcrSpread(dataUrl, sid){
 // 사진을 잇따라 찍어도 한 장씩 차례로 읽습니다 (겹치면 판독이 깨집니다)
 let ocrQ = Promise.resolve();
 function queueOcr(dataUrl, sid, hard){
+  // 판독하는 동안 서버 기록을 미리 받아 둡니다 — 판독 직후 '이미 올림' 표시가 다른 폰 것까지 맞게 뜹니다
+  pullSrv(form.date).catch(()=>{});
   ocrQ = ocrQ.then(()=>runOcr(dataUrl, sid, hard)).catch(()=>{});
 }
 function queueSpread(dataUrl, sid){
@@ -1538,7 +1583,9 @@ function nudge(sel,msg){
     setTimeout(()=>el.classList.remove('need'),2600);
   }
 }
-$('#bSave').onclick = ()=>{
+let srvChecking = false;
+$('#bSave').onclick = async ()=>{
+  if(srvChecking) return;
   if(!cfg.veh){ toast('설정에서 차량을 먼저 정하세요','err'); return; }
   if(!form.seong){ nudge('#fSeong','성상을 고르세요 — 여기를 먼저 누르세요'); return; }
   if(!siteName()){ nudge('#fSite','반입처를 고르세요'); return; }
@@ -1581,6 +1628,15 @@ $('#bSave').onclick = ()=>{
   });
 
   // ── 이미 올린 전표 걸러내기 ──
+  // 다른 폰이 올린 것까지 보려고 서버 기록을 먼저 받습니다. 인터넷이 안 되면 이 폰 기록으로만 봅니다.
+  if(cfg.db && online()){
+    srvChecking = true; $('#bSave').disabled = true;
+    toast('이미 올린 전표인지 서버에서 확인하는 중…');
+    let ok = false;
+    try{ ok = await pullSrv(rows.map(r=>rowDate(r)).filter(Boolean).sort()[0]); }
+    finally{ srvChecking = false; $('#bSave').disabled = false; }
+    if(!ok) toast('서버 기록을 못 받아, 이 폰에 있는 기록으로만 확인합니다','err');
+  }
   // 전표번호가 같으면 같은 전표입니다. 한 장에 번호가 둘일 수 없으니 물을 것도 없습니다.
   // 묻고 「확인」을 받으면 바쁜 현장에서 그냥 눌러 버리셔서, 아예 빼고 저장합니다.
   const hard = rows.filter(r=> r.no && alreadySent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no));
@@ -1610,12 +1666,18 @@ $('#bSave').onclick = ()=>{
     if(!go) return;
   }
   // 번호를 틀리게 읽었거나 손으로 넣어서 위에서 안 걸린 것 — 같은 전표로 보이면 여쭙니다.
+  // 다른 차량으로 이미 올라간 같은 전표도 여기서 여쭙니다.
   const soft2 = rows.filter(r=> !soft.includes(r))
-    .map(r=>({r, d:looksSent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no)})).filter(x=>x.d);
+    .map(r=>{
+      const o = otherVehSent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no);
+      return {r, d: o ? {hit:o, why:'veh'} : looksSent(rowDate(r), cfg.veh, r.g, r.t, +r.w, r.no)};
+    }).filter(x=>x.d);
   if(soft2.length){
     const go = confirm(
       `이미 올린 전표와 같아 보이는 줄이 ${soft2.length}장 있습니다.\n\n`
-      + soft2.slice(0,4).map(x=> x.d.why==='no'
+      + soft2.slice(0,4).map(x=> x.d.why==='veh'
+          ? `  ${comma(+x.r.w)}kg — 전표번호 ${x.r.no}·중량이 같은 전표가 ${x.d.hit.veh}호로 이미 올라가 있습니다`
+          : x.d.why==='no'
           ? `  ${comma(+x.r.w)}kg — 1차·2차 중량까지 같습니다`
             + ` (전표번호 ${x.r.no||'없음'} / 올린 것 ${x.d.hit.no||'없음'})`
           : `  ${comma(+x.r.w)}kg — 같은 날 같은 중량을 이미 올렸습니다`).join('\n')
@@ -1919,7 +1981,7 @@ if('serviceWorker' in navigator){
 
 /* 기사님이 앱을 껐다 켜지 않으셔도 새 버전으로 바뀝니다.
    다만 찍어 둔 사진이나 아직 못 보낸 전표가 있으면, 그것부터 지키고 나중에 바꿉니다. */
-const APP_VER = 'v67';
+const APP_VER = 'v68';
 let newVer = null;
 
 function appBusy(){

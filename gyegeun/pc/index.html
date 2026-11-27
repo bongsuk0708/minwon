@@ -206,12 +206,40 @@ tr.picked{background:#FBEAE8}
 .toast.on{opacity:1;transform:none}
 .toast.good{border-color:rgba(46,139,87,.5);color:var(--ok)}
 .toast.err{border-color:rgba(200,64,47,.5);color:var(--bad)}
+
+/* ---------- 합계 인쇄 (화면에는 안 보이고 인쇄할 때만 나옵니다) ---------- */
+#printArea{display:none}
+@page{size:A4 portrait;margin:12mm}
+@page land{size:A4 landscape;margin:10mm}
+@media print{
+  /* '합계 인쇄' 단추로 찍을 때만 합계표만 나옵니다. Ctrl+P 로 찍으면 예전처럼 화면 그대로 */
+  body.printing,html:has(body.printing){background:#fff !important}
+  body.printing>*{display:none !important}
+  body.printing>#printArea{display:block !important}
+  #printArea{color:#000;font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea .pp{break-after:page}
+  #printArea .pp:last-child{break-after:auto}
+  #printArea .pp.land{page:land}
+  #printArea h1{font-size:17px;margin:0 0 3px}
+  #printArea .psub{font-size:11px;color:#444;margin-bottom:10px}
+  #printArea .pbig{font-size:14px;font-weight:800;margin:0 0 10px}
+  #printArea h3{font-size:13px;margin:14px 0 5px}
+  #printArea table{width:100%;border-collapse:collapse;border:1px solid #888;border-radius:0;background:#fff}
+  #printArea th,#printArea td{border:1px solid #999;padding:3px 6px;font-size:11px;white-space:nowrap;color:#000}
+  #printArea th{background:#E9ECEF;text-align:center;font-weight:800}
+  #printArea td.r{text-align:right;font-variant-numeric:tabular-nums}
+  #printArea tr.sub td{background:#F3F4F6;font-weight:800}
+  #printArea tr.tot td{background:#E2E5E9;font-weight:800}
+  #printArea tr.gap td{color:#B03020}
+  #printArea thead{display:table-header-group}
+  #printArea tr{break-inside:avoid}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v63</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v64</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -240,6 +268,8 @@ tr.picked{background:#FBEAE8}
     <button class="chip" id="bPicPurge">사진 지우기</button>
     <button class="chip" id="bTrash">휴지통</button>
     <button class="chip" id="bToggle">전표 직접 입력</button>
+    <button class="go" id="bXl">합계 엑셀</button>
+    <button class="chip" id="bPrint">합계 인쇄</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
 
@@ -326,6 +356,7 @@ tr.picked{background:#FBEAE8}
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="printArea"></div>
 
 <script>
 const DB = 'https://minwon-c29c2-default-rtdb.asia-southeast1.firebasedatabase.app';
@@ -894,19 +925,23 @@ function drawTrash(){
 }
 
 /* 지금 보고 있는 기간을 글로 적어 둡니다 — 달인지 날짜 범위인지 헷갈리지 않게 */
-function drawPeriod(){
+function periodLabel(){
   const v=$('#fVeh').value, g=$('#fSeong').value, j=$('#fJo').value;
   const f=[v?`${v}호`:'', g, j].filter(Boolean).join(' · ');
-  let t, note='';
+  let t;
   if(mode==='day'){
     const a=$('#fDay').value, b=$('#fDay2').value;
     t = (a&&b&&a!==b) ? `${a} ~ ${b}` : (a||b||'날짜 없음');
-    note = '날짜로 보는 중입니다. 위의 달 선택은 쉬고 있습니다.';
   }
   else if(mode==='today'){ t = `오늘 ${today()}`; }
   else if(mode==='7')    { t = '최근 7일'; }
   else { const m=($('#fMonth').value||today().slice(0,7)).split('-');
          t = `${m[0]}년 ${Number(m[1])}월 한 달`; }
+  return {v,g,j,f,t};
+}
+function drawPeriod(){
+  const {v,g,j,f,t} = periodLabel();
+  const note = mode==='day' ? '날짜로 보는 중입니다. 위의 달 선택은 쉬고 있습니다.' : '';
   $('#fMonth').style.opacity = (mode==='day') ? .45 : 1;
   // 전표번호나 계근시각은 있는데 사진이 안 붙은 것 — 현장에서 사진을 지우고 저장한 건입니다
   const np = picked().filter(r=>!r.batch && (r.no||r.t1||r.t2)).length;
@@ -1642,14 +1677,175 @@ $('#bCsv').onclick = ()=>{
   const blob=new Blob(['\ufeff'+head+'\n'+body],{type:'text/csv;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  const a1=$('#fDay').value, b1=$('#fDay2').value;
-  const tag = mode==='day' ? (a1&&b1&&a1!==b1 ? `${a1}_${b1}` : (a1||b1))
-            : mode==='today' ? today()
-            : mode==='7' ? `최근7일_${today()}`
-            : ($('#fMonth').value||today().slice(0,7));
-  a.download=`계근대장_${tag}.csv`;
+  a.download=`계근대장_${fileTag()}.csv`;
   a.click(); URL.revokeObjectURL(a.href);
 };
+/* 내려받는 파일 이름에 붙일 기간 */
+function fileTag(){
+  const a1=$('#fDay').value, b1=$('#fDay2').value;
+  return mode==='day' ? (a1&&b1&&a1!==b1 ? `${a1}_${b1}` : (a1||b1))
+       : mode==='today' ? today()
+       : mode==='7' ? `최근7일_${today()}`
+       : ($('#fMonth').value||today().slice(0,7));
+}
+
+/* ---------- 합계표 (엑셀·인쇄 같이 씀) ----------
+   지금 화면 조건(기간·차량·성상·조)에 맞는 전표로 총합계·조별·차량별·일자별 표를 만듭니다.
+   화면 왼쪽 근무조별·차량별·일자별 합계와 같은 숫자입니다. */
+const WDAY=['일','월','화','수','목','금','토'];
+const tnTxt = v => v.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const JO_ORDER=['주간','야간'];
+function sumReport(rows){
+  let {t,f} = periodLabel();
+  if(mode==='7'){ const ds=periodDays(rows); t += ` (${ds[0]} ~ ${ds[ds.length-1]})`; }
+  const total = rows.reduce((a,r)=>a+r.weight,0);
+  const nVeh  = new Set(rows.map(r=>r.veh)).size;
+  const tn = w => Math.round(w/10)/100;                 // 톤, 소수 둘째 자리
+  const seongs = SEONG.filter(s=>rows.some(r=>r.seong===s))
+       .concat([...new Set(rows.map(r=>r.seong))].filter(s=>!SEONG.includes(s)));
+  const jos = [...new Set(rows.map(r=>joOf(r)||'(미지정)'))]
+       .sort((a,b)=>((JO_ORDER.indexOf(a)+1)||9)-((JO_ORDER.indexOf(b)+1)||9) || a.localeCompare(b));
+  const grp = (list,key)=>{ const m={}; list.forEach(r=>{ const k=key(r); (m[k]=m[k]||[]).push(r); }); return m; };
+  const wOf = list => list.reduce((a,r)=>a+r.weight,0);
+  const vehOf = list => new Set(list.map(r=>r.veh)).size;
+  const vehs = list => [...new Set(list.map(r=>r.veh))].sort();
+  const full = v => (CARS[v]||{}).f || '';
+  const KG={t:'kg',w:12}, TN={t:'t',w:9}, NN={t:'n',w:9};
+  const foot = ['합계'];
+
+  /* 1. 총합계 — 성상별 · 조별 */
+  const bySeong = grp(rows,r=>r.seong), byJo = grp(rows,r=>joOf(r)||'(미지정)');
+  const sumCols = h=>[{h,t:'s',w:16},{h:'차량(대)',...NN},{h:'전표(장)',...NN},{h:'중량(kg)',...KG},{h:'톤',...TN}];
+  const totRow = ['합계', nVeh, rows.length, total, tn(total)];
+  const s1 = {name:'총합계', title:'계근 합계 — 총합계',
+    big:`총 합계  ${comma(total)} kg  (${tnTxt(tn(total))} t)  ·  전표 ${comma(rows.length)}장  ·  차량 ${nVeh}대`,
+    tables:[
+      {cap:'성상별', cols:sumCols('성상'),
+       body:seongs.map(s=>({v:[s, vehOf(bySeong[s]), bySeong[s].length, wOf(bySeong[s]), tn(wOf(bySeong[s]))]})),
+       foot:totRow},
+      {cap:'조별', cols:sumCols('조'),
+       body:jos.map(j=>({v:[j, vehOf(byJo[j]), byJo[j].length, wOf(byJo[j]), tn(wOf(byJo[j]))]})),
+       foot:totRow}]};
+
+  /* 2. 조별 — 조 안에 차량, 조마다 소계 */
+  const joBody=[];
+  jos.forEach(j=>{
+    const jr=byJo[j], bv=grp(jr,r=>r.veh);
+    vehs(jr).forEach(v=>{ const x=bv[v];
+      joBody.push({v:[j, v, full(v), [...new Set(x.map(r=>r.seong))].join(', '), x.length, wOf(x), tn(wOf(x))]}); });
+    joBody.push({k:'sub', v:[`${j} 소계`, `${vehOf(jr)}대`, '', '', jr.length, wOf(jr), tn(wOf(jr))]});
+  });
+  const s2 = {name:'조별', title:'계근 합계 — 조별',
+    tables:[{cols:[{h:'조',t:'s',w:11},{h:'차량',t:'s',w:8},{h:'차량번호',t:'s',w:12},{h:'성상',t:'s',w:24},
+                   {h:'전표(장)',...NN},{h:'중량(kg)',...KG},{h:'톤',...TN}],
+             body:joBody, foot:['총합계', `${nVeh}대`, '', '', rows.length, total, tn(total)]}]};
+
+  /* 3. 차량별 — 성상마다 중량 */
+  const byVeh = grp(rows,r=>r.veh);
+  const s3 = {name:'차량별', title:'계근 합계 — 차량별', land: seongs.length>3,
+    tables:[{cols:[{h:'차량',t:'s',w:8},{h:'차량번호',t:'s',w:12},{h:'조',t:'s',w:7},
+                   ...seongs.map(s=>({h:s,...KG})),{h:'합계(kg)',...KG},{h:'톤',...TN},{h:'전표(장)',...NN}],
+             body:vehs(rows).map(v=>{ const x=byVeh[v], bs=grp(x,r=>r.seong);
+               return {v:[v, full(v), joOf(x[0]), ...seongs.map(s=>bs[s]?wOf(bs[s]):null), wOf(x), tn(wOf(x)), x.length]}; }),
+             foot:['합계','','', ...seongs.map(s=>wOf(bySeong[s])), total, tn(total), rows.length]}]};
+
+  /* 4. 일자별 — 기간 안의 날을 하루도 빼지 않고 (전표 없는 날은 빨갛게) */
+  const byDate = grp(rows,r=>r.date), tdy = today();
+  const days = periodDays(rows).filter(d=>d<=tdy || byDate[d]);
+  const s4 = {name:'일자별', title:'계근 합계 — 일자별', land: seongs.length>4,
+    tables:[{cols:[{h:'날짜',t:'s',w:11},{h:'요일',t:'s',w:6},
+                   ...seongs.map(s=>({h:s,...KG})),{h:'합계(kg)',...KG},{h:'톤',...TN},{h:'전표(장)',...NN}],
+             body:days.map(d=>{ const x=byDate[d]||[], bs=grp(x,r=>r.seong);
+               const [y,mo,dd]=d.split('-').map(Number), wd=WDAY[new Date(y,mo-1,dd).getDay()];
+               return x.length ? {v:[d, wd, ...seongs.map(s=>bs[s]?wOf(bs[s]):null), wOf(x), tn(wOf(x)), x.length]}
+                               : {k:'gap', v:[d, wd, ...seongs.map(()=>null), '없음', null, 0]}; }),
+             foot:['합계','', ...seongs.map(s=>wOf(bySeong[s])), total, tn(total), rows.length]}]};
+
+  const now = new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  return {sub:`기간: ${t}${f?`  ·  조건: ${f}`:''}  ·  뽑은 때: ${now}`, sheets:[s1,s2,s3,s4]};
+}
+
+/* 합계 엑셀 — 시트 4장 (총합계·조별·차량별·일자별), 엑셀에서 바로 인쇄해도 A4 한 장 폭에 맞게 */
+const XL_CDN='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
+let xlBusy=false;
+$('#bXl').onclick = async ()=>{
+  if(xlBusy) return;
+  const rows=picked();
+  if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
+  xlBusy=true; toast('엑셀 만드는 중…');
+  try{
+    if(!window.ExcelJS) await loadScript(XL_CDN);
+    const R=sumReport(rows), wb=new ExcelJS.Workbook();
+    const thin={style:'thin',color:{argb:'FF9AA1AA'}}, box={top:thin,left:thin,bottom:thin,right:thin};
+    const fill=c=>({type:'pattern',pattern:'solid',fgColor:{argb:c}});
+    const FMT={kg:'#,##0', n:'#,##0', t:'#,##0.00'};
+    R.sheets.forEach(S=>{
+      const nc=Math.max(...S.tables.map(T=>T.cols.length));
+      const ws=wb.addWorksheet(S.name,{pageSetup:{paperSize:9, orientation:S.land?'landscape':'portrait',
+        fitToPage:true, fitToWidth:1, fitToHeight:0,
+        margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
+      ws.headerFooter.oddFooter='&C&P / &N';
+      S.tables[0].cols.forEach((c,i)=>{ ws.getColumn(i+1).width=c.w; });
+      let r=1;
+      const line=(text,font)=>{ ws.mergeCells(r,1,r,nc); const x=ws.getCell(r,1); x.value=text; x.font=font; r++; };
+      line(S.title,{bold:true,size:15});
+      line(R.sub,{size:10,color:{argb:'FF555555'}});
+      if(S.big) line(S.big,{bold:true,size:12});
+      S.tables.forEach(T=>{
+        r++;
+        if(T.cap) line(T.cap,{bold:true,size:12});
+        const hr=r;
+        T.cols.forEach((c,i)=>{ const x=ws.getCell(r,i+1); x.value=c.h; x.font={bold:true}; x.fill=fill('FFE9ECEF');
+          x.border=box; x.alignment={horizontal:'center',vertical:'middle',wrapText:true}; });
+        r++;
+        const put=(vals,k)=>{ vals.forEach((v,i)=>{ const c=T.cols[i], x=ws.getCell(r,i+1);
+            x.value = (v===null||v===undefined||v==='') ? null : v; x.border=box;
+            if(c.t!=='s'){ x.numFmt=FMT[c.t]; x.alignment={horizontal:'right'}; }
+            if(k==='sub'){ x.font={bold:true}; x.fill=fill('FFF3F4F6'); }
+            if(k==='tot'){ x.font={bold:true}; x.fill=fill('FFE2E5E9'); }
+            if(k==='gap'){ x.font={color:{argb:'FFB03020'}}; } });
+          r++; };
+        T.body.forEach(b=>put(b.v,b.k));
+        if(T.foot) put(T.foot,'tot');
+        if(S.tables.length===1){ ws.views=[{state:'frozen',ySplit:hr}]; ws.pageSetup.printTitlesRow=`${hr}:${hr}`; }
+      });
+    });
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`계근합계_${fileTag()}.xlsx`;
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('합계 엑셀을 내려받았습니다 — 시트 4장: 총합계·조별·차량별·일자별','good');
+  }catch(e){
+    toast('엑셀을 만들지 못했습니다 — 인터넷 연결을 확인하고 다시 눌러 주세요','err');
+  }finally{ xlBusy=false; }
+};
+
+/* 합계 인쇄 — 총합계·조별·차량별·일자별을 한 장씩. 일부만 찍으려면 인쇄 창에서 페이지를 고르세요 */
+function printHtml(R){
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const cell=(v,c)=>{ if(v===null||v===undefined||v==='') return `<td${c.t!=='s'?' class="r"':''}></td>`;
+    if(c.t==='s' || typeof v!=='number') return `<td${c.t!=='s'?' class="r"':''}>${esc(v)}</td>`;
+    return `<td class="r">${c.t==='t' ? tnTxt(v) : comma(v)}</td>`; };
+  const tr=(vals,cols,k)=>`<tr${k?` class="${k}"`:''}>${vals.map((v,i)=>cell(v,cols[i])).join('')}</tr>`;
+  return R.sheets.map(S=>`<section class="pp${S.land?' land':''}">
+    <h1>${esc(S.title)}</h1><div class="psub">${esc(R.sub)}</div>
+    ${S.big?`<div class="pbig">${esc(S.big)}</div>`:''}
+    ${S.tables.map(T=>`${T.cap?`<h3>${esc(T.cap)}</h3>`:''}<table>
+      <thead><tr>${T.cols.map(c=>`<th>${esc(c.h)}</th>`).join('')}</tr></thead>
+      <tbody>${T.body.map(b=>tr(b.v,T.cols,b.k)).join('')}${T.foot?tr(T.foot,T.cols,'tot'):''}</tbody>
+    </table>`).join('')}
+  </section>`).join('');
+}
+$('#bPrint').onclick = ()=>{
+  const rows=picked();
+  if(!rows.length){ toast('인쇄할 기록이 없습니다','err'); return; }
+  $('#printArea').innerHTML = printHtml(sumReport(rows));
+  document.body.classList.add('printing');
+  setTimeout(()=>window.print(), 50);
+};
+window.addEventListener('afterprint', ()=>{ document.body.classList.remove('printing'); });
 
 /* ---------- 일괄 입력 ---------- */
 const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,7);

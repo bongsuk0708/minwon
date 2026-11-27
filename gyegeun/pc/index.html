@@ -211,7 +211,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v62</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v63</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -415,7 +415,10 @@ function flagsOf(r){
     if(c.w && c.w.length >= ws.length && !c.w.includes(r.weight))
       f.push(`사진 숫자와 다름 (사진: ${c.w.map(comma).join(' · ')})`);
     const pd = plausibleDate(c.ds || (c.d?[c.d]:[]), r.at);   // 전표에 찍힌 날짜 그대로
-    if(pd && pd!==r.date)
+    // 중량도 시각도 하나 못 읽은 사진은 날짜도 잘못 읽었을 때가 많습니다 (11/27 4968호: 27일을 21일로).
+    // 그럴 때는 날짜로 따지지 않습니다.
+    const readOk = (c.w && c.w.length) || (c.t && c.t.length);
+    if(readOk && pd && pd!==r.date)
       f.push(`사진 날짜와 다름 (사진: ${pd.slice(5).replace('-','/')}`
            + (c.t && c.t.length ? ` ${c.t.join('·')}` : '') + ')');
   }

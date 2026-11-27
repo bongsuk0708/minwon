@@ -76,6 +76,10 @@ input[type=month]:focus,select:focus{border-color:var(--acc)}
 .c .s{font-size:12px;color:var(--dim);margin-top:2px}
 .c.tot{background:var(--accbg);border-color:rgba(160,99,26,.3)}
 .c.tot .v{color:var(--acc)}
+/* 합계 카드 옆 — 합계표 엑셀·인쇄 단추 */
+.c.act{display:flex;flex-direction:column;gap:9px}
+.c.act .btns{display:flex;gap:8px;flex:1;align-items:center}
+.c.act button{flex:1;padding:12px 0;font-size:16px;font-weight:800;border-radius:10px}
 
 h2{font-size:14px;color:var(--dim);font-weight:700;margin:26px 0 10px}
 
@@ -239,7 +243,7 @@ tr.picked{background:#FBEAE8}
 <body>
 
 <header>
-  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v64</span></h1>
+  <h1>계근 대장 <span>·</span> 본에코 <span class="ver">v65</span></h1>
   <div class="sp"></div>
   <div class="st" id="st">불러오는 중</div>
   <button class="chip" id="bReload">새로고침</button>
@@ -268,8 +272,6 @@ tr.picked{background:#FBEAE8}
     <button class="chip" id="bPicPurge">사진 지우기</button>
     <button class="chip" id="bTrash">휴지통</button>
     <button class="chip" id="bToggle">전표 직접 입력</button>
-    <button class="go" id="bXl">합계 엑셀</button>
-    <button class="chip" id="bPrint">합계 인쇄</button>
     <button class="go" id="bCsv">대장 CSV 내려받기</button>
   </div>
 
@@ -1024,7 +1026,9 @@ function render(){
     SEONG.filter(s=>sum[s]>0).map(s=>
       `<div class="c"><div class="k">${s}</div><div class="v num">${ton(sum[s])}<span style="font-size:14px;color:var(--dim)"> t</span></div><div class="s num">${comma(sum[s])} kg</div></div>`
     ).join('') +
-    `<div class="c tot"><div class="k">합계</div><div class="v num">${ton(total)}<span style="font-size:14px"> t</span></div><div class="s num">전표 ${comma(rows.length)}장 · ${comma(total)} kg</div></div>`;
+    `<div class="c tot"><div class="k">합계</div><div class="v num">${ton(total)}<span style="font-size:14px"> t</span></div><div class="s num">전표 ${comma(rows.length)}장 · ${comma(total)} kg</div></div>` +
+    `<div class="c act" title="총합계·조별·차량별·일자별 합계표 — 지금 보는 기간·조건대로"><div class="k">합계표</div>
+       <div class="btns"><button class="go" id="bXl">엑셀</button><button class="chip" id="bPrint">인쇄</button></div></div>`;
 
   const jm={};
   rows.forEach(r=>{ const j=joOf(r)||'(미지정)';
@@ -1710,22 +1714,22 @@ function sumReport(rows){
   const vehOf = list => new Set(list.map(r=>r.veh)).size;
   const vehs = list => [...new Set(list.map(r=>r.veh))].sort();
   const full = v => (CARS[v]||{}).f || '';
-  const KG={t:'kg',w:12}, TN={t:'t',w:9}, NN={t:'n',w:9};
-  const foot = ['합계'];
+  const KG={t:'kg',w:12}, TN={t:'t',w:10}, NN={t:'n',w:10};
 
-  /* 1. 총합계 — 성상별 · 조별 */
+  /* 1. 총합계 — 성상별 · 조별
+     성상별에는 차량 대수를 넣지 않습니다 — 한 차가 여러 성상을 싣기도 해서(4968호 대형·재활용(다량),
+     7507호 생활·재활용·대형·기타) 성상마다 센 대수를 더하면 실제 대수보다 많아집니다.
+     조는 차마다 하나라 조별 대수는 더하면 맞습니다. */
   const bySeong = grp(rows,r=>r.seong), byJo = grp(rows,r=>joOf(r)||'(미지정)');
-  const sumCols = h=>[{h,t:'s',w:16},{h:'차량(대)',...NN},{h:'전표(장)',...NN},{h:'중량(kg)',...KG},{h:'톤',...TN}];
-  const totRow = ['합계', nVeh, rows.length, total, tn(total)];
   const s1 = {name:'총합계', title:'계근 합계 — 총합계',
-    big:`총 합계  ${comma(total)} kg  (${tnTxt(tn(total))} t)  ·  전표 ${comma(rows.length)}장  ·  차량 ${nVeh}대`,
+    big:[`총 합계  ${comma(total)} kg  (${tnTxt(tn(total))} t)`, `전표 ${comma(rows.length)}장  ·  차량 ${nVeh}대`],
     tables:[
-      {cap:'성상별', cols:sumCols('성상'),
-       body:seongs.map(s=>({v:[s, vehOf(bySeong[s]), bySeong[s].length, wOf(bySeong[s]), tn(wOf(bySeong[s]))]})),
-       foot:totRow},
-      {cap:'조별', cols:sumCols('조'),
-       body:jos.map(j=>({v:[j, vehOf(byJo[j]), byJo[j].length, wOf(byJo[j]), tn(wOf(byJo[j]))]})),
-       foot:totRow}]};
+      {cap:'성상별', cols:[{h:'성상',t:'s',w:16},{h:'전표(장)',...NN},{h:'중량(kg)',...KG},{h:'톤',...TN}],
+       body:seongs.map(s=>({v:[s, bySeong[s].length, wOf(bySeong[s]), tn(wOf(bySeong[s]))]})),
+       foot:['합계', rows.length, total, tn(total)]},
+      {cap:'조별', cols:[{h:'조',t:'s',w:16},{h:'전표(장)',...NN},{h:'중량(kg)',...KG},{h:'톤',...TN},{h:'차량(대)',...NN}],
+       body:jos.map(j=>({v:[j, byJo[j].length, wOf(byJo[j]), tn(wOf(byJo[j])), vehOf(byJo[j])]})),
+       foot:['합계', rows.length, total, tn(total), nVeh]}]};
 
   /* 2. 조별 — 조 안에 차량, 조마다 소계 */
   const joBody=[];
@@ -1762,13 +1766,19 @@ function sumReport(rows){
              foot:['합계','', ...seongs.map(s=>wOf(bySeong[s])), total, tn(total), rows.length]}]};
 
   const now = new Date().toLocaleString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  return {sub:`기간: ${t}${f?`  ·  조건: ${f}`:''}  ·  뽑은 때: ${now}`, sheets:[s1,s2,s3,s4]};
+  // 머리 글은 줄을 나눠 둡니다 — 한 줄로 길게 쓰면 엑셀 칸 폭에서 뒤가 잘립니다
+  return {sub:[`기간: ${t}${f?`  ·  조건: ${f}`:''}`, `뽑은 때: ${now}`], sheets:[s1,s2,s3,s4]};
 }
 
 /* 합계 엑셀 — 시트 4장 (총합계·조별·차량별·일자별), 엑셀에서 바로 인쇄해도 A4 한 장 폭에 맞게 */
 const XL_CDN='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
 let xlBusy=false;
-$('#bXl').onclick = async ()=>{
+// 단추는 합계 카드 옆에 있어 화면을 다시 그릴 때마다 새로 생깁니다 — 그래서 카드 묶음에서 받습니다
+$('#cards').addEventListener('click', e=>{
+  if(e.target.closest('#bXl')) xlOut();
+  else if(e.target.closest('#bPrint')) printOut();
+});
+async function xlOut(){
   if(xlBusy) return;
   const rows=picked();
   if(!rows.length){ toast('내려받을 기록이 없습니다','err'); return; }
@@ -1785,12 +1795,13 @@ $('#bXl').onclick = async ()=>{
         fitToPage:true, fitToWidth:1, fitToHeight:0,
         margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.3,footer:0.3}}});
       ws.headerFooter.oddFooter='&C&P / &N';
-      S.tables[0].cols.forEach((c,i)=>{ ws.getColumn(i+1).width=c.w; });
+      const cw=[]; S.tables.forEach(T=>T.cols.forEach((c,i)=>{ cw[i]=Math.max(cw[i]||0,c.w); }));
+      cw.forEach((w,i)=>{ ws.getColumn(i+1).width=w; });
       let r=1;
       const line=(text,font)=>{ ws.mergeCells(r,1,r,nc); const x=ws.getCell(r,1); x.value=text; x.font=font; r++; };
       line(S.title,{bold:true,size:15});
-      line(R.sub,{size:10,color:{argb:'FF555555'}});
-      if(S.big) line(S.big,{bold:true,size:12});
+      R.sub.forEach(s=>line(s,{size:10,color:{argb:'FF555555'}}));
+      (S.big||[]).forEach(s=>line(s,{bold:true,size:12}));
       S.tables.forEach(T=>{
         r++;
         if(T.cap) line(T.cap,{bold:true,size:12});
@@ -1820,7 +1831,7 @@ $('#bXl').onclick = async ()=>{
   }catch(e){
     toast('엑셀을 만들지 못했습니다 — 인터넷 연결을 확인하고 다시 눌러 주세요','err');
   }finally{ xlBusy=false; }
-};
+}
 
 /* 합계 인쇄 — 총합계·조별·차량별·일자별을 한 장씩. 일부만 찍으려면 인쇄 창에서 페이지를 고르세요 */
 function printHtml(R){
@@ -1830,21 +1841,21 @@ function printHtml(R){
     return `<td class="r">${c.t==='t' ? tnTxt(v) : comma(v)}</td>`; };
   const tr=(vals,cols,k)=>`<tr${k?` class="${k}"`:''}>${vals.map((v,i)=>cell(v,cols[i])).join('')}</tr>`;
   return R.sheets.map(S=>`<section class="pp${S.land?' land':''}">
-    <h1>${esc(S.title)}</h1><div class="psub">${esc(R.sub)}</div>
-    ${S.big?`<div class="pbig">${esc(S.big)}</div>`:''}
+    <h1>${esc(S.title)}</h1><div class="psub">${R.sub.map(esc).join(' &nbsp;·&nbsp; ')}</div>
+    ${S.big?`<div class="pbig">${S.big.map(esc).join(' &nbsp;·&nbsp; ')}</div>`:''}
     ${S.tables.map(T=>`${T.cap?`<h3>${esc(T.cap)}</h3>`:''}<table>
       <thead><tr>${T.cols.map(c=>`<th>${esc(c.h)}</th>`).join('')}</tr></thead>
       <tbody>${T.body.map(b=>tr(b.v,T.cols,b.k)).join('')}${T.foot?tr(T.foot,T.cols,'tot'):''}</tbody>
     </table>`).join('')}
   </section>`).join('');
 }
-$('#bPrint').onclick = ()=>{
+function printOut(){
   const rows=picked();
   if(!rows.length){ toast('인쇄할 기록이 없습니다','err'); return; }
   $('#printArea').innerHTML = printHtml(sumReport(rows));
   document.body.classList.add('printing');
   setTimeout(()=>window.print(), 50);
-};
+}
 window.addEventListener('afterprint', ()=>{ document.body.classList.remove('printing'); });
 
 /* ---------- 일괄 입력 ---------- */
